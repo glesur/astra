@@ -14,4 +14,5 @@ enum class LoopPattern { SIMDFOR, RANGE, MDRANGE, TPX, TPTTRTVR, UNDEFINED };
 
 #include "loop.hpp"
 #include "arrays.hpp"
+#include "global.hpp"
 #endif

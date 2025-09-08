@@ -46,6 +46,7 @@ endif()
 target_include_directories(astra PUBLIC
                            src/kokkos/core/src
                            src
+                           src/utils
                            )
 
 target_link_libraries(astra Kokkos::kokkos KokkosFFT::fft)
