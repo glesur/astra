@@ -13,6 +13,7 @@ endif()
 
 # Add kokkos CMAKE files (required early since these set compiler options)
 add_subdirectory(src/kokkos build/kokkos)
+add_subdirectory(src/kokkos-fft)
 
 
 add_executable(astra)
@@ -47,4 +48,4 @@ target_include_directories(astra PUBLIC
                            src
                            )
 
-target_link_libraries(astra Kokkos::kokkos)
+target_link_libraries(astra Kokkos::kokkos KokkosFFT::fft)

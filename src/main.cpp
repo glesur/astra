@@ -3,11 +3,30 @@
 
 #include "astra.hpp"
 
+#include <Kokkos_Core.hpp>
+#include <Kokkos_Complex.hpp>
+#include <Kokkos_Random.hpp>
+#include <KokkosFFT.hpp>
+
 int main( int argc, char* argv[] ) {
   Kokkos::initialize( argc, argv );
   {
-    Array3D<double>  toto("toto_name",16,16,16);
-    Array3D<double>  totoprime("toto_prime",16,16,16);
+    // Test of 1D FFT
+    const int n = 4;
+
+    // Test FFTs
+    Array1D<real> x("x", n);
+    Array1D<complex> x_hat("x_hat", n/2+1);
+
+    Kokkos::Random_XorShift64_Pool<> random_pool(12345);
+    Kokkos::fill_random(x, random_pool, 1);
+    Kokkos::fence();
+
+    KokkosFFT::rfft(Kokkos::DefaultExecutionSpace(), x, x_hat);
+
+    // Test standard kokkos array
+    Array3D<real>  toto("toto_name",16,16,16);
+    Array3D<real>  totoprime("toto_prime",16,16,16);
     astra_for("loop_example",0,9,0,9,0,9,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         toto(i,j,k) = 1.0;
