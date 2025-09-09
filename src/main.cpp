@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "astra.hpp"
+#include "input.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Complex.hpp>
@@ -11,6 +12,19 @@
 int main( int argc, char* argv[] ) {
   Kokkos::initialize( argc, argv );
   {
+    // Initialize astra screen outputs, logs, profiling
+    astra::initialize();
+
+    ///////////////////////////////////
+    //Initialisation phase
+    // Read input
+    Input input(argc, argv);
+    input.PrintLogo();
+
+    
+    // Show configuration after initialisation
+    input.ShowConfig();
+    /////////////////////////////////////////
     // Test of 1D FFT
     const int n = 4;
 
@@ -45,9 +59,9 @@ int main( int argc, char* argv[] ) {
     ArrayHost3D<double> toto_host("toto_host",16,16,16);
     Kokkos::deep_copy(toto_host,toto);
 
-    std::cout << "toto_host(1,1,1)=" << toto_host(1,1,1) << std::endl;
+    astra::cout << "toto_host(1,1,1)=" << toto_host(1,1,1) << std::endl;
 
-    std::cout << "j'ai fini!"<< std::endl;
+    astra::cout << "j'ai fini!"<< std::endl;
 
   }
   Kokkos::finalize();

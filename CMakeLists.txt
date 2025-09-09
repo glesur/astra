@@ -2,9 +2,19 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_BUILD_TYPE Release)
 set (CMAKE_CXX_STANDARD 17)
 
-project (Astra VERSION 1.0.0)
+set(Astra_VERSION_MAJOR 0)
+set(Astra_VERSION_MINOR 1)
+set(Astra_VERSION_PATCH 00)
+
+project (Astra VERSION 0.1.00)
 
 set(Astra_LOOP_PATTERN "Default" CACHE STRING "Loop pattern for astra_for")
+
+
+# load git revision tools
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
+include(GetGitRevisionDescription)
+
 
 #astra requires Cuda Lambdas (experimental)
 if(Kokkos_ENABLE_CUDA)
@@ -18,6 +28,15 @@ add_subdirectory(src/kokkos-fft)
 
 add_executable(astra)
 add_subdirectory(src build)
+
+#update version.hpp if possible
+git_describe(GIT_SHA1)
+set(Idefix_VERSION ${Astra_VERSION_MAJOR}.${Astra_VERSION_MINOR}.${Astra_VERSION_PATCH}-${GIT_SHA1})
+file(WRITE ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_GIT_COMMIT \"${GIT_SHA1}\"\n")
+file(APPEND ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_VERSION_MAJOR \"${Astra_VERSION_MAJOR}\"\n")
+file(APPEND ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_VERSION_MINOR \"${Astra_VERSION_MINOR}\"\n")
+file(APPEND ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_VERSION_PATCH \"${Astra_VERSION_PATCH}\"\n")
+file(APPEND ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_VERSION \"${Astra_VERSION}\"\n")
 
 #Loop type
 if(${Astra_LOOP_PATTERN} STREQUAL "SIMD")

@@ -12,12 +12,11 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include "astra.hpp"
 
-#include "idefix.hpp"
-
-using IdefixParamContainer = std::vector<std::string>;
-using IdefixBlockContainer = std::map<std::string,IdefixParamContainer>;
-using IdefixInputContainer = std::map<std::string,IdefixBlockContainer>;
+using ParamContainer = std::vector<std::string>;
+using BlockContainer = std::map<std::string,ParamContainer>;
+using InputContainer = std::map<std::string,BlockContainer>;
 
 class Input {
  public:
@@ -67,7 +66,7 @@ class Input {
 
  private:
   std::string inputFileName;
-  IdefixInputContainer  inputParameters;
+  InputContainer  inputParameters;
   void ParseCommandLine(int , char **argv);
   static void signalHandler(int);
   Kokkos::Timer timer;
@@ -83,7 +82,7 @@ T Input::Get(std::string blockName, std::string paramName, int num) {
       std::stringstream msg;
       msg << "Mandatory parameter [" << blockName << "]:" << paramName << "(" << num
           << "). Cannot be found in the input file" << std::endl;
-      IDEFIX_ERROR(msg);
+      throw std::runtime_error(msg.str());
   }
 
   // Fetch it
@@ -94,7 +93,7 @@ T Input::Get(std::string blockName, std::string paramName, int num) {
       double dv = std::stod(paramString, NULL);
       value = static_cast<int>(std::round(dv));
       if (std::abs((dv - value)/dv) > 1e-14) {
-        IDEFIX_WARNING("Detected a truncation error while reading an integer");
+        throw std::overflow_error("Detected a truncation error while reading an integer");
       }
     } else if constexpr(std::is_same<T, double>::value) {
       value = std::stod(paramString, NULL);
@@ -113,13 +112,9 @@ T Input::Get(std::string blockName, std::string paramName, int num) {
         value = true;
       } else if(paramString.compare("true") == 0) {
         value = true;
-      } else if(paramString.compare("debout") == 0) {
-        value = true;
       } else if(paramString.compare("no") == 0) {
         value = false;
       } else if(paramString.compare("false") == 0) {
-        value = false;
-      } else if(paramString.compare("couche") == 0) {
         value = false;
       } else {
         std::stringstream msg;
@@ -128,10 +123,10 @@ T Input::Get(std::string blockName, std::string paramName, int num) {
           << std::endl << "I read \"" << paramString << "\"" << std::endl
           << "Use \"yes\" or \"true\" for boolean true ;"
           << " use \"no\" or \"false\" for boolean false.";
-        IDEFIX_ERROR(msg);
+        throw std::runtime_error(msg.str());
       }
     } else {
-      IDEFIX_ERROR("Unknown type has been requested from the input file");
+      throw std::runtime_error("Unknown type has been requested from the input file");
     }
   } catch(const std::exception& e) {
     std::stringstream errmsg;
@@ -139,7 +134,7 @@ T Input::Get(std::string blockName, std::string paramName, int num) {
           << "Input::Get: Error while reading [" << blockName << "]:" << paramName << "(" << num
           << ")." << std::endl
           << "\"" << paramString << "\" cannot be interpreted as required." << std::endl;
-    IDEFIX_ERROR(errmsg);
+    throw std::runtime_error(errmsg.str());
   }
   return(value);
 }
@@ -153,14 +148,14 @@ T Input::GetOrSet(std::string blockName, std::string paramName, int num, T def) 
       std::stringstream msg;
       msg << "Entry [" << blockName << "]:" << paramName << "is not defined." << std::endl
           << "Only the first (index 0) parameter can be set by default." << std::endl;
-      IDEFIX_ERROR(msg);
+      throw std::runtime_error(msg.str());
     }
     if(entrySize+1 < num) {
       std::stringstream msg;
       msg << "Entry [" << blockName << "]:" << paramName << "has " << entrySize << " parameters."
           << std::endl << ". Only the " << entrySize  << "th (index " << entrySize-1
           << ") parameter can be set by default." << std::endl;
-      IDEFIX_ERROR(msg);
+      throw std::runtime_error(msg.str());
     }
     std::stringstream strm;
     strm << std::boolalpha << def;

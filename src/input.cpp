@@ -15,11 +15,12 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <Kokkos_Core.hpp>
 
-#include "idefix.hpp"
 #include "input.hpp"
 #include "version.hpp"
 #include "profiler.hpp"
+#include "global.hpp"
 
 // Flag will be set if a signal has been received
 bool Input::abortRequested = false;
@@ -52,7 +53,7 @@ Input::Input(int argc, char* argv[] ) {
   lastStopFileCheck = timer.seconds();
 
   // Default input file name
-  this->inputFileName = std::string("idefix.ini");
+  this->inputFileName = std::string("astra.ini");
 
   // Parse command line (may replace the input file)
   ParseCommandLine(argc,argv);
@@ -61,7 +62,7 @@ Input::Input(int argc, char* argv[] ) {
 
   if(!file) {
     msg << "Input: cannot open input file " << this->inputFileName;
-    IDEFIX_ERROR(msg);
+    throw std::runtime_error(msg.str());
   }
 
   while(std::getline(file, lineWithComments)) {
@@ -77,11 +78,11 @@ Input::Input(int argc, char* argv[] ) {
       if (lastChar == std::string::npos) {
         msg << "Block name '" << blockName << "' in file '"
             << this->inputFileName << "' not properly ended";
-        IDEFIX_ERROR(msg);
+        throw std::invalid_argument(msg.str());
       }
       // Check if previous block was empty
       if(haveBlock && nParameters == 0) {
-        IDEFIX_WARNING(blockName+std::string(" block is empty in "+inputFileName));
+        throw std::invalid_argument(blockName+std::string(" block is empty in "+inputFileName));
         inputParameters[blockName]["!!empty!!"].push_back("!!empty!!");
       }
       blockName.assign(line, firstChar, lastChar-1);
@@ -95,7 +96,7 @@ Input::Input(int argc, char* argv[] ) {
     if(haveBlock == false) {
       msg << "Input file '" << this->inputFileName
           << "' must specify a block name before the first parameter";
-      IDEFIX_ERROR(msg);
+      throw std::invalid_argument(msg.str());
     }
 
     std::stringstream streamline(line);
@@ -115,23 +116,8 @@ void Input::ParseCommandLine(int argc, char **argv) {
   std::stringstream msg;
   bool enableLogs = true;
   for(int i = 1 ; i < argc ; i++) {
-    // MPI decomposition argument
-    if(std::string(argv[i]) == "-dec") {
-      #ifndef WITH_MPI
-      IDEFIX_ERROR("Domain decomposition option '-dec' only makes sense when MPI is enabled");
-      #endif
-      // Loop on dimensions
-      for(int dir = 0 ; dir < DIMENSIONS ; dir++) {
-        if ((++i) >= argc) {
-          D_SELECT(msg << "You must specify -dec n1";  ,
-              msg << "You must specify -dec n1 n2";  ,
-              msg << "You must specify -dec n1 n2 n3"; )
-          IDEFIX_ERROR(msg);
-        }
-        // Store this
-        inputParameters["CommandLine"]["dec"].push_back(std::string(argv[i]));
-      }
-    } else if(std::string(argv[i]) == "-restart") {
+    
+    if(std::string(argv[i]) == "-restart") {
       std::string sirestart{};
       bool explicitDump = true;     // by default, assume a restart dump # was given
       // Check whether -restart was given with a number or not
@@ -155,15 +141,15 @@ void Input::ParseCommandLine(int argc, char **argv) {
       this->restartFileNumber = std::stoi(sirestart);
     } else if(std::string(argv[i]) == "-i") {
       // Loop on dimensions
-      if((++i) >= argc) IDEFIX_ERROR(
+      if((++i) >= argc) throw std::invalid_argument(
                       "You must specify -i filename where filename is the name of the input file.");
       this->inputFileName = std::string(argv[i]);
     } else if(std::string(argv[i]) == "-maxcycles") {
       if((i+1)>= argc) {
-        IDEFIX_ERROR("-maxcycles requires an additional integer parameter");
+        throw std::invalid_argument("-maxcycles requires an additional integer parameter");
       } else if(std::isdigit(argv[i+1][0]) == 0) {
         // next argiment is another parameter (does not start with a number)
-        IDEFIX_ERROR("-maxcycles requires an additional integer paramater");
+        throw std::invalid_argument("-maxcycles requires an additional integer paramater");
       }
       this->maxCycles = std::stoi(std::string(argv[++i]));
       inputParameters["CommandLine"]["maxCycles"].push_back(std::to_string(maxCycles));
@@ -175,23 +161,23 @@ void Input::ParseCommandLine(int argc, char **argv) {
     } else if(std::string(argv[i]) == "-nolog") {
       enableLogs = false;
     } else if(std::string(argv[i]) == "-profile") {
-      idfx::prof.EnablePerformanceProfiling();
+      astra::prof.EnablePerformanceProfiling();
     } else if(std::string(argv[i]) == "-Werror") {
-      idfx::warningsAreErrors = true;
+      astra::warningsAreErrors = true;
     } else if(std::string(argv[i]) == "-version" || std::string(argv[i]) == "-v") {
       PrintVersion();
-      idfx::safeExit(0);
+      astra::safeExit(0);
     } else if(std::string(argv[i]) == "-help" || std::string(argv[i]) == "-h") {
       PrintOptions();
-      idfx::safeExit(0);
+      astra::safeExit(0);
     } else {
       PrintOptions();
       msg << "Unknown option " << argv[i];
-      IDEFIX_ERROR(msg);
+      throw std::invalid_argument(msg.str());
     }
   }
   if(enableLogs) {
-    idfx::cout.enableLogFile();
+    astra::cout.enableLogFile();
   }
 }
 
@@ -199,62 +185,59 @@ void Input::ParseCommandLine(int argc, char **argv) {
 // This routine prints the parameters stored in the inputParameters structure
 void Input::ShowConfig() {
   std::string blockName, paramName, paramValue;
-  idfx::cout << "-----------------------------------------------------------------------------"
+  astra::cout << "-----------------------------------------------------------------------------"
              << std::endl;
-  idfx::cout << "Input Parameters using input file " << this->inputFileName << ":" << std::endl;
-  idfx::cout << "-----------------------------------------------------------------------------"
+  astra::cout << "Input Parameters using input file " << this->inputFileName << ":" << std::endl;
+  astra::cout << "-----------------------------------------------------------------------------"
              << std::endl;
-  for(IdefixInputContainer::iterator block = inputParameters.begin();
+  for(InputContainer::iterator block = inputParameters.begin();
       block != inputParameters.end();
       block++ ) {
     blockName=block->first;
-    idfx::cout << "[" << blockName << "]" << std::endl;
-    for(IdefixBlockContainer::iterator param = block->second.begin();
+    astra::cout << "[" << blockName << "]" << std::endl;
+    for(BlockContainer::iterator param = block->second.begin();
           param !=block->second.end(); param++) {
       paramName=param->first;
-      idfx::cout << "\t" << paramName << "\t";
-      for(IdefixParamContainer::iterator value = param->second.begin();
+      astra::cout << "\t" << paramName << "\t";
+      for(ParamContainer::iterator value = param->second.begin();
           value != param->second.end(); value++) {
         paramValue = *value;
-        idfx::cout << "\t" << paramValue;
+        astra::cout << "\t" << paramValue;
       }
-      idfx::cout << std::endl;
+      astra::cout << std::endl;
     }
   }
-  idfx::cout << "-----------------------------------------------------------------------------"
+  astra::cout << "-----------------------------------------------------------------------------"
              << std::endl;
-  idfx::cout << "-----------------------------------------------------------------------------"
+  astra::cout << "-----------------------------------------------------------------------------"
              << std::endl;
 
   std::stringstream os;
   Kokkos::DefaultExecutionSpace().print_configuration(os, true);
-  idfx::cout << "Input: Kokkos configuration" << std::endl << os.str();
-  idfx::cout << "-----------------------------------------------------------------------------"
+  astra::cout << "Input: Kokkos configuration" << std::endl << os.str();
+  astra::cout << "-----------------------------------------------------------------------------"
              << std::endl;
 
   #ifdef SINGLE_PRECISION
-    idfx::cout << "Input: Compiled with SINGLE PRECISION arithmetic." << std::endl;
+    astra::cout << "Input: Compiled with SINGLE PRECISION arithmetic." << std::endl;
   #else
-    idfx::cout << "Input: Compiled with DOUBLE PRECISION arithmetic." << std::endl;
+    astra::cout << "Input: Compiled with DOUBLE PRECISION arithmetic." << std::endl;
   #endif
-  // Show dimensionality and other general options:
-  idfx::cout << "Input: DIMENSIONS=" << DIMENSIONS << "." << std::endl;
-  idfx::cout << "Input: COMPONENTS=" << COMPONENTS << "." << std::endl;
   #ifdef WITH_MPI
-    idfx::cout << "Input: MPI ENABLED." << std::endl;
+    astra::cout << "Input: MPI ENABLED." << std::endl;
   #endif
 }
 
 // This routine is called whenever a specific OS signal is caught
 void Input::signalHandler(int signum) {
-  idfx::cout << std::endl << "Input: Caught interrupt " << signum << std::endl;
+  astra::cout << std::endl << "Input: Caught interrupt " << signum << std::endl;
   abortRequested=true;
 }
 
 void Input::CheckForStopFile() {
   // Check whether a file "stop" has been created in directory. If so, raise the abort flag
   // Look for stop file every 5 seconds to avoid overloading the file system
-  if(idfx::prank==0) {
+  if(astra::prank==0) {
     std::string filename = std::string("stop");
     if(timer.seconds()-lastStopFileCheck>5.0) {
       lastStopFileCheck = timer.seconds();
@@ -263,14 +246,14 @@ void Input::CheckForStopFile() {
         // File exists, delete it and raise the flag
         std::remove(filename.c_str());
         abortRequested = true;
-        idfx::cout << std::endl << "Input: Caught stop file command" << std::endl;
+        astra::cout << std::endl << "Input: Caught stop file command" << std::endl;
       }
     }
   }
 }
 
 bool Input::CheckForAbort() {
-  idfx::pushRegion("Input::CheckForAbort");
+  astra::pushRegion("Input::CheckForAbort");
   // Check whether an abort has been requesested
   // When MPI is present, we abort whenever one process got the signal
   CheckForStopFile();
@@ -281,42 +264,24 @@ bool Input::CheckForAbort() {
 
   MPI_Bcast(&abortValue, 1, MPI_INT, 0, MPI_COMM_WORLD);
   returnValue = abortValue > 0;
-  if(returnValue) idfx::cout << "Input: CheckForAbort: abort has been requested." << std::endl;
-  idfx::popRegion();
+  if(returnValue) astra::cout << "Input: CheckForAbort: abort has been requested." << std::endl;
+  astra::popRegion();
   return(returnValue);
 #else
-  if(abortRequested) idfx::cout << "Input: CheckForAbort: abort has been requested." << std::endl;
-  idfx::popRegion();
+  if(abortRequested) astra::cout << "Input: CheckForAbort: abort has been requested." << std::endl;
+  astra::popRegion();
   return(abortRequested);
 #endif
-}
-
-// Get a string in a block, parameter, position of the file
-std::string Input::GetString(std::string blockName, std::string paramName, int num) {
-  IDEFIX_DEPRECATED("Input::GetString is deprecated. Use Input::Get<std::string> instead");
-  return(Get<std::string>(blockName, paramName, num));
-}
-
-// Get a real number in a block, parameter, position of the file
-real Input::GetReal(std::string blockName, std::string paramName, int num) {
-  IDEFIX_DEPRECATED("Input::GetReal is deprecated. Use Input::Get<real> instead");
-  return(Get<real>(blockName, paramName, num));
-}
-
-// Get an integer number in a block, parameter, position of the file
-int Input::GetInt(std::string blockName, std::string paramName, int num) {
-  IDEFIX_DEPRECATED("Input::GetInt is deprecated. Use Input::Get<int> instead");
-  return(Get<int>(blockName, paramName, num));
 }
 
 // Check that an entry is present in the ini file.
 // If yes, return the number of parameters for given entry
 int Input::CheckEntry(std::string blockName, std::string paramName) {
   int result=-1;
-  IdefixInputContainer::iterator block = inputParameters.find(blockName);
+  InputContainer::iterator block = inputParameters.find(blockName);
   if(block != inputParameters.end()) {
     // Block exists
-    IdefixBlockContainer::iterator param = block->second.find(paramName);
+    BlockContainer::iterator param = block->second.find(paramName);
     if(param != block->second.end()) {
       // Parameter exist
       result = param->second.size();
@@ -329,7 +294,7 @@ int Input::CheckEntry(std::string blockName, std::string paramName) {
 // If yes, return true
 bool Input::CheckBlock(std::string blockName) {
   bool result = false;
-  IdefixInputContainer::iterator block = inputParameters.find(blockName);
+  InputContainer::iterator block = inputParameters.find(blockName);
   if(block != inputParameters.end()) {
     // Block exists
     result = true;
@@ -338,84 +303,41 @@ bool Input::CheckBlock(std::string blockName) {
 }
 
 void Input::PrintLogo() {
-  idfx::cout << "                                  .:HMMMMHn:.  ..:n.."<< std::endl;
-  idfx::cout << "                                .H*'``     `'%HM'''''!x."<< std::endl;
-  idfx::cout << "         :x                    x*`           .(MH:    `#h."<< std::endl;
-  idfx::cout << "        x.`M                   M>        :nMMMMMMMh.     `n."<< std::endl;
-  idfx::cout << "         *kXk..                XL  nnx:.XMMMMMMMMMMML   .. 4X."<< std::endl;
-  idfx::cout << "          )MMMMMx              'M   `^?M*MMMMMMMMMMMM:HMMMHHMM."<< std::endl;
-  idfx::cout << "          MMMMMMMX              ?k    'X ..'*MMMMMMM.#MMMMMMMMMx"<< std::endl;
-  idfx::cout << "         XMMMMMMMX               4:    M:MhHxxHHHx`MMx`MMMMMMMMM>"<< std::endl;
-  idfx::cout << "         XM!`   ?M                `x   4MM'`''``HHhMMX  'MMMMMMMM"<< std::endl;
-  idfx::cout << "         4M      M                 `:   *>     `` .('MX   '*MMMM'"<< std::endl;
-  idfx::cout << "          MX     `X.nnx..                        ..XMx`     'M*X"<< std::endl;
-  idfx::cout << "           ?h.    ''```^'*!Hx.     :Mf     xHMh  M**MMM      4L`"<< std::endl;
-  idfx::cout << "            `*Mx           `'*n.x. 4M>   :M` `` 'M    `       %"<< std::endl;
-  idfx::cout << "             '%                ``*MHMX   X>      !"<< std::endl;
-  idfx::cout << "            :!                    `#MM>  X>      `   :x"<< std::endl;
-  idfx::cout << "           :M                        ?M  `X     .  ..'M"<< std::endl;
-  idfx::cout << "           XX                       .!*X  `x   XM( MMx`h"<< std::endl;
-  idfx::cout << "          'M>::                        `M: `+  MMX XMM `:"<< std::endl;
-  idfx::cout << "          'M> M                         'X    'MMX ?MMk.Xx.."<< std::endl;
-  idfx::cout << "          'M> ?L                     ...:!     MMX.H**'MMMM*h"<< std::endl;
-  idfx::cout << "           M>  #L                  :!'`MM.    . X*`.xHMMMMMnMk."<< std::endl;
-  idfx::cout << "           `!   #h.      :L           XM'*hxHMM*MhHMMMMMMMMMM'#h"<< std::endl;
-  idfx::cout << "           +     XMh:    4!      x   :f   MM'   `*MMMMMMMMMM%  `X"<< std::endl;
-  idfx::cout << "           M     Mf``tHhxHM      M>  4k xxX'      `#MMMMMMMf    `M .>"<< std::endl;
-  idfx::cout << "          :f     M   `MMMMM:     M>   M!MMM:         '*MMf'     'MH*"<< std::endl;
-  idfx::cout << "          !     Xf   'MMMMMX     `X   X>'h.`          :P*Mx.   .d*~.."<< std::endl;
-  idfx::cout << "        :M      X     4MMMMM>     !   X~ `Mh.      .nHL..M#'%nnMhH!'`"<< std::endl;
-  idfx::cout << "       XM      d>     'X`'**h     'h  M   ^'MMHH+*'`  ''''   `'**'"<< std::endl;
-  idfx::cout << "    %nxM>      *x+x.:. XL.. `k     `::X"<< std::endl;
-  idfx::cout << ":nMMHMMM:.  X>  Mn`*MMMMMHM: `:     ?MMn."<< std::endl;
-  idfx::cout << "    `'**MML M>  'MMhMMMMMMMM  #      `M:^*x"<< std::endl;
-  idfx::cout << "         ^*MMttnnMMMMMMMMMMMH>.        M:.4X"<< std::endl;
-  idfx::cout << "                        `MMMM>X   (   .MMM:MM!   ."<< std::endl;
-  idfx::cout << "                          `'''4x.dX  +^ `''MMMMHM?L.."<< std::endl;
-  idfx::cout << "                                ``'           `'`'`'`"<< std::endl;
-  idfx::cout << std::endl;
+  astra::cout << std::endl;
   PrintVersion();
-  idfx::cout << std::endl;
-  idfx::cout << std::endl;
+  astra::cout << std::endl;
+  astra::cout << std::endl;
 }
 
 void Input::PrintOptions() {
-  idfx::cout << "List of valid arguments:" << std::endl << std::endl;
-  #ifdef WITH_MPI
-    idfx::cout << " -dec "
-    D_SELECT(<< " nx1 ",
-             << " nx1 nx2",
-             << " nx1 nx2 nx3")
-            << std::endl;
-    idfx::cout << "         Force an mpi domain decomposition with n processes in each direction"
-               << std::endl;
-  #endif
-  idfx::cout << " -restart n" << std::endl;
-  idfx::cout << "         Restart from dumpfile n. If n is ommited, Idefix restart from the latest"
+  astra::cout << "List of valid arguments:" << std::endl << std::endl;
+
+  astra::cout << " -restart n" << std::endl;
+  astra::cout << "         Restart from dumpfile n. If n is ommited, Idefix restart from the latest"
              << " generated dump file." << std::endl;
-  idfx::cout << " -i xxx" << std::endl;
-  idfx::cout << "         Use the input file xxx instead of the default idefix.ini" << std::endl;
-  idfx::cout << " -maxcycles n" << std::endl;
-  idfx::cout << "         Perform at most n integration cycles." << std::endl;
-  idfx::cout << " -force_init" << std::endl;
-  idfx::cout << "         Call initial conditions before reading dump file ";
-  idfx::cout << "(this has no effect if -restart is not also passed)" << std::endl;
-  idfx::cout << " -nowrite" << std::endl;
-  idfx::cout << "         Do not generate any output file." << std::endl;
-  idfx::cout << " -nolog" << std::endl;
-  idfx::cout << "         Do not write any log file." << std::endl;
-  idfx::cout << " -profile" << std::endl;
-  idfx::cout << "         Enable on-the-fly performance profiling." << std::endl;
-  idfx::cout << " -Werror" << std::endl;
-  idfx::cout << "         Consider warnings as errors." << std::endl;
-  idfx::cout << " -v/-version" << std::endl;
-  idfx::cout << "         Show Idefix and kokkos version." << std::endl;
-  idfx::cout << " -h/-help" << std::endl;
-  idfx::cout << "         Show this message." << std::endl;
+  astra::cout << " -i xxx" << std::endl;
+  astra::cout << "         Use the input file xxx instead of the default idefix.ini" << std::endl;
+  astra::cout << " -maxcycles n" << std::endl;
+  astra::cout << "         Perform at most n integration cycles." << std::endl;
+  astra::cout << " -force_init" << std::endl;
+  astra::cout << "         Call initial conditions before reading dump file ";
+  astra::cout << "(this has no effect if -restart is not also passed)" << std::endl;
+  astra::cout << " -nowrite" << std::endl;
+  astra::cout << "         Do not generate any output file." << std::endl;
+  astra::cout << " -nolog" << std::endl;
+  astra::cout << "         Do not write any log file." << std::endl;
+  astra::cout << " -profile" << std::endl;
+  astra::cout << "         Enable on-the-fly performance profiling." << std::endl;
+  astra::cout << " -Werror" << std::endl;
+  astra::cout << "         Consider warnings as errors." << std::endl;
+  astra::cout << " -v/-version" << std::endl;
+  astra::cout << "         Show Idefix and kokkos version." << std::endl;
+  astra::cout << " -h/-help" << std::endl;
+  astra::cout << "         Show this message." << std::endl;
 }
 
 void Input::PrintVersion() {
-  idfx::cout << "              Idefix version " << IDEFIX_VERSION << std::endl;
-  idfx::cout << "              Built against Kokkos " << KOKKOS_VERSION << std::endl;
-  idfx::cout << "              Compiled on " << __DATE__ <<  " at " << __TIME__ << std::endl;
+  astra::cout << "              Astra version " << ASTRA_VERSION << std::endl;
+  astra::cout << "              Built against Kokkos " << KOKKOS_VERSION << std::endl;
+  astra::cout << "              Compiled on " << __DATE__ <<  " at " << __TIME__ << std::endl;
 }
