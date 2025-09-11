@@ -6,6 +6,7 @@
 #include "global.hpp"
 #include "input.hpp"
 #include "grid.hpp"
+#include "field.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Complex.hpp>
@@ -32,6 +33,11 @@ int main( int argc, char* argv[] ) {
     /////////////////////////////////////////
     // Test of 1D FFT
     const int n = 4;
+
+    Field<Array3D<real>> fld("myField",grid.npr);
+    fld.Add("vx");
+    
+    auto vy = fld["vy"];
 
     // Test FFTs
     Array1D<real> x("x", n);
