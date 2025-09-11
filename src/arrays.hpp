@@ -8,7 +8,9 @@
 #ifndef ARRAYS_HPP_
 #define ARRAYS_HPP_
 
+#include <Kokkos_Core.hpp>
 #include "astra.hpp"
+
 template <typename T> using Array1D =
                             Kokkos::View<T*, Layout, Device>;
 template <typename T> using Array2D =

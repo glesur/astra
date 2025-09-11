@@ -3,6 +3,7 @@
 
 #include "astra.hpp"
 #include "input.hpp"
+#include "grid.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Complex.hpp>
@@ -21,9 +22,11 @@ int main( int argc, char* argv[] ) {
     Input input(argc, argv);
     input.PrintLogo();
 
+    Grid grid(input);
     
     // Show configuration after initialisation
     input.ShowConfig();
+    grid.ShowConfig();
     /////////////////////////////////////////
     // Test of 1D FFT
     const int n = 4;
