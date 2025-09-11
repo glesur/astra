@@ -8,11 +8,9 @@ using Layout = Kokkos::LayoutLeft;
 using real = double;
 using complex = Kokkos::complex<real>;
 
-
 /// Type of loops we admit in idefix (see loop.hpp for details)
 enum class LoopPattern { SIMDFOR, RANGE, MDRANGE, TPX, TPTTRTVR, UNDEFINED };
 
-#include "loop.hpp"
-#include "arrays.hpp"
-#include "global.hpp"
+enum Direction {IDIR, JDIR, KDIR};
+
 #endif

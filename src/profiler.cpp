@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "astra.hpp"
+#include "global.hpp"
 #include "profiler.hpp"
 
 /////////////////////////////

@@ -2,6 +2,8 @@
 #include <iostream>
 
 #include "astra.hpp"
+#include "loop.hpp"
+#include "global.hpp"
 #include "input.hpp"
 #include "grid.hpp"
 

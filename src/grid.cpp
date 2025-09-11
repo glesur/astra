@@ -6,7 +6,10 @@
 // ***********************************************************************************
 
 #include <string>
+#include <KokkosFFT.hpp>
 
+#include "astra.hpp"
+#include "loop.hpp"
 #include "input.hpp"
 #include "grid.hpp"
 #include "global.hpp"
@@ -23,32 +26,61 @@ Grid::Grid(Input &input) {
   for(int dir = 0 ; dir < 3 ; dir++) {
     std::string label = std::string("X")+std::to_string(dir+1)+std::string("-grid");
 
-    np[dir] = input.Get<int>("Grid",label,1);
-    xbeg[dir] = input.Get<real>("Grid",label,0);
-    xend[dir] = input.Get<real>("Grid",label,2);
+    npr_glob[dir] = input.Get<int>("Grid",label,1);
+    xbeg_glob[dir] = input.Get<real>("Grid",label,0);
+    xend_glob[dir] = input.Get<real>("Grid",label,2);
 
-    x[dir] = Array1D<real>("Grid_x",np[dir]);
-    xr[dir] = Array1D<real>("Grid_xr",np[dir]);
-    xl[dir] = Array1D<real>("Grid_xl",np[dir]);
+    npf_glob[dir] = npr_glob[dir];
+    if(dir == KDIR) npf_glob[dir] = npf_glob[dir]/2+1;
 
-    dx[dir] = (xend[dir] - xbeg[dir])/np[dir];
+
+    // todo: MPI domain decomposition
+    // #ifundef MPI
+    npr[dir] = npr_glob[dir];
+    npf[dir] = npf_glob[dir];
+    xbeg[dir] = xbeg_glob[dir];
+    xend[dir] = xend_glob[dir];
+
+    // #endif
+    x_glob[dir] = Array1D<real>("Grid_x_glob",npr_glob[dir]);
+    x[dir] = Array1D<real>("Grid_x",npr[dir]);
+
+    dx[dir] = (xend[dir] - xbeg[dir])/npr_glob[dir];
   }
 
   // Initialise the grid elements
   for(int dir = 0 ; dir < 3 ; dir++) {
-    Array1D<real> x = this->x[dir];
-    Array1D<real> xl = this->xl[dir];
-    Array1D<real> xr = this->xr[dir];
+    Array1D<real> x = this->x_glob[dir];
+
     real dx = this->dx[dir];
-    real xb = this->xbeg[dir];
-    real xe = this->xend[dir];
-    astra_for("Init grid array", 0, np[dir],
+    real xb = this->xbeg_glob[dir];
+    real xe = this->xend_glob[dir];
+    astra_for("Init grid array", 0, npr_glob[dir],
       KOKKOS_LAMBDA(int i) {
-        xl(i) = xb + i*dx;
-        xr(i) = xb + (i+1)*dx;
+        x(i) = xb + (i+1./2.)*dx;
+      });
+
+    x = this->x[dir];
+    xb = this->xbeg[dir];
+    xe = this->xend[dir];
+    astra_for("Init grid array", 0, npr[dir],
+      KOKKOS_LAMBDA(int i) {
         x(i) = xb + (i+1./2.)*dx;
       });
   }
+
+  // initialise wavenumbers
+  for(int dir = 0 ; dir < 3 ; dir++) {
+    real d = (xend[dir]-xbeg[dir])/(2.0*M_PI*static_cast<real>(npr_glob[dir]));
+    if(dir < KDIR) kx_glob[dir] = KokkosFFT::fftfreq(Device(), npr_glob[dir], d);
+    else kx_glob[dir] = KokkosFFT::rfftfreq(Device(), npr_glob[dir], d);
+  }
+
+  // todo: MPI again
+  for(int dir = 0 ; dir < 3 ; dir++) {
+    kx[dir] = kx_glob[dir];
+  }
+
 
    astra::popRegion();
 }
@@ -59,9 +91,15 @@ void Grid::ShowConfig() {
   for(int dir = 0 ; dir < 3 ; dir++) {
     
 
-      astra::cout << "\t Direction X" << (dir+1) << ": " << "\t" << xbeg[dir]
-                 << "...." << np[dir] << "...." << xend[dir] << "\t"
+      astra::cout << "\t Direction X" << (dir+1) << ": " << "\t" << xbeg_glob[dir]
+                 << "...." << npr_glob[dir] << "...." << xend_glob[dir] << "\t"
                  << std::endl;
+
+      astra::cout << " kx[" << dir << "]= ";
+      for(int i = 0; i < kx[dir].extent(0) ; i++) {
+        astra::cout << kx[dir](i) << " ; ";
+      }
+      astra::cout << std::endl;
   }
   
 }

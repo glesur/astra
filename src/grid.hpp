@@ -23,15 +23,24 @@
 
 class Grid {
  public:
-  std::array<Array1D<real>,3> x;    ///< geometrical central points
-  std::array<Array1D<real>,3> xr;   ///< cell right interface
-  std::array<Array1D<real>,3> xl;   ///< cell left interface
-  std::array<real,3> dx;   ///< cell width
+  std::array<Array1D<real>,3> x_glob;    ///< geometrical central points
+  std::array<Array1D<real>,3> x;         ///< local geometrical central points
+  std::array<real,3> dx;                 ///< cell width
+
+  std::array<Array1D<real>,3> kx_glob;    ///< wavenumbers global
+  std::array<Array1D<real>,3> kx;         ///< wavenumbers local
+
+  std::array<real,3> xbeg_glob;           ///< Beginning of grid
+  std::array<real,3> xend_glob;           ///< End of grid
 
   std::array<real,3> xbeg;           ///< Beginning of grid
   std::array<real,3> xend;           ///< End of grid
 
-  std::array<int,3> np;          ///< total number of grid points
+  std::array<int,3> npr_glob;     ///< total number of grid points in real space
+  std::array<int,3> npr;          ///< local process number of grid points in real space
+
+  std::array<int,3> npf_glob;          ///< total number of grid points in Fourier space
+  std::array<int,3> npf;          ///< local process number of grid points in Fourier space
   
 
   // Constructor
