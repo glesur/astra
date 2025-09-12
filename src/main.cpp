@@ -36,9 +36,19 @@ int main( int argc, char* argv[] ) {
 
     Field<Array3D<real>> fld("myField",grid.npr);
     fld.Add("vx");
-    
-    auto vy = fld["vy"];
 
+    Field<Array3D<real>> fldo("myField",grid.npr);
+    fldo.Add("vx");
+
+    Field<Array3D<complex>> fldf("myField",grid.npf);
+    fldf.Add("vx");
+
+    // test 3D FFT
+    Kokkos::fence();
+
+    KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), fld["vx"], fldf["vx"]);
+    KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), fldf["vx"], fldo["vx"]);
+    
     // Test FFTs
     Array1D<real> x("x", n);
     Array1D<complex> x_hat("x_hat", n/2+1);

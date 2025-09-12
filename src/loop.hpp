@@ -15,6 +15,7 @@
 
 #include <string>
 #include "astra.hpp"
+#include "field.hpp"
 
 #define KOKKOS_VECTOR_LENGTH  8
 
@@ -294,5 +295,22 @@ inline void astra_for(const std::string & NAME,
     throw std::runtime_error("Unknown/undefined LoopPattern used.");
   }
 }
+
+template <typename Function, typename T>
+  inline void astra_for(const std::string & NAME,
+                       Field<T> fld,
+                       Function function) {
+    auto dims = fld.GetDimensions();
+
+    if constexpr(fld::rank == 1) {
+      astra_for(NAME, 0, dims[0],function);
+    } else if constexpr(fld::rank == 2) {
+      astra_for(NAME, 0, dims[0],0,dims[1],function);
+    } else if constexpr(fld::rank == 3) {
+      astra_for(NAME, 0, dims[0],0,dims[1],0,dims[2],function);
+    } else if constexpr(fld::rank == 4) {
+      astra_for(NAME, 0, dims[0],0,dims[1],0,dims[2],0,dims[2],function);
+    } 
+  } 
 
 #endif // LOOP_HPP_

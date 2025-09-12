@@ -44,6 +44,8 @@ class Field {
     const_iterator begin() const { return map.begin(); }
     const_iterator end() const { return map.end(); }
 
+    static constexpr int rank{T::rank};
+    std::array<<int,T::rank> GetDimensions() {return npr};
   private:
     std::string name;
     std::map<std::string,T> map;
