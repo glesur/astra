@@ -16,14 +16,14 @@
 template<typename T>
 class Field {
   public:
-    Field(std::string name, std::array<int,T::rank> n) : name(name), npr(n) {};
+    Field(std::string name, std::array<int,T::rank> n) : name(name), np(n) {};
 
     void Add(std::string key) {
       if(map.count(key)) {
         throw std::runtime_error(key+" already exists in the Field \""+name+"\"");
       }
       // allocate memory
-      map[key] = T("Field "+name+" "+key, this->npr);
+      map[key] = T("Field "+name+" "+key, this->np);
     }
 
     T & operator[] (std::string var) {
@@ -45,11 +45,11 @@ class Field {
     const_iterator end() const { return map.end(); }
 
     static constexpr int rank{T::rank};
-    std::array<<int,T::rank> GetDimensions() {return npr};
+    std::array<int,T::rank> GetDimensions() {return np;};
   private:
     std::string name;
     std::map<std::string,T> map;
-    std::array<int,T::rank> npr;          ///< local process number of grid points in real space
+    std::array<int,T::rank> np;          ///< local process number of grid points in real space
 };
 
 #endif

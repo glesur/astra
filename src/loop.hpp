@@ -296,20 +296,21 @@ inline void astra_for(const std::string & NAME,
   }
 }
 
+// Generic function taking a Field class in parameter.
 template <typename Function, typename T>
   inline void astra_for(const std::string & NAME,
                        Field<T> fld,
                        Function function) {
     auto dims = fld.GetDimensions();
 
-    if constexpr(fld::rank == 1) {
+    if constexpr(T::rank == 1) {
       astra_for(NAME, 0, dims[0],function);
-    } else if constexpr(fld::rank == 2) {
+    } else if constexpr(Field<T>::rank == 2) {
       astra_for(NAME, 0, dims[0],0,dims[1],function);
-    } else if constexpr(fld::rank == 3) {
+    } else if constexpr(Field<T>::rank == 3) {
       astra_for(NAME, 0, dims[0],0,dims[1],0,dims[2],function);
-    } else if constexpr(fld::rank == 4) {
-      astra_for(NAME, 0, dims[0],0,dims[1],0,dims[2],0,dims[2],function);
+    } else if constexpr(Field<T>::rank == 4) {
+      astra_for(NAME, 0, dims[0],0,dims[1],0,dims[2],0,dims[3],function);
     } 
   } 
 

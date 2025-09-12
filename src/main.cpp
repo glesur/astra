@@ -46,9 +46,22 @@ int main( int argc, char* argv[] ) {
     // test 3D FFT
     Kokkos::fence();
 
+    auto vx = fld["vx"];
+
+    astra_for("loop_example",fld,
+      KOKKOS_LAMBDA(int i,int j,int k) {
+        vx(i,j,k) = 1;
+      });
+
     KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), fld["vx"], fldf["vx"]);
     KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), fldf["vx"], fldo["vx"]);
     
+    vx = fldo["vx"];
+    for(int i=0 ; i < grid.npr[IDIR] ; i++) {
+      astra::cout << vx(i,0,0) << " ; ";
+    }
+    astra::cout << std::endl;
+
     // Test FFTs
     Array1D<real> x("x", n);
     Array1D<complex> x_hat("x_hat", n/2+1);
