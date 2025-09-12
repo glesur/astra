@@ -36,6 +36,18 @@ int main( int argc, char* argv[] ) {
 
     Field<Array3D<real>> fld("myField",grid.npr);
     fld.Add("vx");
+    // Test a derivative
+    auto vxi = fld["vx"];
+    auto xi = grid.x[IDIR];
+    astra_for("loop_example",fld,
+      KOKKOS_LAMBDA(int i,int j,int k) {
+        vxi(i,j,k) = std::sin(2.0*M_PI*xi(i));
+    }); 
+    astra::cout << "Initial condition : " << std::endl;
+    for(int i=0 ; i < grid.npr[IDIR] ; i++) {
+      astra::cout << vxi(i,0,0) << " ; ";
+    }
+    astra::cout << std::endl;
 
     Field<Array3D<real>> fldo("myField",grid.npr);
     fldo.Add("vx");
@@ -46,19 +58,22 @@ int main( int argc, char* argv[] ) {
     // test 3D FFT
     Kokkos::fence();
 
-    auto vx = fld["vx"];
-
-    astra_for("loop_example",fld,
-      KOKKOS_LAMBDA(int i,int j,int k) {
-        vx(i,j,k) = 1;
-      });
 
     KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), fld["vx"], fldf["vx"]);
+    auto vxf = fldf["vx"];
+    auto kx1 = grid.kx[IDIR];
+    astra_for("loop_example",fldf,
+      KOKKOS_LAMBDA(int i,int j,int k) {
+        vxf(i,j,k) *= kx1(i)*Kokkos::complex(0.0, 1.0);
+    }); 
+
     KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), fldf["vx"], fldo["vx"]);
-    
-    vx = fldo["vx"];
+
+    auto vxo = fldo["vx"];
+
+    astra::cout << "After derivative : " << std::endl;
     for(int i=0 ; i < grid.npr[IDIR] ; i++) {
-      astra::cout << vx(i,0,0) << " ; ";
+      astra::cout << vxo(i,0,0) << " ; ";
     }
     astra::cout << std::endl;
 
