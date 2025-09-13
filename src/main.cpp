@@ -1,17 +1,21 @@
 #include <stdlib.h>
 #include <iostream>
 
+#include <Kokkos_Core.hpp>
+#include <Kokkos_Complex.hpp>
+#include <Kokkos_Random.hpp>
+#include <KokkosFFT.hpp>
+
 #include "astra.hpp"
 #include "loop.hpp"
 #include "global.hpp"
 #include "input.hpp"
 #include "grid.hpp"
 #include "field.hpp"
+#include "euler.hpp"
+#include "advection.hpp"
 
-#include <Kokkos_Core.hpp>
-#include <Kokkos_Complex.hpp>
-#include <Kokkos_Random.hpp>
-#include <KokkosFFT.hpp>
+
 
 int main( int argc, char* argv[] ) {
   Kokkos::initialize( argc, argv );
@@ -30,11 +34,31 @@ int main( int argc, char* argv[] ) {
     // Show configuration after initialisation
     input.ShowConfig();
     grid.ShowConfig();
+
+    // Init a vector of rhs
+    std::vector<RightHandSide<Array3D<complex>>*> rhsVector;
+    rhsVector.push_back(new Advection(input, &grid));
+
+    // Create a state matching rhsVector reaquirements
+    Field<Array3D<complex>> state("state",grid.npf);
+    for(auto rhs : rhsVector) {
+      for(auto var : rhs->GetVariables()) {
+        state.Add(var);
+      }
+    }
+    // Create a time integrator
+    TimeIntegrator<Array3D<complex>> *timeIntegrator = new EulerTimeIntegrator<Array3D<complex>>(rhsVector,state);
+
+    // Test the time integrator
+    timeIntegrator->Cycle(state);
+
     /////////////////////////////////////////
     // Test of 1D FFT
     const int n = 4;
 
     Field<Array3D<real>> fld("myField",grid.npr);
+
+
     fld.Add("vx");
     // Test a derivative
     auto vxi = fld["vx"];

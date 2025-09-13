@@ -1,4 +1,6 @@
 add_subdirectory(utils)
+add_subdirectory(timeIntegrator)
+add_subdirectory(rightHandSide)
 
 target_sources(astra
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/astra.hpp

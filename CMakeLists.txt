@@ -66,6 +66,8 @@ target_include_directories(astra PUBLIC
                            src/kokkos/core/src
                            src
                            src/utils
+                           src/timeIntegrator
+                           src/rightHandSide
                            )
 
 target_link_libraries(astra Kokkos::kokkos KokkosFFT::fft)

@@ -26,6 +26,28 @@ class Field {
       map[key] = T("Field "+name+" "+key, this->np);
     }
 
+    void Reset() {
+      for(auto& it : map) {
+        auto view = it.second;
+        if constexpr(T::rank != 3) {
+          throw std::runtime_error("Reset not implemented for rank != 3");
+        } else {
+          astra_for("reset_field_"+it.first,*this,
+            KOKKOS_LAMBDA(int i,int j,int k) {
+              view(i,j,k) = 0.0;
+          });
+        }
+      }
+    }
+
+    Field<T> Clone(std::string name) {
+      Field<T> newField(name, this->np);
+      for(auto& it : map) {
+        newField.Add(it.first);
+      }
+      return newField;
+    }
+
     T & operator[] (std::string var) {
       return this->map.at(var);
     }

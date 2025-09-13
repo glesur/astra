@@ -12,6 +12,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <Kokkos_Core.hpp> // For Kokkos::Timer
 #include "astra.hpp"
 
 using ParamContainer = std::vector<std::string>;
