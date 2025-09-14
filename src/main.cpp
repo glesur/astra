@@ -14,6 +14,7 @@
 #include "field.hpp"
 #include "euler.hpp"
 #include "advection.hpp"
+#include "vtk.hpp"
 
 
 
@@ -39,7 +40,7 @@ int main( int argc, char* argv[] ) {
     std::vector<RightHandSide<Array3D<complex>>*> rhsVector;
     rhsVector.push_back(new Advection(input, &grid));
 
-    // Create a state matching rhsVector reaquirements
+    // Create a state matching rhsVector requirements
     Field<Array3D<complex>> state("state",grid.npf);
     for(auto rhs : rhsVector) {
       for(auto var : rhs->GetVariables()) {
@@ -52,6 +53,10 @@ int main( int argc, char* argv[] ) {
     // Test the time integrator
     timeIntegrator->Cycle(state);
 
+    {
+      Vtk vtk(input, &grid, 0.0, "test");
+      vtk.Write(state);
+    }
     /////////////////////////////////////////
     // Test of 1D FFT
     const int n = 4;
