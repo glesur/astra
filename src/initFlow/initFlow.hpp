@@ -27,6 +27,7 @@ private:
   Input *input;
   void MeanField(Field<ArrayHost3D<complex>>& field);
   void LargeScaleNoise(Field<ArrayHost3D<complex>>& field);
+  void Projector(Field<ArrayHost3D<complex>>& field);
 
   std::array<ArrayHost1D<real>,3> kx;
   std::array<ArrayHost1D<real>,3> x;

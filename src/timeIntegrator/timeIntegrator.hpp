@@ -21,6 +21,7 @@ class TimeIntegrator {
   public:
     TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : rhsVector(rhsVector), grid(grid), logger(input, grid, this) {
       logger.Start();
+      cfl = input.Get<real>("TimeIntegrator","cfl",0);
     }
     virtual ~TimeIntegrator() {}
 
@@ -32,10 +33,11 @@ class TimeIntegrator {
     real GetTime() { return t; }
     real GetTimeStep() { return dt; }
     int GetCycle() { return ncycles; }
-    
+
   protected:
     real t{0.0};
     real dt{0.0};
+    real cfl{1.0};
     int ncycles{0};
     Grid *grid;
     std::vector<RightHandSide<T>*> rhsVector;

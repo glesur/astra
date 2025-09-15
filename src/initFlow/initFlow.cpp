@@ -36,6 +36,7 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
     LargeScaleNoise(hfield);
   }
 
+  Projector(hfield);
   // Copy back to device
   field.CopyFrom(hfield);
 }
@@ -67,6 +68,27 @@ void InitFlow::LargeScaleNoise(Field<ArrayHost3D<complex>>& field) {
       }
     }
   } 
-  
+}
 
+void InitFlow::Projector(Field<ArrayHost3D<complex>>& fldin) {
+  auto kx1 = this->kx[IDIR];
+  auto kx2 = this->kx[JDIR];
+  auto kx3 = this->kx[KDIR];
+
+  auto vx1 = fldin["vx1"];
+  auto vx2 = fldin["vx2"];
+  auto vx3 = fldin["vx3"];
+
+  // Project the velocity field to be divergence free
+  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+      real k2 = kx1(i)*kx1(i)+kx2(j)*kx2(j)+kx3(k)*kx3(k);
+      if(k2 > 0.0) {
+        complex kv_dot_v = kx1(i)*vx1(i,j,k)+kx2(j)*vx2(i,j,k)+kx3(k)*vx3(i,j,k);
+        vx1(i,j,k) -= kv_dot_v*kx1(i)/k2;
+        vx2(i,j,k) -= kv_dot_v*kx2(j)/k2;
+        vx3(i,j,k) -= kv_dot_v*kx3(k)/k2;
+      }
+  }}}
 }

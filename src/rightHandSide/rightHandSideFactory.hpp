@@ -15,6 +15,7 @@
 #include <vector>
 #include "rightHandSide.hpp"
 #include "advection.hpp"
+#include "hydro.hpp"
 #include "input.hpp"
 #include "grid.hpp"
 
@@ -34,6 +35,8 @@ public:
       std::string method = input.Get<std::string>("Physics","rhs",irhs);
       if(method == "advection") {
         rhsVector.push_back(new Advection(input, grid));
+      } else if(method == "hydro") {
+        rhsVector.push_back(new Hydro(input, grid));
       } else {
         throw std::runtime_error("Unknown right hand side method: " + method);
       }

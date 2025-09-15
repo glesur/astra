@@ -37,7 +37,7 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
         this->dt += rhs->GetInvDt();
       }
       // Get the timestep
-      this->dt = 1/this->dt;
+      this->dt = this->cfl/this->dt;
 
       // Update the field
       for(auto& it : field) {
