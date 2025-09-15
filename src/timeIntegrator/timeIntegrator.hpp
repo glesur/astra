@@ -32,6 +32,7 @@ class TimeIntegrator {
     real GetTime() { return t; }
     real GetTimeStep() { return dt; }
     int GetCycle() { return ncycles; }
+    
   protected:
     real t{0.0};
     real dt{0.0};
