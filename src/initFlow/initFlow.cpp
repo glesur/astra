@@ -43,6 +43,10 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
 
 void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
   // Implementation of mean field initialization
+  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  hfield["vx1"](0,0,0) = input->Get<real>("InitFlow","mean_field",0)*ntot;
+  hfield["vx2"](0,0,0) = input->Get<real>("InitFlow","mean_field",1)*ntot;
+  hfield["vx3"](0,0,0) = input->Get<real>("InitFlow","mean_field",2)*ntot;
 }
 
 void InitFlow::LargeScaleNoise(Field<ArrayHost3D<complex>>& field) {
@@ -75,20 +79,24 @@ void InitFlow::Projector(Field<ArrayHost3D<complex>>& fldin) {
   auto kx2 = this->kx[JDIR];
   auto kx3 = this->kx[KDIR];
 
-  auto vx1 = fldin["vx1"];
-  auto vx2 = fldin["vx2"];
-  auto vx3 = fldin["vx3"];
+  try {
+    auto vx1 = fldin["vx1"];
+    auto vx2 = fldin["vx2"];
+    auto vx3 = fldin["vx3"];
 
-  // Project the velocity field to be divergence free
-  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
-    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
-      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
-      real k2 = kx1(i)*kx1(i)+kx2(j)*kx2(j)+kx3(k)*kx3(k);
-      if(k2 > 0.0) {
-        complex kv_dot_v = kx1(i)*vx1(i,j,k)+kx2(j)*vx2(i,j,k)+kx3(k)*vx3(i,j,k);
-        vx1(i,j,k) -= kv_dot_v*kx1(i)/k2;
-        vx2(i,j,k) -= kv_dot_v*kx2(j)/k2;
-        vx3(i,j,k) -= kv_dot_v*kx3(k)/k2;
-      }
-  }}}
+    // Project the velocity field to be divergence free
+    for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
+      for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
+        for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+        real k2 = kx1(i)*kx1(i)+kx2(j)*kx2(j)+kx3(k)*kx3(k);
+        if(k2 > 0.0) {
+          complex kv_dot_v = kx1(i)*vx1(i,j,k)+kx2(j)*vx2(i,j,k)+kx3(k)*vx3(i,j,k);
+          vx1(i,j,k) -= kv_dot_v*kx1(i)/k2;
+          vx2(i,j,k) -= kv_dot_v*kx2(j)/k2;
+          vx3(i,j,k) -= kv_dot_v*kx3(k)/k2;
+        }
+    }}}  
+  } catch(...) {
+    astra::cerr << "Projector: can't apply projection on this field." << std::endl;  
+  }
 }

@@ -81,12 +81,19 @@ void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>
   auto dvx2 = dfld["vx2"];
   auto dvx3 = dfld["vx3"];
 
+  real kx1max = grid->kmax[IDIR];
+  real kx2max = grid->kmax[JDIR];
+  real kx3max = grid->kmax[KDIR];
   // Compute the nonlinear term in spectral space
   astra_for("hydro_nonlinear", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int i, int j, int k) {
-      dvx1(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf11(i,j,k)+kx2(j)*wf12(i,j,k)+kx3(k)*wf13(i,j,k));
-      dvx2(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf12(i,j,k)+kx2(j)*wf22(i,j,k)+kx3(k)*wf23(i,j,k));
-      dvx3(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf13(i,j,k)+kx2(j)*wf23(i,j,k)+kx3(k)*wf33(i,j,k));
+      // 2/3 de-aliasing rule
+      complex mask = (std::fabs(kx1(i))< 2./3*kx1max 
+                   && std::fabs(kx2(j))< 2./3*kx2max 
+                   && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
+      dvx1(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf11(i,j,k)+kx2(j)*wf12(i,j,k)+kx3(k)*wf13(i,j,k))*mask;
+      dvx2(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf12(i,j,k)+kx2(j)*wf22(i,j,k)+kx3(k)*wf23(i,j,k))*mask;
+      dvx3(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf13(i,j,k)+kx2(j)*wf23(i,j,k)+kx3(k)*wf33(i,j,k))*mask;
   });
 
   Projector(dfld);
