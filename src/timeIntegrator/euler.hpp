@@ -15,7 +15,7 @@
 template <typename T>
 class EulerTimeIntegrator : public TimeIntegrator<T> {
   public:
-    EulerTimeIntegrator(std::vector<RightHandSide<T>*> rhsVector, Field<T>& field) : TimeIntegrator<T>(rhsVector), dfld(field.Clone("Euler dfld")) {}
+    EulerTimeIntegrator(std::vector<RightHandSide<T>*> rhsVector, Field<T>& field) : TimeIntegrator<T>(rhsVector), dfld("Euler dfld",field) {}
     ~EulerTimeIntegrator() {}
 
     void Cycle(Field<T>& field) override {

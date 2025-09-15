@@ -66,6 +66,7 @@ target_include_directories(astra PUBLIC
                            src/kokkos/core/src
                            src
                            src/utils
+                           src/initFlow
                            src/timeIntegrator
                            src/rightHandSide
                            src/output

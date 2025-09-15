@@ -11,6 +11,7 @@
 #include "global.hpp"
 #include "input.hpp"
 #include "grid.hpp"
+#include "initFlow.hpp"
 #include "field.hpp"
 #include "euler.hpp"
 #include "advection.hpp"
@@ -31,6 +32,7 @@ int main( int argc, char* argv[] ) {
     input.PrintLogo();
 
     Grid grid(input);
+    InitFlow initFlow(input, &grid);
     
     // Show configuration after initialisation
     input.ShowConfig();
@@ -47,6 +49,10 @@ int main( int argc, char* argv[] ) {
         state.Add(var);
       }
     }
+
+    // Initial conditions
+    initFlow.Init(state);
+
     // Create a time integrator
     TimeIntegrator<Array3D<complex>> *timeIntegrator = new EulerTimeIntegrator<Array3D<complex>>(rhsVector,state);
 

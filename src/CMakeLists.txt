@@ -1,4 +1,5 @@
 add_subdirectory(utils)
+add_subdirectory(initFlow)
 add_subdirectory(timeIntegrator)
 add_subdirectory(rightHandSide)
 add_subdirectory(output)

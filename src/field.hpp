@@ -18,6 +18,13 @@ class Field {
   public:
     Field(std::string name, std::array<int,T::rank> n) : name(name), np(n) {};
 
+    template<typename G>
+    Field(std::string name, Field<G>& in) : name(name), np(in.GetDimensions()) {
+      for(auto& it : in) {
+        this->Add(it.first);
+      }
+    }
+
     void Add(std::string key) {
       if(map.count(key)) {
         throw std::runtime_error(key+" already exists in the Field \""+name+"\"");
@@ -40,14 +47,15 @@ class Field {
       }
     }
 
-    Field<T> Clone(std::string name) {
-      Field<T> newField(name, this->np);
-      for(auto& it : map) {
-        newField.Add(it.first);
+    template<typename G>
+    void CopyFrom(Field<G>& in) {
+      for(auto& it : in) {
+        Kokkos::deep_copy(map.at(it.first), in[it.first]);
       }
-      return newField;
     }
 
+
+  // Accessors to make it behave like a map (but throw exception if key not found)
     T & operator[] (std::string var) {
       return this->map.at(var);
     }
