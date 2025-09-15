@@ -20,10 +20,10 @@
 
 
 Advection::Advection(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>(input, grid) {
-  direction = input.Get<int>("RHS","advection_direction",0);
-  velocity = input.GetOrSet<real>("RHS","advection_velocity", 0,1.0);
+  direction = input.Get<int>("Advection","direction",0);
+  velocity = input.GetOrSet<real>("Advection","velocity", 0,1.0);
   if(direction < 0 || direction > 2) {
-    throw std::runtime_error("advection_direction must be 0, 1 or 2");
+    throw std::runtime_error("Advection direction must be 0, 1 or 2");
   }
   astra::cout << "Advection along direction " << direction << " with velocity " << velocity << std::endl;
 }
@@ -42,7 +42,7 @@ void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<compl
 
     astra_for("advection_"+it.first,fldin,
       KOKKOS_LAMBDA(int i,int j,int k) {
-        real kv;
+        complex kv;
         if(direction == 0) {
           kv = kx(i)*velocity;
         } else if(direction == 1) {

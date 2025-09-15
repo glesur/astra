@@ -14,9 +14,9 @@
 #include "initFlow.hpp"
 #include "logger.hpp"
 #include "field.hpp"
-#include "euler.hpp"
-#include "rk3.hpp"
-#include "advection.hpp"
+#include "timeIntegrator.hpp"
+#include "timeIntegratorFactory.hpp"
+#include "rightHandSideFactory.hpp"
 #include "vtk.hpp"
 
 
@@ -52,9 +52,10 @@ int main( int argc, char* argv[] ) {
     input.ShowConfig();
     grid.ShowConfig();
 
-    // Init a vector of rhs
-    std::vector<RightHandSide<Array3D<complex>>*> rhsVector;
-    rhsVector.push_back(new Advection(input, &grid));
+    // Init the right hand sides
+    auto rhsVector = RightHandSideFactory<Array3D<complex>>::Create(input, &grid);
+    // Init the time integrator
+    auto *timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
 
     // Create a state matching rhsVector requirements
     Field<Array3D<complex>> state("state",grid.npf);
@@ -68,13 +69,13 @@ int main( int argc, char* argv[] ) {
     initFlow.Init(state);
 
     // Create a time integrator
-    TimeIntegrator<Array3D<complex>> *timeIntegrator = new RK3TimeIntegrator<Array3D<complex>>(input, &grid, rhsVector);
-
+    //TimeIntegrator<Array3D<complex>> *timeIntegrator = new RK3TimeIntegrator<Array3D<complex>>(input, &grid, rhsVector);
+    
     int nvtk = 0;
     // Test the time integrator
     
     while(timeIntegrator->GetCycle() < 1000) {
-      if(timeIntegrator->GetCycle()%100==0) {
+      if(timeIntegrator->GetCycle()%10==0) {
         WriteFile(input, &grid, state, nvtk, timeIntegrator->GetTime());
         nvtk++;
       }

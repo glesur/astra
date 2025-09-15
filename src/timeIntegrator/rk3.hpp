@@ -30,8 +30,6 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
 
     void Cycle(Field<T>& fld) override {
       // Implement the RK3 time integration step here
-      dfld.Reset();
-      dfld1.Reset();
 
       // Explicit part
 
@@ -41,6 +39,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
       // First Stage
       ///////////////////////////////////////
 
+      dfld.Reset();
       for(auto rhs : this->rhsVector) {
         rhs->ExplicitStep(fld, dfld);
         this->dt += rhs->GetInvDt();
@@ -63,7 +62,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
       ///////////////////////////////////////:
       // Second Stage
       ///////////////////////////////////////
-      
+      dfld1.Reset();
       for(auto rhs : this->rhsVector) {
         rhs->ExplicitStep(fld, dfld1);
       }
@@ -85,7 +84,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
       ///////////////////////////////////////:
       // Third Stage
       ///////////////////////////////////////
-      
+      dfld.Reset();
       for(auto rhs : this->rhsVector) {
         rhs->ExplicitStep(fld, dfld);
       }
