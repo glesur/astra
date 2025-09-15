@@ -14,19 +14,31 @@
 
 #include "field.hpp"
 #include "rightHandSide.hpp"
+#include "logger.hpp"
 
 template <typename T>
 class TimeIntegrator {
   public:
-    TimeIntegrator(std::vector<RightHandSide<T>*> rhsVector) : rhsVector(rhsVector) {}
+    TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : rhsVector(rhsVector), grid(grid), logger(input, grid, this) {
+      logger.Start();
+    }
     virtual ~TimeIntegrator() {}
 
-    virtual void Cycle(Field<T>& field) = 0;
-
+    virtual void Cycle(Field<T>& field) {
+      t=t+dt;
+      ncycles++;
+      logger.Show(ncycles);
+    };
+    real GetTime() { return t; }
+    real GetTimeStep() { return dt; }
+    int GetCycle() { return ncycles; }
   protected:
-    int ncycle{0};
-    double time{0.0};
-    double dt{0.0};
+    real t{0.0};
+    real dt{0.0};
+    int ncycles{0};
+    Grid *grid;
     std::vector<RightHandSide<T>*> rhsVector;
+    Logger<T> logger;
 };
+
 #endif // TIMEINTEGRATOR_HPP_

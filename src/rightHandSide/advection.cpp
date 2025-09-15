@@ -31,9 +31,6 @@ Advection::Advection(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>
 Advection::~Advection() {}
 
 void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld) {
-  // Compute the CFL condition
-  cmax = std::abs(velocity);
-
 
   // Compute the advection term
   for(auto& it : fldin) {
@@ -62,8 +59,8 @@ void Advection::ImplicitStep(Field<Array3D<complex>>& fldin, real dt){
   // Nothing to do here for pure advection
 }
 
-real Advection::GetCMax()  {
-  return this->cmax;
+real Advection::GetInvDt()  {
+  return this->velocity*grid->kmax[direction];
 }
 
 std::vector<std::string> Advection::GetVariables() {

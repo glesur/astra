@@ -15,16 +15,29 @@
 template <typename T>
 class EulerTimeIntegrator : public TimeIntegrator<T> {
   public:
-    EulerTimeIntegrator(std::vector<RightHandSide<T>*> rhsVector, Field<T>& field) : TimeIntegrator<T>(rhsVector), dfld("Euler dfld",field) {}
+    EulerTimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("Euler dfld",grid->npf) {
+      // Init dfld vector for the rhs
+      for(auto rhs : rhsVector) {
+        for(auto var : rhs->GetVariables()) {
+          dfld.Add(var);
+        }
+      }
+    }
+
     ~EulerTimeIntegrator() {}
 
     void Cycle(Field<T>& field) override {
       // Implement the Euler time integration step here
       dfld.Reset();
       // Explicit part
+      real cmax = 0;
+      this->dt = 0.0;
       for(auto rhs : this->rhsVector) {
         rhs->ExplicitStep(field, dfld);
+        this->dt += rhs->GetInvDt();
       }
+      // Get the timestep
+      this->dt = 1/this->dt;;
 
       // Update the field
       for(auto& it : field) {
@@ -41,6 +54,8 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
       for(auto rhs : this->rhsVector) {
         rhs->ImplicitStep(field, this->dt);
       }
+      // Call base class cycle to update time and cycle count
+      TimeIntegrator<T>::Cycle(field);
     }
 
   private:

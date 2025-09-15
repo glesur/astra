@@ -12,6 +12,7 @@
 #include "input.hpp"
 #include "grid.hpp"
 #include "initFlow.hpp"
+#include "logger.hpp"
 #include "field.hpp"
 #include "euler.hpp"
 #include "advection.hpp"
@@ -34,6 +35,7 @@ int main( int argc, char* argv[] ) {
     Grid grid(input);
     InitFlow initFlow(input, &grid);
     
+    
     // Show configuration after initialisation
     input.ShowConfig();
     grid.ShowConfig();
@@ -54,14 +56,22 @@ int main( int argc, char* argv[] ) {
     initFlow.Init(state);
 
     // Create a time integrator
-    TimeIntegrator<Array3D<complex>> *timeIntegrator = new EulerTimeIntegrator<Array3D<complex>>(rhsVector,state);
+    TimeIntegrator<Array3D<complex>> *timeIntegrator = new EulerTimeIntegrator<Array3D<complex>>(input, &grid, rhsVector);
 
+    
+    int nvtk = 0;
     // Test the time integrator
-    timeIntegrator->Cycle(state);
+    while(timeIntegrator->GetCycle() < 1000) {
+      timeIntegrator->Cycle(state);
+      if(timeIntegrator->GetCycle()%100==0) {
+        std::stringstream ssfileName, ssvtkFileNum;
+        ssvtkFileNum << std::setfill('0') << std::setw(4) << nvtk;
+        std::string filename = std::string("data.")+ssvtkFileNum.str();
+        Vtk vtk(input, &grid, timeIntegrator->GetTime(), filename);
+        vtk.Write(state);
+        nvtk++;
+      }
 
-    {
-      Vtk vtk(input, &grid, 0.0, "test");
-      vtk.Write(state);
     }
     /////////////////////////////////////////
     // Test of 1D FFT

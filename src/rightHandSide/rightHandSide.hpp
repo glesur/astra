@@ -24,11 +24,10 @@ class RightHandSide {
 
     virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld) = 0;
     virtual void ImplicitStep(Field<T>& fldin, real dt) = 0;
-    virtual real GetCMax() = 0;
+    virtual real GetInvDt() = 0;
     virtual std::vector<std::string> GetVariables() = 0;
 
   protected:
-    real cmax{-1.0};
     Grid *grid{nullptr};
 };
 

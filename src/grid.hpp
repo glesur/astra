@@ -29,6 +29,7 @@ class Grid {
 
   std::array<Array1D<real>,3> kx_glob;    ///< wavenumbers global
   std::array<Array1D<real>,3> kx;         ///< wavenumbers local
+  std::array<real,3> kmax;               ///< maximum wavenumber in each direction
 
   std::array<real,3> xbeg_glob;           ///< Beginning of grid
   std::array<real,3> xend_glob;           ///< End of grid

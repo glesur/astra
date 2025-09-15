@@ -27,7 +27,7 @@ class Advection : public RightHandSide<Array3D<complex>> {
 
     void ImplicitStep(Field<Array3D<complex>>& fldin, real dt) override;
 
-    real GetCMax() override;
+    real GetInvDt() override;
 
     std::vector<std::string> GetVariables() override;
 

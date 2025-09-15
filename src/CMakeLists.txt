@@ -14,6 +14,7 @@ target_sources(astra
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/grid.cpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/input.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/input.cpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/logger.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/loop.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/profiler.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/profiler.cpp

@@ -46,6 +46,7 @@ Grid::Grid(Input &input) {
     x[dir] = Array1D<real>("Grid_x",npr[dir]);
 
     dx[dir] = (xend[dir] - xbeg[dir])/npr_glob[dir];
+    kmax[dir] = M_PI/dx[dir];
   }
 
   // Initialise the grid elements
