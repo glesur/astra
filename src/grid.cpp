@@ -100,11 +100,6 @@ void Grid::ShowConfig() {
       astra::cout << "\t Direction X" << (dir+1) << ": " << "\t" << xbeg_glob[dir]
                  << "...." << npr_glob[dir] << "...." << xend_glob[dir] << "\t"
                  << std::endl;
-
-      astra::cout << " kx[" << dir << "]= ";
-      for(int i = 0; i < kx[dir].extent(0) ; i++) {
-        astra::cout << kx[dir](i) << " ; ";
-      }
       astra::cout << std::endl;
   }
   

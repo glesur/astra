@@ -36,14 +36,7 @@ class Field {
     void Reset() {
       for(auto& it : map) {
         auto view = it.second;
-        if constexpr(T::rank != 3) {
-          throw std::runtime_error("Reset not implemented for rank != 3");
-        } else {
-          astra_for("reset_field_"+it.first,*this,
-            KOKKOS_LAMBDA(int i,int j,int k) {
-              view(i,j,k) = 0.0;
-          });
-        }
+        Kokkos::deep_copy(view, 0.0);
       }
     }
 
