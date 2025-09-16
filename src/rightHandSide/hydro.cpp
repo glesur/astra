@@ -6,7 +6,6 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-#include <KokkosFFT.hpp>
 #include "hydro.hpp"
 #include "arrays.hpp"
 #include "grid.hpp"
@@ -42,11 +41,11 @@ Hydro::~Hydro() {
 }
 
 void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld) {
-
+  astra::pushRegion("Hydro::ExplicitStep");
   // Fourier transform the velocity field to real space
-  KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), fldin["vx1"], vr1);
-  KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), fldin["vx2"], vr2);
-  KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), fldin["vx3"], vr3);
+  astra::fft.C2R(fldin["vx1"], vr1);
+  astra::fft.C2R(fldin["vx2"], vr2);
+  astra::fft.C2R(fldin["vx3"], vr3);
 
   // Compute the cross-correlation
   auto vr1 = this->vr1;
@@ -72,12 +71,12 @@ void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>
     });
 
   // Fourier transform back to spectral space
-  KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), wr11, wf11);
-  KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), wr12, wf12);
-  KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), wr13, wf13);
-  KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), wr22, wf22);
-  KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), wr23, wf23);
-  KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), wr33, wf33);
+  astra::fft.R2C(wr11, wf11);
+  astra::fft.R2C(wr12, wf12);
+  astra::fft.R2C(wr13, wf13);
+  astra::fft.R2C(wr22, wf22);
+  astra::fft.R2C(wr23, wf23);
+  astra::fft.R2C(wr33, wf33);
   
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];
@@ -109,10 +108,11 @@ void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>
   });
 
   Projector(dfld);
-  
+  astra::popRegion();
 }
 
 void Hydro::Projector(Field<Array3D<complex>>& fldin) {
+  astra::pushRegion("Hydro::Projector");
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];
   auto kx3 = this->grid->kx[KDIR];
@@ -132,8 +132,10 @@ void Hydro::Projector(Field<Array3D<complex>>& fldin) {
         vx3(i,j,k) -= kv_dot_v*kx3(k)/k2;
       }
   });
+  astra::popRegion();
 }
 void Hydro::ImplicitStep(Field<Array3D<complex>>& fldin, real dt) {
+  astra::pushRegion("Hydro::ImplicitStep");
   Projector(fldin);
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];
@@ -152,9 +154,11 @@ void Hydro::ImplicitStep(Field<Array3D<complex>>& fldin, real dt) {
       vx2(i,j,k) *= factor;
       vx3(i,j,k) *= factor;
     });
+  astra::popRegion();
 }
 
 real Hydro::GetInvDt() {
+  astra::pushRegion("Hydro::GetInvDt");
   real invdt = 0.0;
   real kx1max = grid->kmax[IDIR];
   real kx2max = grid->kmax[JDIR];
@@ -176,7 +180,7 @@ real Hydro::GetInvDt() {
 
         },
     Kokkos::Max<real>(invdt));
-
+  astra::popRegion();
   return invdt;
 }
 

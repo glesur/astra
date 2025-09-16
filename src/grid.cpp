@@ -47,9 +47,6 @@ Grid::Grid(Input &input) {
   }
 
   this->InitGrid();
-  
-
-
    astra::popRegion();
 }
 
@@ -95,12 +92,9 @@ void Grid::InitGrid() {
 void Grid::ShowConfig() {
   astra::cout << "Grid: full grid size is " << std::endl;
   for(int dir = 0 ; dir < 3 ; dir++) {
-    
-
       astra::cout << "\t Direction X" << (dir+1) << ": " << "\t" << xbeg_glob[dir]
                  << "...." << npr_glob[dir] << "...." << xend_glob[dir] << "\t"
                  << std::endl;
-      astra::cout << std::endl;
   }
   
 }

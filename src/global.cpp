@@ -11,6 +11,7 @@
 #include "astra.hpp"
 #include "global.hpp"
 #include "profiler.hpp"
+#include "fft.hpp"
 
 #ifdef WITH_MPI
 #include "mpi.hpp"
@@ -27,6 +28,7 @@ AstraOutStream cout;
 AstraErrStream cerr;
 Profiler prof;
 LoopPattern defaultLoopPattern;
+FFT fft;
 
 #ifdef DEBUG
 static int regionIndent = 0;

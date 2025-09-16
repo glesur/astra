@@ -26,9 +26,11 @@ class TimeIntegrator {
     virtual ~TimeIntegrator() {}
 
     virtual void Cycle(Field<T>& field) {
+      astra::pushRegion("TimeIntegrator::Cycle");
       t=t+dt;
       ncycles++;
       logger.Show(ncycles);
+      astra::popRegion();
     };
     real GetTime() { return t; }
     real GetTimeStep() { return dt; }

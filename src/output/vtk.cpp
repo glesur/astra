@@ -244,7 +244,7 @@ void Vtk::Write(Field<Array3D<complex>> field) {
   ArrayHost3D<real> realHostView("VTK_rfft_host_view",nx1loc,nx2loc,nx3loc);
    // Write field one by one
   for(auto const& [name, view] : field) {
-    KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), view, realView);
+    astra::fft.C2R(view, realView);
     Kokkos::fence();
     // Copy data to host
     Kokkos::deep_copy(realHostView, realView);

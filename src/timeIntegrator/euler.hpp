@@ -27,6 +27,7 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
     ~EulerTimeIntegrator() {}
 
     void Cycle(Field<T>& field) override {
+      astra::pushRegion("EulerTimeIntegrator::Cycle");
       // Implement the Euler time integration step here
       dfld.Reset();
       // Explicit part
@@ -56,6 +57,7 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
       }
       // Call base class cycle to update time and cycle count
       TimeIntegrator<T>::Cycle(field);
+      astra::popRegion();
     }
 
   private:

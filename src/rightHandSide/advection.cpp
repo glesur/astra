@@ -31,7 +31,7 @@ Advection::Advection(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>
 Advection::~Advection() {}
 
 void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld) {
-
+  astra::pushRegion("Advection::ExplicitStep");
   // Compute the advection term
   for(auto& it : fldin) {
     auto view = it.second;
@@ -53,6 +53,7 @@ void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<compl
         dview(i,j,k) -= Kokkos::complex(0.0, 1.0)*kv*view(i,j,k);
     });
   }
+  astra::popRegion();
 }
 
 void Advection::ImplicitStep(Field<Array3D<complex>>& fldin, real dt){
@@ -60,7 +61,10 @@ void Advection::ImplicitStep(Field<Array3D<complex>>& fldin, real dt){
 }
 
 real Advection::GetInvDt()  {
-  return this->velocity*grid->kmax[direction];
+  astra::pushRegion("Advection::GetInvDt");
+  real invdt = this->velocity*grid->kmax[direction];
+  astra::popRegion();
+  return invdt;
 }
 
 std::vector<std::string> Advection::GetVariables() {

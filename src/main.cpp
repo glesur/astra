@@ -7,6 +7,7 @@
 #include <KokkosFFT.hpp>
 
 #include "astra.hpp"
+#include "profiler.hpp"
 #include "loop.hpp"
 #include "global.hpp"
 #include "input.hpp"
@@ -30,6 +31,56 @@ void WriteFile(Input &input,
   std::string filename = std::string("data.")+ssvtkFileNum.str();
   Vtk vtk(input, grid, time, filename);
   vtk.Write(state);
+}
+
+void LogFinished(Grid &grid, Input &Tint, Kokkos::Timer &timer, TimeIntegrator<Array3D<complex>> *timeIntegrator) {
+  int n_days{0}, n_hours{0}, n_minutes{0}, n_seconds{0};
+  div_t divres;
+  divres = div(timer.seconds(), 86400);
+  n_days = divres.quot;
+  divres = div(divres.rem, 3600);
+  n_hours = divres.quot;
+  divres = div(divres.rem, 60);
+  n_minutes = divres.quot;
+  n_seconds = divres.rem;
+
+  astra::cout << "Main: Reached t=" << timeIntegrator->GetTime() << std::endl;
+  double perfs = timer.seconds() / grid.npr_glob[IDIR] / grid.npr_glob[JDIR]
+                    / grid.npr_glob[KDIR] / timeIntegrator->GetCycle() * astra::psize;
+  astra::cout << "Main: Completed in ";
+    if (n_days > 0) {
+      astra::cout << n_days << " day";
+      if (n_days != 1) {
+        astra::cout << "s";
+      }
+      astra::cout << " ";
+    }
+    if (n_hours > 0) {
+      astra::cout << n_hours << " hour";
+      if (n_hours != 1) {
+        astra::cout << "s";
+      }
+      astra::cout << " ";
+    }
+    if (n_minutes > 0) {
+      astra::cout << n_minutes << " minute";
+      if (n_minutes != 1) {
+        astra::cout << "s";
+      }
+      astra::cout << " ";
+    }
+    astra::cout << n_seconds << " second";
+    if (n_seconds != 1) {
+      astra::cout << "s";
+    }
+    astra::cout << " ";
+    astra::cout << "and " << timeIntegrator->GetCycle() << " cycle";
+    if (timeIntegrator->GetCycle() != 1) {
+      astra::cout << "s";
+    }
+    astra::cout << std::endl;
+    astra::cout << "Main: ";
+    astra::cout << "Perfs are " << std::scientific << 1/perfs << " cell updates/second" << std::endl;
 }
 
 int main( int argc, char* argv[] ) {
@@ -74,7 +125,9 @@ int main( int argc, char* argv[] ) {
     int nvtk = 0;
     // Test the time integrator
     
-    while(timeIntegrator->GetCycle() < 1000) {
+    Kokkos::Timer timer;
+
+    while(timeIntegrator->GetCycle() < 100) {
       if(timeIntegrator->GetCycle()%10==0) {
         WriteFile(input, &grid, state, nvtk, timeIntegrator->GetTime());
         nvtk++;
@@ -82,89 +135,17 @@ int main( int argc, char* argv[] ) {
       timeIntegrator->Cycle(state);
     }
     WriteFile(input, &grid, state, nvtk, timeIntegrator->GetTime());
-    /////////////////////////////////////////
-    // Test of 1D FFT
-    const int n = 4;
 
-    Field<Array3D<real>> fld("myField",grid.npr);
+    LogFinished(grid, input, timer, timeIntegrator);
+    // Show profiler output
+    astra::prof.Show();
 
-
-    fld.Add("vx");
-    // Test a derivative
-    auto vxi = fld["vx"];
-    auto xi = grid.x[IDIR];
-    astra_for("loop_example",fld,
-      KOKKOS_LAMBDA(int i,int j,int k) {
-        vxi(i,j,k) = std::sin(2.0*M_PI*xi(i));
-    }); 
-    astra::cout << "Initial condition : " << std::endl;
-    for(int i=0 ; i < grid.npr[IDIR] ; i++) {
-      astra::cout << vxi(i,0,0) << " ; ";
+    // Clean up
+    delete timeIntegrator;
+    for(auto rhs : rhsVector) {
+      delete rhs;
     }
-    astra::cout << std::endl;
-
-    Field<Array3D<real>> fldo("myField",grid.npr);
-    fldo.Add("vx");
-
-    Field<Array3D<complex>> fldf("myField",grid.npf);
-    fldf.Add("vx");
-
-    // test 3D FFT
-    Kokkos::fence();
-
-
-    KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), fld["vx"], fldf["vx"]);
-    auto vxf = fldf["vx"];
-    auto kx1 = grid.kx[IDIR];
-    astra_for("loop_example",fldf,
-      KOKKOS_LAMBDA(int i,int j,int k) {
-        vxf(i,j,k) *= kx1(i)*Kokkos::complex(0.0, 1.0);
-    }); 
-
-    KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), fldf["vx"], fldo["vx"]);
-
-    auto vxo = fldo["vx"];
-
-    astra::cout << "After derivative : " << std::endl;
-    for(int i=0 ; i < grid.npr[IDIR] ; i++) {
-      astra::cout << vxo(i,0,0) << " ; ";
-    }
-    astra::cout << std::endl;
-
-    // Test FFTs
-    Array1D<real> x("x", n);
-    Array1D<complex> x_hat("x_hat", n/2+1);
-
-    Kokkos::Random_XorShift64_Pool<> random_pool(12345);
-    Kokkos::fill_random(x, random_pool, 1);
-    Kokkos::fence();
-
-    KokkosFFT::rfft(Kokkos::DefaultExecutionSpace(), x, x_hat);
-
-    // Test standard kokkos array
-    Array3D<real>  toto("toto_name",16,16,16);
-    Array3D<real>  totoprime("toto_prime",16,16,16);
-    astra_for("loop_example",0,9,0,9,0,9,
-      KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        toto(i,j,k) = 1.0;
-      });
-
-    astra_for("loop_example2",0,9,0,9,0,9,
-      KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        totoprime(i,j,k) = toto(i,j,k)+toto(i,j,k);
-      });
-
-      astra_for("loop_example3",0,9,0,9,0,9,
-      KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        toto(i,j,k) = toto(i,j,k) + totoprime(i,j,k);
-      });
-    
-    ArrayHost3D<double> toto_host("toto_host",16,16,16);
-    Kokkos::deep_copy(toto_host,toto);
-
-    astra::cout << "toto_host(1,1,1)=" << toto_host(1,1,1) << std::endl;
-
-    astra::cout << "j'ai fini!"<< std::endl;
+    astra::cout << "Main: Job completed successfully." << std::endl;
 
   }
   Kokkos::finalize();

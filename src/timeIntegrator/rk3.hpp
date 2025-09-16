@@ -29,6 +29,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
     ~RK3TimeIntegrator() {}
 
     void Cycle(Field<T>& fld) override {
+      astra::pushRegion("RK3TimeIntegrator::Cycle");
       // Implement the RK3 time integration step here
 
       // Explicit part
@@ -108,6 +109,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
         rhs->ImplicitStep(fld, this->dt);
       }
       // Call base class cycle to update time and cycle count
+      astra::popRegion();
       TimeIntegrator<T>::Cycle(fld);
     }
 
