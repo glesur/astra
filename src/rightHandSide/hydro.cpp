@@ -52,6 +52,12 @@ void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>
   auto vr1 = this->vr1;
   auto vr2 = this->vr2;
   auto vr3 = this->vr3;
+  auto wr11 = this->wr11;
+  auto wr12 = this->wr12;
+  auto wr13 = this->wr13;
+  auto wr22 = this->wr22;
+  auto wr23 = this->wr23;
+  auto wr33 = this->wr33;
   astra_for("hydro_windup", 0,npr[IDIR],0,npr[JDIR],0,npr[KDIR],
     KOKKOS_LAMBDA(int i, int j, int k) {
       real v1 = vr1(i, j, k);
@@ -80,6 +86,12 @@ void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>
   auto dvx1 = dfld["vx1"];
   auto dvx2 = dfld["vx2"];
   auto dvx3 = dfld["vx3"];
+  auto wf11 = this->wf11;
+  auto wf12 = this->wf12;
+  auto wf13 = this->wf13;
+  auto wf22 = this->wf22;
+  auto wf23 = this->wf23;
+  auto wf33 = this->wf33;
 
   real kx1max = grid->kmax[IDIR];
   real kx2max = grid->kmax[JDIR];
@@ -160,7 +172,7 @@ real Hydro::GetInvDt() {
       real idtx1 = std::fabs(vr1(i,j,k)*kx1max);
       real idtx2 = std::fabs(vr2(i,j,k)*kx2max);
       real idtx3 = std::fabs(vr3(i,j,k)*kx3max);
-      dtmax = std::max(dtmax,idtx1+idtx2+idtx3);
+      dtmax = std::fmax(dtmax,idtx1+idtx2+idtx3);
 
         },
     Kokkos::Max<real>(invdt));

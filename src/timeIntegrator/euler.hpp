@@ -30,7 +30,7 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
       // Implement the Euler time integration step here
       dfld.Reset();
       // Explicit part
-      real cmax = 0;
+      
       this->dt = 0.0;
       for(auto rhs : this->rhsVector) {
         rhs->ExplicitStep(field, dfld);

@@ -47,6 +47,7 @@ class Grid {
   // Constructor
   explicit Grid(Input &);
   void ShowConfig();
+  void InitGrid();
   Grid() = default;
 
  private:

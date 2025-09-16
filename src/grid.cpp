@@ -19,10 +19,7 @@
 
 Grid::Grid(Input &input) {
   astra::pushRegion("Grid::Grid(Input)");
-
-
   // Get grid size from input file, block [Grid]
-  int npoints[3];
   for(int dir = 0 ; dir < 3 ; dir++) {
     std::string label = std::string("X")+std::to_string(dir+1)+std::string("-grid");
 
@@ -49,6 +46,16 @@ Grid::Grid(Input &input) {
     kmax[dir] = M_PI/dx[dir];
   }
 
+  this->InitGrid();
+  
+
+
+   astra::popRegion();
+}
+
+// To allow for capture in Lambda functions, astra_for can't be used in class constructors
+void Grid::InitGrid() {
+  astra::pushRegion("Grid::InitGrid()");
   // Initialise the grid elements
   for(int dir = 0 ; dir < 3 ; dir++) {
     Array1D<real> x = this->x_glob[dir];
@@ -81,11 +88,9 @@ Grid::Grid(Input &input) {
   for(int dir = 0 ; dir < 3 ; dir++) {
     kx[dir] = kx_glob[dir];
   }
-
-
-   astra::popRegion();
+  // Nothing to do here for now
+  astra::popRegion();
 }
-
 
 void Grid::ShowConfig() {
   astra::cout << "Grid: full grid size is " << std::endl;
