@@ -51,8 +51,15 @@ void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
 
 void InitFlow::LargeScaleNoise(Field<ArrayHost3D<complex>>& field) {
   // Implementation of large scale noise initialization
+  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
   real noiseAmplitude = input->Get<real>("InitFlow","large_scale_noise",0);
   real noiseCutLength = input->Get<real>("InitFlow","large_scale_noise",1);
+
+  real lx = grid->xend_glob[IDIR]-grid->xbeg_glob[IDIR];
+  real ly = grid->xend_glob[JDIR]-grid->xbeg_glob[JDIR];
+  real lz = grid->xend_glob[KDIR]-grid->xbeg_glob[KDIR];
+  // Number of modes that are excited (approx)
+  real nmodes = lx*ly*lz/(noiseCutLength*noiseCutLength*noiseCutLength);
 
   for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
     for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
@@ -66,7 +73,7 @@ void InitFlow::LargeScaleNoise(Field<ArrayHost3D<complex>>& field) {
             auto view = it.second;
             real phase = 2.0*M_PI*astra::randm();
             real ampl = noiseAmplitude;
-            view(i,j,k) += Kokkos::complex(ampl*std::cos(phase), ampl*std::sin(phase));
+            view(i,j,k) += Kokkos::complex(ampl*std::cos(phase), ampl*std::sin(phase))/nmodes*ntot;
           }
         }
       }
