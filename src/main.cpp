@@ -105,8 +105,6 @@ int main( int argc, char* argv[] ) {
 
     // Init the right hand sides
     auto rhsVector = RightHandSideFactory<Array3D<complex>>::Create(input, &grid);
-    // Init the time integrator
-    auto *timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
 
     // Create a state matching rhsVector requirements
     Field<Array3D<complex>> state("state",grid.npf);
@@ -119,22 +117,26 @@ int main( int argc, char* argv[] ) {
     // Initial conditions
     initFlow.Init(state);
 
-    // Create a time integrator
-    //TimeIntegrator<Array3D<complex>> *timeIntegrator = new RK3TimeIntegrator<Array3D<complex>>(input, &grid, rhsVector);
-    
+    // Write initial condition@
+    real lastOutput = 0.0;
+    real outputStep = input.GetOrSet<real>("Output","vtk",0,0.1);
     int nvtk = 0;
-    // Test the time integrator
-    
-    Kokkos::Timer timer;
+    WriteFile(input, &grid, state, nvtk, 0.0);
+    nvtk++;
 
-    while(timeIntegrator->GetCycle() < 100) {
-      if(timeIntegrator->GetCycle()%10==0) {
+    astra::cout << "Main: Starting time integration..." << std::endl;
+    // Init the time integrator
+    auto *timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
+    real tstop = input.Get<real>("TimeIntegrator","tstop",0);
+    Kokkos::Timer timer;
+    while(timeIntegrator->GetTime() < tstop) {
+      timeIntegrator->Cycle(state);
+      if(timeIntegrator->GetTime()-lastOutput>=outputStep) {
         WriteFile(input, &grid, state, nvtk, timeIntegrator->GetTime());
         nvtk++;
+        lastOutput += outputStep;
       }
-      timeIntegrator->Cycle(state);
     }
-    WriteFile(input, &grid, state, nvtk, timeIntegrator->GetTime());
 
     LogFinished(grid, input, timer, timeIntegrator);
     // Show profiler output
@@ -146,7 +148,6 @@ int main( int argc, char* argv[] ) {
       delete rhs;
     }
     astra::cout << "Main: Job completed successfully." << std::endl;
-
   }
   Kokkos::finalize();
   return(0);
