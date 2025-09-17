@@ -29,16 +29,68 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
   Field<ArrayHost3D<complex>> hfield("hfield", field);
   hfield.Reset();
 
+  if(input->CheckEntry("InitFlow","shear_layer")>=0) {
+    ShearLayer(hfield);
+  }
   if(input->CheckEntry("InitFlow","mean_field")>=0) {
     MeanField(hfield);
   }
   if(input->CheckEntry("InitFlow","large_scale_noise")>=0) {
-    LargeScaleNoise(hfield);
+    LargeScale3DNoise(hfield);
+  }
+  if(input->CheckEntry("InitFlow","large_scale_2d_noise")>=0) {
+    LargeScale2DNoise(hfield);
+  }
+  if(input->CheckEntry("InitFlow","large_scale_1d_noise")>=0) {
+    LargeScale1DNoise(hfield);
   }
 
   Projector(hfield);
   // Copy back to device
   field.CopyFrom(hfield);
+}
+
+void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
+  // Implementation of mean field initialization
+  ArrayHost1D<real> x1 = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),grid->x[IDIR]);
+  ArrayHost1D<real> x2 = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),grid->x[JDIR]);
+  ArrayHost1D<real> x3 = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),grid->x[KDIR]);
+  real y0 = input->Get<real>("InitFlow","shear_layer",0);
+  real v0 = input->Get<real>("InitFlow","shear_layer",1);
+
+  Field<ArrayHost3D<real>> realField("realField", grid->npr, hfieldOut);
+  Field<ArrayHost3D<complex>> complexField("complexField", grid->npf, hfieldOut);
+  realField.Reset();
+  complexField.Reset();
+
+  for(int i = 0 ; i < grid->npr_glob[IDIR] ; i++) {
+    for(int j = 0 ; j < grid->npr_glob[JDIR] ; j++) {
+      real y = x2(j);
+      for(int k = 0 ; k < grid->npr_glob[KDIR] ; k++) {
+        if(std::fabs(y) < y0) {
+          realField["vx1"](i,j,k) = -v0;
+        } else {
+          realField["vx1"](i,j,k) = v0;
+        }
+      }
+    }
+  }
+
+  // Fourier transform to get the complex field
+  astra::fft.R2C_Host(realField["vx1"], complexField["vx1"]);
+  
+  // add to output field
+  for(auto it : hfieldOut) {
+    auto viewOut = it.second;
+    auto viewIn = complexField[it.first];
+    for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+      for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
+        for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
+          viewOut(i,j,k) += viewIn(i,j,k);
+        }
+      }
+    }
+  }
 }
 
 void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
@@ -49,7 +101,9 @@ void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
   hfield["vx3"](0,0,0) = input->Get<real>("InitFlow","mean_field",2)*ntot;
 }
 
-void InitFlow::LargeScaleNoise(Field<ArrayHost3D<complex>>& field) {
+
+
+void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
   // Implementation of large scale noise initialization
   int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
   real noiseAmplitude = input->Get<real>("InitFlow","large_scale_noise",0);
@@ -69,6 +123,67 @@ void InitFlow::LargeScaleNoise(Field<ArrayHost3D<complex>>& field) {
                               kx[KDIR](k)*kx[KDIR](k))
                                 /(2.0*M_PI);
         if(ktot*noiseCutLength < 1.0) {
+          for(auto& it : field) {
+            auto view = it.second;
+            real phase = 2.0*M_PI*astra::randm();
+            real ampl = noiseAmplitude;
+            view(i,j,k) += Kokkos::complex(ampl*std::cos(phase), ampl*std::sin(phase))/nmodes*ntot;
+          }
+        }
+      }
+    }
+  } 
+}
+
+void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
+  // Implementation of large scale noise initialization
+  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  real noiseAmplitude = input->Get<real>("InitFlow","large_scale_2d_noise",0);
+  real noiseCutLength = input->Get<real>("InitFlow","large_scale_2d_noise",1);
+
+  real lx = grid->xend_glob[IDIR]-grid->xbeg_glob[IDIR];
+  real ly = grid->xend_glob[JDIR]-grid->xbeg_glob[JDIR];
+
+  // Number of modes that are excited (approx)
+  real nmodes = lx*ly/(noiseCutLength*noiseCutLength);
+
+  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+        real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
+                              kx[JDIR](j)*kx[JDIR](j))
+                                /(2.0*M_PI);
+        if(ktot*noiseCutLength < 1.0 && kx[KDIR](k) == 0.0) {
+          for(auto& it : field) {
+            auto view = it.second;
+            real phase = 2.0*M_PI*astra::randm();
+            real ampl = noiseAmplitude;
+            view(i,j,k) += Kokkos::complex(ampl*std::cos(phase), ampl*std::sin(phase))/nmodes*ntot;
+          }
+        }
+      }
+    }
+  } 
+}
+
+void InitFlow::LargeScale1DNoise(Field<ArrayHost3D<complex>>& field) {
+  // Implementation of large scale noise initialization
+  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  real noiseAmplitude = input->Get<real>("InitFlow","large_scale_1d_noise",0);
+  real noiseCutLength = input->Get<real>("InitFlow","large_scale_1d_noise",1);
+
+  real lx = grid->xend_glob[IDIR]-grid->xbeg_glob[IDIR];
+
+  // Number of modes that are excited (approx)
+  real nmodes = lx/(noiseCutLength);
+
+  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+        real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
+                              kx[JDIR](j)*kx[JDIR](j))
+                                /(2.0*M_PI);
+        if(ktot*noiseCutLength < 1.0 && kx[KDIR](k) == 0.0 && kx[JDIR](j) == 0.0) {
           for(auto& it : field) {
             auto view = it.second;
             real phase = 2.0*M_PI*astra::randm();

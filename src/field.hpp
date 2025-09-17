@@ -16,10 +16,19 @@
 template<typename T>
 class Field {
   public:
+    // Constructor with a name and dimensions. Arrays will be subsequently added with Add()
     Field(std::string name, std::array<int,T::rank> n) : name(name), np(n) {};
 
+    // Constructor with a name and a Field. The new field will have the same dimensions and variables as the input field.
     template<typename G>
     Field(std::string name, Field<G>& in) : name(name), np(in.GetDimensions()) {
+      for(auto& it : in) {
+        this->Add(it.first);
+      }
+    }
+    // Constructor with a name, dimenions and a Field. The new field will have the new dimensions but the same variables as the input field.
+    template<typename G>
+    Field(std::string name, std::array<int,T::rank> n, Field<G>& in) : name(name), np(n) {
       for(auto& it : in) {
         this->Add(it.first);
       }

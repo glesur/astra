@@ -25,8 +25,11 @@ public:
 private:
   Grid *grid;
   Input *input;
+  void ShearLayer(Field<ArrayHost3D<complex>>& field);
   void MeanField(Field<ArrayHost3D<complex>>& field);
-  void LargeScaleNoise(Field<ArrayHost3D<complex>>& field);
+  void LargeScale3DNoise(Field<ArrayHost3D<complex>>& field);
+  void LargeScale2DNoise(Field<ArrayHost3D<complex>>& field);
+  void LargeScale1DNoise(Field<ArrayHost3D<complex>>& field);
   void Projector(Field<ArrayHost3D<complex>>& field);
 
   std::array<ArrayHost1D<real>,3> kx;

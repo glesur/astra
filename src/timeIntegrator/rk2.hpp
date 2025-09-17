@@ -16,15 +16,14 @@
 template <typename T>
 class RK2TimeIntegrator : public TimeIntegrator<T> {
   public:
-    RK2TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK2 dfld",grid->npf), dfld1("RK2 dfld",grid->npf) {
+    RK2TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK2 dfld",grid->npf), fld0("RK2 fld0",grid->npf) {
       // Init dfld vector for the rhs
       for(auto rhs : rhsVector) {
         for(auto var : rhs->GetVariables()) {
           dfld.Add(var);
-          dfld1.Add(var);
+          fld0.Add(var);
         }
       }
-
     }
 
     ~RK2TimeIntegrator() {}
@@ -34,9 +33,10 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
       // Implement the RK2 time integration step here
 
       // Explicit part
-
       this->dt = 0.0;
 
+      // Save the initial field
+      fld0.CopyFrom(fld);
       ///////////////////////////////////////:
       // First Stage
       ///////////////////////////////////////
@@ -54,52 +54,22 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
         auto view = it.second;
         auto dview = dfld[it.first];
         real dt = this->dt;
-        const real gamma = gammaRK[0];
-        astra_for("rk3_update1_"+it.first,fld,
+        astra_for("rk2_update1_"+it.first,fld,
           KOKKOS_LAMBDA(int i,int j,int k) {
-            view(i,j,k) += gamma * dt * dview(i,j,k);
+            view(i,j,k) += dt * dview(i,j,k);
         }); 
       }
 
       // Implicit part
       for(auto rhs : this->rhsVector) {
-        rhs->ImplicitStep(fld, this->t, this->dt*this->gammaRK[0]);
+        rhs->ImplicitStep(fld, this->t, this->dt);
       }
 
       ///////////////////////////////////////:
       // Second Stage
       ///////////////////////////////////////
-      dfld1.Reset();
-      real stageTime = this->t + this->dt * this->gammaRK[0];
-
-      for(auto rhs : this->rhsVector) {
-        rhs->ExplicitStep(fld, dfld1, stageTime);
-      }
-
-      // Update the field
-      for(auto& it : fld) {
-        auto view = it.second;
-        auto dview1 = dfld1[it.first];
-        auto dview = dfld[it.first];
-        real dt = this->dt;
-        const real gamma = gammaRK[1];
-        const real xi = xiRK[0];
-        astra_for("rk3_update2_"+it.first,fld,
-          KOKKOS_LAMBDA(int i,int j,int k) {
-            view(i,j,k) += dt * (gamma * dview1(i,j,k) + xi * dview(i,j,k));
-        }); 
-      }
-
-      // Implicit part
-      for(auto rhs : this->rhsVector) {
-        rhs->ImplicitStep(fld, stageTime, this->dt*(this->gammaRK[1]+this->xiRK[0]));
-      }
-
-      ///////////////////////////////////////:
-      // Third Stage
-      ///////////////////////////////////////
       dfld.Reset();
-      stageTime = this->t + this->dt * (this->gammaRK[0]+this->gammaRK[1]+this->xiRK[0]);
+      real stageTime = this->t + this->dt;
 
       for(auto rhs : this->rhsVector) {
         rhs->ExplicitStep(fld, dfld, stageTime);
@@ -108,21 +78,33 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
       // Update the field
       for(auto& it : fld) {
         auto view = it.second;
-        auto dview1 = dfld1[it.first];
         auto dview = dfld[it.first];
         real dt = this->dt;
-        const real gamma = gammaRK[2];
-        const real xi = xiRK[1];
-        astra_for("rk3_update2_"+it.first,fld,
+        astra_for("rk2_update2_"+it.first,fld,
           KOKKOS_LAMBDA(int i,int j,int k) {
-            view(i,j,k) += dt * (gamma * dview(i,j,k) + xi * dview1(i,j,k));
+            view(i,j,k) += dt *  dview(i,j,k);
         }); 
       }
 
       // Implicit part
       for(auto rhs : this->rhsVector) {
-        rhs->ImplicitStep(fld, stageTime, this->dt*(this->gammaRK[2]+this->xiRK[1]));
+        rhs->ImplicitStep(fld, stageTime, this->dt);
       }
+
+      ///////////////////////////////////////:
+      // Final combination
+      ///////////////////////////////////////
+
+      for(auto& it : fld) {
+        auto view = it.second;
+        auto view0 = fld0[it.first];
+        real dt = this->dt;
+        astra_for("rk2_update2_"+it.first,fld,
+          KOKKOS_LAMBDA(int i,int j,int k) {
+            view(i,j,k) = 0.5 * (view0(i,j,k) + view(i,j,k));
+        });
+      }
+
       // Call base class cycle to update time and cycle count
       astra::popRegion();
       TimeIntegrator<T>::Cycle(fld);
@@ -130,9 +112,8 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
 
   private:
     Field<T> dfld; // a temporary field to store the time derivative
-    Field<T> dfld1; // a temporary field to store the time derivative
-    const std::array<const real,3> gammaRK = {8.0 / 15.0 , 5.0 / 12.0 , 3.0 / 4.0};
-    const std::array<const real,3> xiRK = {-17.0 / 60.0 , -5.0 / 12.0};
+    Field<T> fld0; // a temporary field to store the original field
+
 };
 
 #endif // RK2_HPP_

@@ -22,6 +22,10 @@ public:
 
   // Perform a complex-to-real inverse FFT
   void C2R(const Array3D<complex>& in, Array3D<real>& out);
+
+  // FFT on Host, using the device.
+  void R2C_Host(const ArrayHost3D<real>& in, ArrayHost3D<complex>& out);
+  void C2R_Host(const ArrayHost3D<complex>& in, ArrayHost3D<real>& out);
 };
 
 #endif // FFT_HPP_
