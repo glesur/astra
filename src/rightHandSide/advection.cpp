@@ -30,7 +30,7 @@ Advection::Advection(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>
 
 Advection::~Advection() {}
 
-void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld) {
+void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) {
   astra::pushRegion("Advection::ExplicitStep");
   // Compute the advection term
   for(auto& it : fldin) {
@@ -56,7 +56,7 @@ void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<compl
   astra::popRegion();
 }
 
-void Advection::ImplicitStep(Field<Array3D<complex>>& fldin, real dt){
+void Advection::ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt){
   // Nothing to do here for pure advection
 }
 

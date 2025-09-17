@@ -22,8 +22,8 @@ class RightHandSide {
     RightHandSide(Input &input, Grid *grid) : grid(grid) {}
     virtual ~RightHandSide() {}
 
-    virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld) = 0;
-    virtual void ImplicitStep(Field<T>& fldin, real dt) = 0;
+    virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld, real t) = 0;
+    virtual void ImplicitStep(Field<T>& fldin, real t, real dt) = 0;
     virtual real GetInvDt() = 0;
     virtual std::vector<std::string> GetVariables() = 0;
 

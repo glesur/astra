@@ -40,7 +40,7 @@ Hydro::Hydro(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>(input, 
 Hydro::~Hydro() {
 }
 
-void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld) {
+void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) {
   astra::pushRegion("Hydro::ExplicitStep");
   // Fourier transform the velocity field to real space
   astra::fft.C2R(fldin["vx1"], vr1);
@@ -134,7 +134,7 @@ void Hydro::Projector(Field<Array3D<complex>>& fldin) {
   });
   astra::popRegion();
 }
-void Hydro::ImplicitStep(Field<Array3D<complex>>& fldin, real dt) {
+void Hydro::ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt) {
   astra::pushRegion("Hydro::ImplicitStep");
   Projector(fldin);
   auto kx1 = this->grid->kx[IDIR];
@@ -149,7 +149,8 @@ void Hydro::ImplicitStep(Field<Array3D<complex>>& fldin, real dt) {
   astra_for("hydro_viscosity", fldin,
     KOKKOS_LAMBDA(int i, int j, int k) {
       real k2 = kx1(i)*kx1(i)+kx2(j)*kx2(j)+kx3(k)*kx3(k);
-      real factor = std::exp(-dt * nu*k2);
+      //real factor = (1-0.5*dt*nu*k2)/(1+0.5*dt*nu*k2); // Crank-Nicholson
+      real factor = std::exp(-dt * nu*k2); // Exact integration
       vx1(i,j,k) *= factor;
       vx2(i,j,k) *= factor;
       vx3(i,j,k) *= factor;

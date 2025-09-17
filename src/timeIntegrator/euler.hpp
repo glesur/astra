@@ -34,7 +34,7 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
       
       this->dt = 0.0;
       for(auto rhs : this->rhsVector) {
-        rhs->ExplicitStep(field, dfld);
+        rhs->ExplicitStep(field, dfld, this->t);
         this->dt += rhs->GetInvDt();
       }
       // Get the timestep
@@ -53,7 +53,7 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
 
       // Implicit part
       for(auto rhs : this->rhsVector) {
-        rhs->ImplicitStep(field, this->dt);
+        rhs->ImplicitStep(field, this->t, this->dt);
       }
       // Call base class cycle to update time and cycle count
       TimeIntegrator<T>::Cycle(field);

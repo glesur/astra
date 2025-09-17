@@ -21,8 +21,8 @@ public:
   Hydro(Input &input, Grid *grid);
   ~Hydro();
 
-  void ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld) override;
-  void ImplicitStep(Field<Array3D<complex>>& fldin, real dt) override;
+  void ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) override;
+  void ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt) override;
 
   void Projector(Field<Array3D<complex>>& fldin);
 
