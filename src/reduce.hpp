@@ -15,6 +15,9 @@
 
 #include <string>
 #include <Kokkos_Core.hpp>
+#ifdef DEBUG
+#include "global.hpp"
+#endif
 
 // 1D default loop pattern
 template <typename Function, typename Reducer>

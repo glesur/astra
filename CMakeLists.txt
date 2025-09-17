@@ -9,7 +9,7 @@ set(Astra_VERSION_PATCH 00)
 project (Astra VERSION 0.1.00)
 
 set(Astra_LOOP_PATTERN "Default" CACHE STRING "Loop pattern for astra_for")
-
+option(Astra_DEBUG "Enable Astra debug features (makes the code very slow)" OFF)
 
 # load git revision tools
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
@@ -31,7 +31,7 @@ add_subdirectory(src build)
 
 #update version.hpp if possible
 git_describe(GIT_SHA1)
-set(Idefix_VERSION ${Astra_VERSION_MAJOR}.${Astra_VERSION_MINOR}.${Astra_VERSION_PATCH}-${GIT_SHA1})
+set(Astra_VERSION ${Astra_VERSION_MAJOR}.${Astra_VERSION_MINOR}.${Astra_VERSION_PATCH}-${GIT_SHA1})
 file(WRITE ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_GIT_COMMIT \"${GIT_SHA1}\"\n")
 file(APPEND ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_VERSION_MAJOR \"${Astra_VERSION_MAJOR}\"\n")
 file(APPEND ${CMAKE_SOURCE_DIR}/src/version.hpp "#define ASTRA_VERSION_MINOR \"${Astra_VERSION_MINOR}\"\n")
@@ -60,6 +60,12 @@ elseif(${Astra_LOOP_PATTERN} STREQUAL "TeamPolicyInnerVector")
   add_compile_definitions("LOOP_PATTERN_TPTTRTVR")
 elseif(NOT ${Astra_LOOP_PATTERN} STREQUAL "Default")
   message(ERROR "Unknown loop Pattern")
+endif()
+
+# Debug mode
+if(Astra_DEBUG)
+  add_compile_definitions("DEBUG")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 endif()
 
 target_include_directories(astra PUBLIC
