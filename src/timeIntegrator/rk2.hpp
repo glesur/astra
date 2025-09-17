@@ -6,16 +6,17 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-// RK3 time integrator
-#ifndef RK3_HPP_
-#define RK3_HPP_
+// RK2 time integrator
+#ifndef RK2_HPP_
+#define RK2_HPP_
 
 #include "timeIntegrator.hpp"
 
+// Implementation of IDEFIX second order TVD time integrator
 template <typename T>
-class RK3TimeIntegrator : public TimeIntegrator<T> {
+class RK2TimeIntegrator : public TimeIntegrator<T> {
   public:
-    RK3TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK3 dfld",grid->npf), dfld1("RK3 dfld",grid->npf) {
+    RK2TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK2 dfld",grid->npf), dfld1("RK2 dfld",grid->npf) {
       // Init dfld vector for the rhs
       for(auto rhs : rhsVector) {
         for(auto var : rhs->GetVariables()) {
@@ -26,11 +27,11 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
 
     }
 
-    ~RK3TimeIntegrator() {}
+    ~RK2TimeIntegrator() {}
 
     void Cycle(Field<T>& fld) override {
-      astra::pushRegion("RK3TimeIntegrator::Cycle");
-      // Implement the RK3 time integration step here
+      astra::pushRegion("RK2TimeIntegrator::Cycle");
+      // Implement the RK2 time integration step here
 
       // Explicit part
 
@@ -134,4 +135,4 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
     const std::array<const real,3> xiRK = {-17.0 / 60.0 , -5.0 / 12.0};
 };
 
-#endif // RK3_HPP_
+#endif // RK2_HPP_

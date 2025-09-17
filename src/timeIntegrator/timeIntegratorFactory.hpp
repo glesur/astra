@@ -13,6 +13,7 @@
 #include <vector>
 #include "timeIntegrator.hpp"
 #include "rk3.hpp"
+#include "rk2.hpp"
 #include "euler.hpp"
 #include "input.hpp"
 #include "rightHandSide.hpp"
@@ -25,6 +26,8 @@ public:
     std::string method = input.Get<std::string>("TimeIntegrator","method",0);
     if(method == "rk3") {
       return new RK3TimeIntegrator<T>(input, grid, rhsVector);
+    } else if(method == "rk2") {
+      return new RK2TimeIntegrator<T>(input, grid, rhsVector);
     } else if(method == "euler") {
       return new EulerTimeIntegrator<T>(input, grid, rhsVector);
     } else {
