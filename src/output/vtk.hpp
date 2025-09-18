@@ -53,6 +53,7 @@ class Vtk {
   int64_t nx1loc,nx2loc,nx3loc;
   bool isRoot;  // Whether this process is our root process for the current
 
+  Grid *grid;
   // Array designed to store the temporary vector array
   float *vect3D;
 

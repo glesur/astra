@@ -14,6 +14,7 @@
 #include "grid.hpp"
 #include "global.hpp"
 #include "arrays.hpp"
+#include "fft.hpp"
 
 
 
@@ -86,6 +87,9 @@ void Grid::InitGrid() {
     kx[dir] = kx_glob[dir];
   }
   // Nothing to do here for now
+  this->fft = std::make_unique<FFT>(npr, npf);
+  //this->fft = std::make_unique<FFT>();
+
   astra::popRegion();
 }
 

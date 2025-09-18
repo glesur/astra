@@ -14,6 +14,7 @@
 #include "field.hpp"
 #include "global.hpp"
 #include "loop.hpp"
+#include "fft.hpp"
 
 InitFlow::InitFlow(Input &input, Grid *grid) : grid(grid), input(&input) {
   for(int dir = 0 ; dir < 3 ; dir++) {
@@ -77,7 +78,7 @@ void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
   }
 
   // Fourier transform to get the complex field
-  astra::fft.R2C_Host(realField["vx1"], complexField["vx1"]);
+  grid->fft->R2C_Host(realField["vx1"], complexField["vx1"]);
   
   // add to output field
   for(auto it : hfieldOut) {

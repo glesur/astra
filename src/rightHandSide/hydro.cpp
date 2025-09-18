@@ -43,9 +43,9 @@ Hydro::~Hydro() {
 void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) {
   astra::pushRegion("Hydro::ExplicitStep");
   // Fourier transform the velocity field to real space
-  astra::fft.C2R(fldin["vx1"], vr1);
-  astra::fft.C2R(fldin["vx2"], vr2);
-  astra::fft.C2R(fldin["vx3"], vr3);
+  grid->fft->C2R(fldin["vx1"], vr1);
+  grid->fft->C2R(fldin["vx2"], vr2);
+  grid->fft->C2R(fldin["vx3"], vr3);
 
   // Compute the cross-correlation
   auto vr1 = this->vr1;
@@ -71,12 +71,12 @@ void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>
     });
 
   // Fourier transform back to spectral space
-  astra::fft.R2C(wr11, wf11);
-  astra::fft.R2C(wr12, wf12);
-  astra::fft.R2C(wr13, wf13);
-  astra::fft.R2C(wr22, wf22);
-  astra::fft.R2C(wr23, wf23);
-  astra::fft.R2C(wr33, wf33);
+  grid->fft->R2C(wr11, wf11);
+  grid->fft->R2C(wr12, wf12);
+  grid->fft->R2C(wr13, wf13);
+  grid->fft->R2C(wr22, wf22);
+  grid->fft->R2C(wr23, wf23);
+  grid->fft->R2C(wr33, wf33);
   
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];

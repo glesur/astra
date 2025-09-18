@@ -12,6 +12,7 @@
 
 #include "arrays.hpp"
 
+class FFT;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 /// The Grid class is designed to store the grid data of the FULL computational domain on the Host
 /// (i.e. of all of the MPI processes running).
@@ -50,6 +51,7 @@ class Grid {
   void InitGrid();
   Grid() = default;
 
+  std::unique_ptr<FFT> fft;  ///< FFT wrapper
  private:
 
 };
