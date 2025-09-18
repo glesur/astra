@@ -70,8 +70,10 @@ void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
       for(int k = 0 ; k < grid->npr_glob[KDIR] ; k++) {
         if(std::fabs(y) < y0) {
           realField["vx1"](i,j,k) = -v0;
+          realField["vx3"](i,j,k) = -v0;
         } else {
           realField["vx1"](i,j,k) = v0;
+          realField["vx3"](i,j,k) = v0;
         }
       }
     }
