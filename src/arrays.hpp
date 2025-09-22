@@ -21,13 +21,13 @@ template <typename T> using Array4D =
                             Kokkos::View<T****, Layout, Device>;
 
 template <typename T> using ArrayHost1D =
-                            Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+                            Kokkos::View<T*, Layout, Kokkos::HostSpace>;
 template <typename T> using ArrayHost2D =
-                            Kokkos::View<T**, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+                            Kokkos::View<T**, Layout, Kokkos::HostSpace>;
 template <typename T> using ArrayHost3D =
-                            Kokkos::View<T***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+                            Kokkos::View<T***, Layout, Kokkos::HostSpace>;
 template <typename T> using ArrayHost4D =
-                            Kokkos::View<T****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+                            Kokkos::View<T****, Layout, Kokkos::HostSpace>;
 
 // Atomic arrays
 template <typename T> using ArrayAtomic1D =

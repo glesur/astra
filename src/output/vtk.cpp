@@ -74,13 +74,14 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
 
   // Open file and write header
   #ifdef WITH_MPI
+  /*
     MPI_Barrier(this->comm);
     // Open file for creating, return error if file already exists.
     MPI_SAFE_CALL(MPI_File_open(this->comm, filename.c_str(),
                                 MPI_MODE_CREATE | MPI_MODE_RDWR
                                 | MPI_MODE_EXCL | MPI_MODE_UNIQUE_OPEN,
                                 MPI_INFO_NULL, &this->fileHdl));
-    this->offset = 0;
+    this->offset = 0;*/
   #else
     fileHdl = fopen(filename.c_str(),"wb");
 
@@ -111,6 +112,7 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
 
   // Create MPI view when using MPI I/O
 #ifdef WITH_MPI
+/*
   int start[3];
   int size[3];
   int subsize[3];
@@ -129,6 +131,7 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
   this->isRoot =   (data->mygrid->xproc[0] == 0)
                 && (data->mygrid->xproc[1] == 0)
                 && (data->mygrid->xproc[2] == 0);
+*/
 #endif
 
   // Write the header
@@ -206,6 +209,7 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
 
 void Vtk::WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk) {
   #ifdef WITH_MPI
+  /*
     MPI_Status status;
     MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_BYTE, MPI_CHAR,
                                     "native", MPI_INFO_NULL ));
@@ -213,6 +217,7 @@ void Vtk::WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk) {
       MPI_SAFE_CALL(MPI_File_write(fvtk, buffer, nelem*sizeof(T), MPI_CHAR, &status));
     }
     offset=offset+nelem*sizeof(T);
+    */
   #else
     if(fwrite(buffer, sizeof(float), nelem, fvtk) != nelem) {
       throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
@@ -222,6 +227,7 @@ void Vtk::WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk) {
 
 void Vtk::WriteHeaderString(const char* header, VtkFileHandler fvtk) {
   #ifdef WITH_MPI
+  /*
     MPI_Status status;
     MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_BYTE,
                                     MPI_CHAR, "native", MPI_INFO_NULL ));
@@ -229,6 +235,7 @@ void Vtk::WriteHeaderString(const char* header, VtkFileHandler fvtk) {
       MPI_SAFE_CALL(MPI_File_write(fvtk, header, strlen(header), MPI_CHAR, &status));
     }
     offset=offset+strlen(header);
+  */
   #else
     int rc = fprintf (fvtk, "%s", header);
     if(rc<0) {
@@ -264,7 +271,7 @@ void Vtk::Write(Field<Array3D<complex>> field) {
 Vtk::~Vtk() {
   
 #ifdef WITH_MPI
-  MPI_SAFE_CALL(MPI_File_close(&fileHdl));
+  //MPI_SAFE_CALL(MPI_File_close(&fileHdl));
 #else
   fclose(fileHdl);
 #endif
@@ -290,6 +297,7 @@ void Vtk::WriteScalar(VtkFileHandler fvtk, float* Vin,  const std::string &var_n
   WriteHeaderString(header.c_str(), fvtk);
 
 #ifdef WITH_MPI
+/*
   MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_FLOAT, this->view,
                                   "native", MPI_INFO_NULL));
 
@@ -298,6 +306,7 @@ void Vtk::WriteScalar(VtkFileHandler fvtk, float* Vin,  const std::string &var_n
   MPI_SAFE_CALL(MPI_File_write_all(fvtk, Vin, nwrite, MPI_FLOAT, MPI_STATUS_IGNORE));
 
   this->offset = this->offset + sizeof(float)*nx1*nx2*nx3;
+  */
 #else
   if(fwrite(Vin,sizeof(float),nx1loc*nx2loc*nx3loc,fvtk) != nx1loc*nx2loc*nx3loc) {
     throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
@@ -307,6 +316,7 @@ void Vtk::WriteScalar(VtkFileHandler fvtk, float* Vin,  const std::string &var_n
 
 void WriteHeaderString(const char* header, VtkFileHandler fvtk) {
   #ifdef WITH_MPI
+  /*
     MPI_Status status;
     MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_BYTE,
                                     MPI_CHAR, "native", MPI_INFO_NULL ));
@@ -314,6 +324,7 @@ void WriteHeaderString(const char* header, VtkFileHandler fvtk) {
       MPI_SAFE_CALL(MPI_File_write(fvtk, header, strlen(header), MPI_CHAR, &status));
     }
     offset=offset+strlen(header);
+    */
   #else
     int rc = fprintf (fvtk, "%s", header);
     if(rc<0) {

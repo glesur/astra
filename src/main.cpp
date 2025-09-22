@@ -84,7 +84,23 @@ void LogFinished(Grid &grid, Input &Tint, Kokkos::Timer &timer, TimeIntegrator<A
 }
 
 int main( int argc, char* argv[] ) {
-  Kokkos::initialize( argc, argv );
+    bool initKokkosBeforeMPI = false;
+
+  // When running on GPUS with Omnipath network,
+  // Kokkos needs to be initialised *before* the MPI layer
+#ifdef KOKKOS_ENABLE_CUDA
+  if(std::getenv("PSM2_CUDA") != NULL) {
+    initKokkosBeforeMPI = true;
+  }
+#endif
+
+  if(initKokkosBeforeMPI)  Kokkos::initialize( argc, argv );
+
+#ifdef WITH_MPI
+  MPI_Init(&argc,&argv);
+#endif
+
+  if(!initKokkosBeforeMPI) Kokkos::initialize( argc, argv );
   {
     // Initialize astra screen outputs, logs, profiling
     astra::initialize();
@@ -102,6 +118,10 @@ int main( int argc, char* argv[] ) {
     // Show configuration after initialisation
     input.ShowConfig();
     grid.ShowConfig();
+
+    #ifdef WITH_MPI
+    grid.fft->TestTranspose();
+    #endif
 
     // Init the right hand sides
     auto rhsVector = RightHandSideFactory<Array3D<complex>>::Create(input, &grid);
@@ -150,6 +170,11 @@ int main( int argc, char* argv[] ) {
     astra::cout << "Main: Job completed successfully." << std::endl;
   }
   Kokkos::finalize();
+
+  #ifdef WITH_MPI
+    MPI_Finalize();
+  #endif
+
   return(0);
 }
 

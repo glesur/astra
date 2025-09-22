@@ -27,6 +27,11 @@
 #include "field.hpp"
 #include "bigEndian.hpp"
 
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
+
 // File handler depends on the type of I/O we use
 #ifdef WITH_MPI
 using VtkFileHandler = MPI_File;

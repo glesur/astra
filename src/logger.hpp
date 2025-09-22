@@ -54,7 +54,7 @@ void Logger<T>::Start() {
   astra::cout << " | " << std::setw(col_width) << "time step";
   astra::cout << " | " << std::setw(col_width) << "cell (updates/s)";
 #ifdef WITH_MPI
-  astra::cout << " | " << std::setw(col_width) << "MPI overhead (%)";
+  //astra::cout << " | " << std::setw(col_width) << "MPI overhead (%)";
 #endif
   astra::cout << std::endl;
 }
@@ -78,13 +78,13 @@ void Logger<T>::Show(int ncycles) {
   if(ncycles>=cyclePeriod) {
     astra::cout << " | " << std::setw(col_width) << 1 / rawperf;
 #ifdef WITH_MPI
-  astra::cout << std::fixed;
-    astra::cout << " | " << std::setw(col_width) << mpiOverhead;
+  //astra::cout << std::fixed;
+  //astra::cout << " | " << std::setw(col_width) << mpiOverhead;
 #endif
   } else {
     astra::cout << " | " << std::setw(col_width) << "N/A";
-#if WITH_MPI
-    astra::cout << " | " << std::setw(col_width) << "N/A";
+#ifdef WITH_MPI
+   // astra::cout << " | " << std::setw(col_width) << "N/A";
 #endif
   }
   astra::cout << std::endl;

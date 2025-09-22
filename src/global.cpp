@@ -54,9 +54,9 @@ int initialize() {
     defaultLoopPattern = LoopPattern::TPX;    // On cpus, works best (generally)
   #endif
 
-  #ifdef WITH_MPI
-    Mpi::CheckConfig();
-  #endif
+  //#ifdef WITH_MPI
+  //  Mpi::CheckConfig();
+  //#endif
 
   return(0);
 }   // Initialisation routine for idefix

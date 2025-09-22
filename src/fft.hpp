@@ -12,6 +12,7 @@
 #include <KokkosFFT.hpp>
 #include "arrays.hpp"
 #include "astra.hpp"
+#include "mpi.hpp"
 // A class that wraps KokkosFFT functionality
 using PlanR2CType = KokkosFFT::Plan<Kokkos::DefaultExecutionSpace, Array3D<real>, Array3D<complex>,3>;
 using PlanC2RType = KokkosFFT::Plan<Kokkos::DefaultExecutionSpace, Array3D<complex>, Array3D<real>,3>;
@@ -29,13 +30,18 @@ public:
   // Perform a complex-to-real inverse FFT
   void C2R(const Array3D<complex>& in, Array3D<real>& out);
 
+  void Transpose(const Array3D<complex>& in, Array3D<complex>& out);
+
   // FFT on Host, using the device.
   void R2C_Host(const ArrayHost3D<real>& in, ArrayHost3D<complex>& out);
   void C2R_Host(const ArrayHost3D<complex>& in, ArrayHost3D<real>& out);
+  void TestTranspose();
 private:
   bool havePlan{false};
   std::unique_ptr<PlanR2CType> r2cPlan;
   std::unique_ptr<PlanC2RType> c2rPlan;
+  Array3D<complex> tempXY;
+  Array3D<complex> tempYX;
 };
 
 #endif // FFT_HPP_

@@ -10,6 +10,7 @@ project (Astra VERSION 0.1.00)
 
 set(Astra_LOOP_PATTERN "Default" CACHE STRING "Loop pattern for astra_for")
 option(Astra_DEBUG "Enable Astra debug features (makes the code very slow)" OFF)
+option(Astra_MPI "enable Message Passing Interface parallelisation" OFF)
 
 # load git revision tools
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
@@ -66,6 +67,12 @@ endif()
 if(Astra_DEBUG)
   add_compile_definitions("DEBUG")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+endif()
+
+if(Astra_MPI)
+  add_compile_definitions("WITH_MPI")
+  find_package(MPI REQUIRED)
+  target_link_libraries(astra MPI::MPI_CXX)
 endif()
 
 target_include_directories(astra PUBLIC
