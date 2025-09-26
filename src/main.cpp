@@ -121,6 +121,7 @@ int main( int argc, char* argv[] ) {
 
     #ifdef WITH_MPI
     grid.fft->TestTranspose();
+    grid.fft->TestMPI(std::array<int,3> {8,8,8});
     #endif
 
     // Init the right hand sides

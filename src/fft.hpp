@@ -26,9 +26,11 @@ public:
 
   // Perform a real-to-complex FFT
   void R2C(const Array3D<real>& in, Array3D<complex>& out);
+  void R2C_MPI(const Array3D<real>& in, Array3D<complex>& out);
 
   // Perform a complex-to-real inverse FFT
   void C2R(const Array3D<complex>& in, Array3D<real>& out);
+  void C2R_MPI(const Array3D<complex>& in, Array3D<real>& out);
 
   void Transpose(const Array3D<complex>& in, Array3D<complex>& out);
 
@@ -36,6 +38,7 @@ public:
   void R2C_Host(const ArrayHost3D<real>& in, ArrayHost3D<complex>& out);
   void C2R_Host(const ArrayHost3D<complex>& in, ArrayHost3D<real>& out);
   void TestTranspose();
+  void TestMPI(std::array<int,3>);
 private:
   bool havePlan{false};
   std::unique_ptr<PlanR2CType> r2cPlan;

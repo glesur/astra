@@ -7,6 +7,7 @@
 // ***********************************************************************************
 
 #include <KokkosFFT.hpp>
+#include <Kokkos_Random.hpp>
 
 #include "fft.hpp"
 #include "global.hpp"
@@ -23,21 +24,38 @@ FFT::FFT(std::array<int,3> npr, std::array<int,3> npf) {
 
 // Perform a real-to-complex FFT
 void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out) {
-  astra::pushRegion("FFT::R2C");
+  
+  if(havePlan) {
+    KokkosFFT::execute(*(r2cPlan.get()), in, out);
+  } else {
+    KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, out);
+  }
+
+  astra::popRegion();
+}
+
+void FFT::R2C_MPI(const Array3D<real>& in, Array3D<complex>& out) {
+  astra::pushRegion("FFT::R2C_MPI");
   #ifdef WITH_MPI
+    std::array<int,3> npr,npf;
+    for(int i = 0 ; i < 3 ; i++) {
+      npr[i] = in.extent(i);
+      npf[i] = out.extent(i);
+    }
+    astra::cout << "FFT step 1" << std::endl;
     Array3D<complex> temp("FFT transpose temp", npf[0], npf[1], npf[2]);
     Array3D<complex> temp_t("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
     Array3D<complex> temp_t2("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
-    Kokkos::rfftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,2>{-3,-2});
+    astra::cout << "FFT step 2" << std::endl;
+    KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,2>{-2,-1});
+    astra::cout << "FFT step 3" << std::endl;
     this->Transpose(temp,temp_t);
-    Kokkos::fftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2,std::array<int,1>{-2});
+    astra::cout << "FFT step 4" << std::endl;
+    KokkosFFT::fftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2,std::array<int,1>{-2});
+    astra::cout << "FFT step 5" << std::endl;
     this->Transpose(temp_t2,out);
   #else
-    if(havePlan) {
-      KokkosFFT::execute(*(r2cPlan.get()), in, out);
-    } else {
-      KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, out);
-    }
+    throw std::runtime_error("R2C_MPI called without MPI support");
   #endif
   astra::popRegion();
 }
@@ -45,21 +63,40 @@ void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out) {
 // Perform a complex-to-real inverse FFT
 void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out) {
   astra::pushRegion("FFT::C2R");
-  #ifdef WITH_MPI
-    Array3D<complex> temp("FFT transpose temp", npf[0], npf[1], npf[2]);
-    Array3D<complex> temp_t("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
-    Array3D<complex> temp_t2("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npr[2]);
-    Kokkos::ifftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,1>{-2});
-    this->Transpose(temp,temp_t);
-    Kokkos::ifftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2 ,std::array<int,1>{-2});
-    this->Transpose(temp_t2,temp);
-    Kokkos::irfftn(Kokkos::DefaultExecutionSpace(), temp, out,std::array<int,1>{-3});
-  #else
+  
     if(havePlan) {
       KokkosFFT::execute(*(c2rPlan.get()), in, out);
     } else {
       KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), in, out);
     }
+
+  astra::popRegion();
+}
+
+void FFT::C2R_MPI(const Array3D<complex>& in, Array3D<real>& out) {
+  astra::pushRegion("FFT::C2R_MPI");
+ #ifdef WITH_MPI
+    std::array<int,3> npr,npf;
+    for(int i = 0 ; i < 3 ; i++) {
+      npf[i] = in.extent(i);
+      npr[i] = out.extent(i);
+    }
+    Array3D<complex> temp("FFT transpose temp", npf[0], npf[1], npf[2]);
+    Array3D<complex> temp_t("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+    Array3D<complex> temp_t2("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+    astra::cout << "iFFT step 1" << std::endl;
+    KokkosFFT::ifftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,1>{-2});
+    astra::cout << "iFFT step 2" << std::endl;
+    this->Transpose(temp,temp_t);
+    astra::cout << "iFFT step 3" << std::endl;
+    KokkosFFT::ifftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2 ,std::array<int,1>{-2});
+    astra::cout << "iFFT step 4" << std::endl;
+    this->Transpose(temp_t2,temp);
+    astra::cout << "iFFT step 5" << std::endl;
+    KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), temp, out,std::array<int,1>{-1});
+    astra::cout << "iFFT step 6" << std::endl;
+  #else
+    throw std::runtime_error("C2R_MPI called without MPI support");
   #endif
   astra::popRegion();
 }
@@ -269,4 +306,104 @@ void FFT::TestTranspose() {
   } else {
     throw std::runtime_error("Transpose test failed @ rank " + std::to_string(rank));
   }
+}
+
+void FFT::TestMPI(std::array<int,3> npr_glob) {
+  if(npr_glob[0] % astra::psize != 0 || npr_glob[1] % astra::psize != 0) {
+    throw std::runtime_error("Global problem size must be dividible by the number of MPI processes");
+  }
+
+  // Make an array with the local problem size
+  std::array<int,3> npr = npr_glob;
+  npr[0] /= astra::psize;
+  std::array<int,3> npf = npr;
+  npf[2] = npr[2]/2+1;
+  std::array<int,3> npf_glob = npr_glob;
+  npf_glob[2] = npr_glob[2]/2+1;
+
+  Kokkos::View<real***, Kokkos::LayoutRight, Device> localReal_right("local real array", npr);
+  Array3D<real> localReal("local real array", npr);
+
+  Kokkos::View<real***, Kokkos::LayoutRight, Device> globalReal_right("global real array", npr_glob);
+  Array3D<real> globalReal("global real array", npr_glob);
+
+  // Compute a dummy real array
+  if(astra::prank == 0) {
+    Kokkos::Random_XorShift64_Pool<> random_pool(12345);
+    Kokkos::fill_random(globalReal_right, random_pool, 1);
+  }
+  // Scatter to make local arrays
+  // And broadcast the global the array
+  MPI_Scatter(globalReal_right.data(), npr[0]*npr[1]*npr[2],
+              MPI_Astra_real,
+              localReal_right.data(), npr[0]*npr[1]*npr[2],
+              MPI_Astra_real,
+              0, MPI_COMM_WORLD);
+
+  MPI_Bcast(globalReal_right.data(), npr_glob[0]*npr_glob[1]*npr_glob[2],
+            MPI_Astra_real, 0, MPI_COMM_WORLD);
+  
+  // Change array Layout
+  astra_for("Reshape global",0, npr_glob[0],
+                            0, npr_glob[1],
+                            0, npr_glob[2],
+    KOKKOS_LAMBDA(int i, int j, int k) {
+      globalReal(i,j,k) = globalReal_right(i,j,k);
+    });
+
+  // Change array Layout
+  astra_for("Reshape local",0, npr[0],
+                            0, npr[1],
+                            0, npr[2],
+    KOKKOS_LAMBDA(int i, int j, int k) {
+      localReal(i,j,k) = localReal_right(i,j,k);
+    });
+
+    // Create the complex arrays
+    Array3D<complex> localComplex("local complex array", npf);
+    Array3D<complex> globalComplex("global complex array", npf_glob);
+
+    // Compute the full serial fft
+    KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), globalReal, globalComplex);
+
+    // Compute the parallele fft
+    this->R2C_MPI(localReal, localComplex);
+
+    // Check on a per-process that they all agree
+    bool error = false;
+    int offset = npf[0]*astra::prank;
+
+    astra_for("Reshape local",0, npf[0],
+                            0, npf[1],
+                            0, npf[2],
+    KOKKOS_LAMBDA(int i, int j, int k) {
+      int iglob = i+offset;
+      real norm = std::pow(localComplex(i,j,k).real()-globalComplex(iglob,j,k).real(),2)
+                  +std::pow(localComplex(i,j,k).real()-globalComplex(iglob,j,k).real(),2);
+
+      norm=std::sqrt(norm);
+
+      if(norm > 1e-10) {
+        Kokkos::abort("incoherent values after MPI ifft");
+      }
+    });
+
+    // Compute the parallele fft
+    this->C2R_MPI(localComplex, localReal);
+
+    // Check on a per-process that they all agree
+    offset = npr[0]*astra::prank;
+
+    astra_for("Reshape local",0, npr[0],
+                            0, npr[1],
+                            0, npr[2],
+    KOKKOS_LAMBDA(int i, int j, int k) {
+      int iglob = i+offset;
+      real norm = std::fabs(localReal(i,j,k)-globalReal(iglob,j,k));
+
+      if(norm > 1e-10) {
+        Kokkos::abort("incoherent values after MPI ifft");
+      }
+    });
+
 }
