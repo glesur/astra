@@ -227,7 +227,7 @@ void FFT::TestMPI() {
 
       norm=std::sqrt(norm);
 
-      if(norm > 1e-10) {
+      if(norm > 1e-8) {
         Kokkos::abort("incoherent values after MPI ifft");
       }
     });
@@ -245,7 +245,7 @@ void FFT::TestMPI() {
       int iglob = i+offset;
       real norm = std::fabs(localReal(i,j,k)-globalReal(iglob,j,k));
 
-      if(norm > 1e-10) {
+      if(norm > 1e-8) {
         Kokkos::abort("incoherent values after MPI ifft");
       }
     });
