@@ -34,12 +34,12 @@ public:
   FFT(std::array<int,3> npr, std::array<int,3> npf);
 
   // Perform a real-to-complex FFT
-  void R2C(const Array3D<real>& in, Array3D<complex>& out);
-  void R2C_MPI(const Array3D<real>& in, Array3D<complex>& out);
+  void R2C(const Array3D<real>& in, Array3D<complex>& out, bool transpose = true);
+  void R2C_MPI(const Array3D<real>& in, Array3D<complex>& out, bool transpose = true);
 
   // Perform a complex-to-real inverse FFT
-  void C2R(const Array3D<complex>& in, Array3D<real>& out);
-  void C2R_MPI(const Array3D<complex>& in, Array3D<real>& out);
+  void C2R(const Array3D<complex>& in, Array3D<real>& out, bool transpose = true);
+  void C2R_MPI(const Array3D<complex>& in, Array3D<real>& out, bool transpose = true);
 
   // FFT on Host, using the device.
   void R2C_Host(const ArrayHost3D<real>& in, ArrayHost3D<complex>& out);
@@ -56,8 +56,8 @@ private:
   std::unique_ptr<PlanC2RType2D> c2rMPIPlan_axis1t3;
 
   // Forward (R2C)
-  std::unique_ptr<PlanR2CType2D> r2cMPIPlan_axis23;
-  std::unique_ptr<PlanC2CType1D> c2cfMPIPlan_axis1t;
+  std::unique_ptr<PlanR2CType2D> r2cMPIPlan_axis1t3;
+  std::unique_ptr<PlanC2CType1D> c2cfMPIPlan_axis2;
   
   // Temporary arrays for MPI FFTs
   Array3D<complex> tempComplex;

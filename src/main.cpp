@@ -47,8 +47,8 @@ void LogFinished(Grid &grid, Input &Tint, Kokkos::Timer &timer, TimeIntegrator<A
   n_seconds = divres.rem;
 
   astra::cout << "Main: Reached t=" << timeIntegrator->GetTime() << std::endl;
-  double perfs = timer.seconds() / grid.npr_glob[IDIR] / grid.npr_glob[JDIR]
-                    / grid.npr_glob[KDIR] / timeIntegrator->GetCycle() * astra::psize;
+  double perfs = timer.seconds() / grid.npr[IDIR] / grid.npr[JDIR]
+                    / grid.npr[KDIR] / timeIntegrator->GetCycle();
   astra::cout << "Main: Completed in ";
     if (n_days > 0) {
       astra::cout << n_days << " day";

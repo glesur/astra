@@ -64,8 +64,8 @@ void Logger<T>::Show(int ncycles) {
   if(isSilent) return;
   if(ncycles % cyclePeriod != 0 && ncycles != 0) return;
 
-  double rawperf = (timer.seconds()-lastLog)/grid->npr[IDIR]/grid->npr[IDIR]
-                      /grid->npr[IDIR]/cyclePeriod;
+  double rawperf = (timer.seconds()-lastLog)/grid->npr[IDIR]/grid->npr[JDIR]
+                      /grid->npr[KDIR]/cyclePeriod;
 
 
   lastLog = timer.seconds();

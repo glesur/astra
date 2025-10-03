@@ -61,20 +61,23 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
       this->c2rMPIPlan_axis1t3 = std::make_unique<PlanC2RType2D>(Kokkos::DefaultExecutionSpace(), tempTransposedComplex, tempTransposedReal, KokkosFFT::Direction::backward, std::array<int,2>{-2,-1});
       
       // MPI R2C plans
-      this->r2cMPIPlan_axis23 = std::make_unique<PlanR2CType2D>(Kokkos::DefaultExecutionSpace(), tempReal, tempComplex, KokkosFFT::Direction::forward, std::array<int,2>{-2,-1});
-      this->c2cfMPIPlan_axis1t = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempTransposedComplex, tempTransposedComplex2, KokkosFFT::Direction::forward, std::array<int,1>{-2});
+      this->r2cMPIPlan_axis1t3 = std::make_unique<PlanR2CType2D>(Kokkos::DefaultExecutionSpace(), tempTransposedReal, tempTransposedComplex, KokkosFFT::Direction::forward, std::array<int,2>{-2,-1});      
+      this->c2cfMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempComplex, tempComplex2, KokkosFFT::Direction::forward, std::array<int,1>{-2});
     
       this->transposeComplex = std::make_unique<Transpose<complex>>(npf);
       this->transposeReal = std::make_unique<Transpose<real>>(npr);
+
+      // Check everything works
+      this->TestMPI();
       #endif
     havePlan = true;
   };
 
 // Perform a real-to-complex FFT
-void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out) {
+void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out, bool transpose) {
   astra::pushRegion("FFT::R2C");
   #ifdef WITH_MPI
-    R2C_MPI(in, out);
+    R2C_MPI(in, out, transpose);
   #else
     if(havePlan) {
       KokkosFFT::execute(*(r2cPlan.get()), in, out);
@@ -85,21 +88,26 @@ void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out) {
   astra::popRegion();
 }
 
-void FFT::R2C_MPI(const Array3D<real>& in, Array3D<complex>& out) {
+void FFT::R2C_MPI(const Array3D<real>& in, Array3D<complex>& out, bool transpose) {
   astra::pushRegion("FFT::R2C_MPI");
+  
+  if(transpose) {
+    this->transposeReal->Apply(in,tempTransposedReal);
+    KokkosFFT::execute(*(r2cMPIPlan_axis1t3.get()), tempTransposedReal, tempTransposedComplex);
+  } else {
+    KokkosFFT::execute(*(r2cMPIPlan_axis1t3.get()), in, tempTransposedComplex);
+  }
+  this->transposeComplex->Apply(tempTransposedComplex,tempComplex);
+  KokkosFFT::execute(*(c2cfMPIPlan_axis2.get()), tempComplex, out);
 
-  KokkosFFT::execute(*(r2cMPIPlan_axis23.get()), in, tempComplex);
-  transposeComplex->Apply(tempComplex,tempTransposedComplex);
-  KokkosFFT::execute(*(c2cfMPIPlan_axis1t.get()), tempTransposedComplex, tempTransposedComplex2);
-  transposeComplex->Apply(tempTransposedComplex2,out);
   astra::popRegion();
 }
 
 // Perform a complex-to-real inverse FFT
-void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out) {
+void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out, bool transpose) {
   astra::pushRegion("FFT::C2R");
     #ifdef WITH_MPI
-      C2R_MPI(in,out);
+      C2R_MPI(in,out,transpose);
     #else
       if(havePlan) {
         KokkosFFT::execute(*(c2rPlan.get()), in, out);
@@ -111,14 +119,16 @@ void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out) {
   astra::popRegion();
 }
 
-void FFT::C2R_MPI(const Array3D<complex>& in, Array3D<real>& out) {
+void FFT::C2R_MPI(const Array3D<complex>& in, Array3D<real>& out, bool transpose) {
   astra::pushRegion("FFT::C2R_MPI");
-
   KokkosFFT::execute(*(c2ciMPIPlan_axis2.get()), in, tempComplex);
   this->transposeComplex->Apply(tempComplex,tempTransposedComplex);
-  KokkosFFT::execute(*(c2rMPIPlan_axis1t3.get()), tempTransposedComplex, tempTransposedReal);
-  this->transposeReal->Apply(tempTransposedReal,out);    
-
+  if(transpose) {
+    KokkosFFT::execute(*(c2rMPIPlan_axis1t3.get()), tempTransposedComplex, tempTransposedReal);
+    this->transposeReal->Apply(tempTransposedReal,out);    
+  } else {
+    KokkosFFT::execute(*(c2rMPIPlan_axis1t3.get()), tempTransposedComplex, out);
+  }
   astra::popRegion();
 }
 
@@ -127,11 +137,7 @@ void FFT::R2C_Host(const ArrayHost3D<real>& in, ArrayHost3D<complex>& out) {
   astra::pushRegion("FFT::R2C_Host");
   Array3D<real> inDev = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), in);
   Array3D<complex> outDev = Kokkos::create_mirror_view(Kokkos::DefaultExecutionSpace(), out);
-  if(havePlan) {
-    KokkosFFT::execute(*(r2cPlan.get()), inDev, outDev);
-  } else {
-    KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), inDev, outDev);
-  }
+  this->R2C(inDev, outDev);
   Kokkos::deep_copy(out, outDev);
   astra::popRegion();
 }
@@ -140,11 +146,7 @@ void FFT::C2R_Host(const ArrayHost3D<complex>& in, ArrayHost3D<real>& out) {
   astra::pushRegion("FFT::C2R_Host");
   Array3D<complex> inDev = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), in);
   Array3D<real> outDev = Kokkos::create_mirror_view(Kokkos::DefaultExecutionSpace(), out);
-  if(havePlan) {
-    KokkosFFT::execute(*(c2rPlan.get()), inDev, outDev);
-  } else {
-    KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), inDev, outDev);
-  }
+  this->C2R(inDev, outDev);
   Kokkos::deep_copy(out, outDev);
   astra::popRegion();
 }

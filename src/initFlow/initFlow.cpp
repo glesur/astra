@@ -126,7 +126,6 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
                               kx[JDIR](j)*kx[JDIR](j)+
                               kx[KDIR](k)*kx[KDIR](k))
                                 /(2.0*M_PI);
-                                astra::cout << "ktot=" << ktot << std::endl;
         if(ktot*noiseCutLength < 1.0) {
           for(auto& it : field) {
             auto view = it.second;
