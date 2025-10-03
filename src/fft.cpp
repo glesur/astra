@@ -13,12 +13,56 @@
 #include "global.hpp"
 #include "loop.hpp"
 
-FFT::FFT(std::array<int,3> npr, std::array<int,3> npf) {
+template <typename T> void ShowExtent(T array) {
+  for(int i = 0 ; i < 3 ; i++) {
+    astra::cout << array.extent(i) << "  ";
+  }
+  astra::cout << std::endl;
+}
+FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
+    this->npf_glob = npf_glob;
+    this->npr_glob = npr_glob;
+    // Local dimensions
+    // We assume a decomposition along the first dimension only for now
+    this->npr = npr_glob;
+    this->npf = npf_glob;
+    this->npr_t = npr_glob;
+
+    #ifdef WITH_MPI
+      this->npr[0] = npr_glob[0]/astra::psize;
+      this->npf[0] = npf_glob[0]/astra::psize;
+      this->npr_t[0] = npr_glob[1]/astra::psize;
+      this->npr_t[1] = npr_glob[0];
+    #endif
+
     Array3D<real> tempReal("FFT temp real", npr);
     Array3D<complex> tempComplex("FFT temp complex", npf);
+
     // Create the FFT plans
     this->r2cPlan = std::make_unique<PlanR2CType>(Kokkos::DefaultExecutionSpace(), tempReal, tempComplex, KokkosFFT::Direction::forward, std::array<int,3>{-3,-2,-1});
     this->c2rPlan = std::make_unique<PlanC2RType>(Kokkos::DefaultExecutionSpace(), tempComplex, tempReal, KokkosFFT::Direction::backward, std::array<int,3>{-3,-2,-1});
+    
+    #ifdef WITH_MPI
+      // Allocate temporary arrays for domain-splited FFTs and transposes
+      this->tempComplex = Array3D<complex>("FFT temp complex", npf);
+      this->tempTransposedComplex = Array3D<complex>("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+      this->tempTransposedComplex2 = Array3D<complex>("FFT transpose temp2", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+      Array3D<complex> tempComplex2("FFT temp complex", npf);
+
+      this->c2rMPIPlan_axis3 = std::make_unique<PlanC2RType1D>(Kokkos::DefaultExecutionSpace(), tempComplex, tempReal, KokkosFFT::Direction::backward, std::array<int,1>{-1});
+      // Axis 1 transposed is axis2 for the fft library
+      this->c2ciMPIPlan_axis1t = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempTransposedComplex, tempTransposedComplex2, KokkosFFT::Direction::backward, std::array<int,1>{-2});
+      this->c2ciMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempComplex, tempComplex2, KokkosFFT::Direction::backward, std::array<int,1>{-2});
+
+      // The R2C plans
+      astra::cout << "R2C MPI plan" << std::endl;
+      astra::cout << "in:";
+      ShowExtent(tempReal);
+      astra::cout << "; out:";
+      ShowExtent(tempComplex);
+      this->r2cMPIPlan_axis23 = std::make_unique<PlanR2CType2D>(Kokkos::DefaultExecutionSpace(), tempReal, tempComplex, KokkosFFT::Direction::forward, std::array<int,2>{-2,-1});
+      this->c2cfMPIPlan_axis1t = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempTransposedComplex, tempTransposedComplex2, KokkosFFT::Direction::forward, std::array<int,1>{-2});
+    #endif
     havePlan = true;
   };
 
@@ -37,23 +81,29 @@ void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out) {
 void FFT::R2C_MPI(const Array3D<real>& in, Array3D<complex>& out) {
   astra::pushRegion("FFT::R2C_MPI");
   #ifdef WITH_MPI
-    std::array<int,3> npr,npf;
-    for(int i = 0 ; i < 3 ; i++) {
-      npr[i] = in.extent(i);
-      npf[i] = out.extent(i);
-    }
+    //std::array<int,3> npr,npf;
+    //for(int i = 0 ; i < 3 ; i++) {
+    //  npr[i] = in.extent(i);
+    //  npf[i] = out.extent(i);
+    //}
     astra::cout << "FFT step 1" << std::endl;
-    Array3D<complex> temp("FFT transpose temp", npf[0], npf[1], npf[2]);
-    Array3D<complex> temp_t("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
-    Array3D<complex> temp_t2("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+    //Array3D<complex> temp("FFT transpose temp", npf[0], npf[1], npf[2]);
+    //Array3D<complex> temp_t("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+    //Array3D<complex> temp_t2("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
     astra::cout << "FFT step 2" << std::endl;
-    KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,2>{-2,-1});
+    astra::cout << "in:";
+    ShowExtent(in);
+    astra::cout << "; out:";
+    ShowExtent(tempComplex);
+    //KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,2>{-2,-1});
+    KokkosFFT::execute(*(r2cMPIPlan_axis23.get()), in, tempComplex);
     astra::cout << "FFT step 3" << std::endl;
-    this->Transpose(temp,temp_t);
+    this->Transpose(tempComplex,tempTransposedComplex);
     astra::cout << "FFT step 4" << std::endl;
-    KokkosFFT::fftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2,std::array<int,1>{-2});
+    //KokkosFFT::fftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2,std::array<int,1>{-2});
+    KokkosFFT::execute(*(c2cfMPIPlan_axis1t.get()), tempTransposedComplex, tempTransposedComplex2);
     astra::cout << "FFT step 5" << std::endl;
-    this->Transpose(temp_t2,out);
+    this->Transpose(tempTransposedComplex2,out);
   #else
     throw std::runtime_error("R2C_MPI called without MPI support");
   #endif
@@ -76,24 +126,27 @@ void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out) {
 void FFT::C2R_MPI(const Array3D<complex>& in, Array3D<real>& out) {
   astra::pushRegion("FFT::C2R_MPI");
  #ifdef WITH_MPI
-    std::array<int,3> npr,npf;
-    for(int i = 0 ; i < 3 ; i++) {
-      npf[i] = in.extent(i);
-      npr[i] = out.extent(i);
-    }
-    Array3D<complex> temp("FFT transpose temp", npf[0], npf[1], npf[2]);
-    Array3D<complex> temp_t("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
-    Array3D<complex> temp_t2("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+    //std::array<int,3> npr,npf;
+    //for(int i = 0 ; i < 3 ; i++) {
+    //  npf[i] = in.extent(i);
+    //  npr[i] = out.extent(i);
+    //}
+    //Array3D<complex> temp("FFT transpose temp", npf[0], npf[1], npf[2]);
+    //Array3D<complex> temp_t("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
+    //Array3D<complex> temp_t2("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
     astra::cout << "iFFT step 1" << std::endl;
-    KokkosFFT::ifftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,1>{-2});
+    //KokkosFFT::ifftn(Kokkos::DefaultExecutionSpace(), in, temp,std::array<int,1>{-2});
+    KokkosFFT::execute(*(c2ciMPIPlan_axis2.get()), in, tempComplex);
     astra::cout << "iFFT step 2" << std::endl;
-    this->Transpose(temp,temp_t);
+    this->Transpose(tempComplex,tempTransposedComplex);
     astra::cout << "iFFT step 3" << std::endl;
-    KokkosFFT::ifftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2 ,std::array<int,1>{-2});
+    //KokkosFFT::ifftn(Kokkos::DefaultExecutionSpace(), temp_t, temp_t2 ,std::array<int,1>{-2});
+    KokkosFFT::execute(*(c2ciMPIPlan_axis1t.get()), tempTransposedComplex, tempTransposedComplex2);
     astra::cout << "iFFT step 4" << std::endl;
-    this->Transpose(temp_t2,temp);
+    this->Transpose(tempTransposedComplex2,tempComplex);
     astra::cout << "iFFT step 5" << std::endl;
-    KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), temp, out,std::array<int,1>{-1});
+    //KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), temp, out,std::array<int,1>{-1});
+    KokkosFFT::execute(*(c2rMPIPlan_axis3.get()), tempComplex, out);
     astra::cout << "iFFT step 6" << std::endl;
   #else
     throw std::runtime_error("C2R_MPI called without MPI support");
@@ -308,7 +361,7 @@ void FFT::TestTranspose() {
   }
 }
 
-void FFT::TestMPI(std::array<int,3> npr_glob) {
+void FFT::TestMPI() {
   if(npr_glob[0] % astra::psize != 0 || npr_glob[1] % astra::psize != 0) {
     throw std::runtime_error("Global problem size must be dividible by the number of MPI processes");
   }

@@ -36,14 +36,19 @@ Grid::Grid(Input &input) {
     // #ifundef MPI
     npr[dir] = npr_glob[dir];
     npf[dir] = npf_glob[dir];
-    xbeg[dir] = xbeg_glob[dir];
+    #ifdef WITH_MPI
+      // We assume a decomposition along the first dimension only for now
+      npr[0] = npr_glob[0]/astra::psize;
+      npf[0] = npf_glob[0]/astra::psize;
+    #endif
+    xbeg[dir] = xbeg_glob[dir] + astra::prank* (xend_glob[dir]-xbeg_glob[dir])/astra::psize;
     xend[dir] = xend_glob[dir];
 
     // #endif
     x_glob[dir] = Array1D<real>("Grid_x_glob",npr_glob[dir]);
     x[dir] = Array1D<real>("Grid_x",npr[dir]);
 
-    dx[dir] = (xend[dir] - xbeg[dir])/npr_glob[dir];
+    dx[dir] = (xend_glob[dir] - xbeg_glob[dir])/npr_glob[dir];
     kmax[dir] = M_PI/dx[dir];
   }
 
@@ -77,18 +82,25 @@ void Grid::InitGrid() {
 
   // initialise wavenumbers
   for(int dir = 0 ; dir < 3 ; dir++) {
-    real d = (xend[dir]-xbeg[dir])/(2.0*M_PI*static_cast<real>(npr_glob[dir]));
+    real d = (xend_glob[dir]-xbeg_glob[dir])/(2.0*M_PI*static_cast<real>(npr_glob[dir]));
     if(dir < KDIR) kx_glob[dir] = KokkosFFT::fftfreq(Device(), npr_glob[dir], d);
     else kx_glob[dir] = KokkosFFT::rfftfreq(Device(), npr_glob[dir], d);
   }
 
-  // todo: MPI again
+  // Get local wavenumbers
   for(int dir = 0 ; dir < 3 ; dir++) {
-    kx[dir] = kx_glob[dir];
+    kx[dir] = Array1D<real>("Grid_kx",npf[dir]);
+    auto k = kx[dir];
+    auto kglob = kx_glob[dir];
+    const int offset = (dir==IDIR) ? astra::prank* (npf_glob[dir])/astra::psize : 0;
+
+    astra_for("Init k array", 0, npf[dir],
+    KOKKOS_LAMBDA(int i) {
+      k(i) = kglob(i+offset);
+    });
   }
   // Nothing to do here for now
-  this->fft = std::make_unique<FFT>(npr, npf);
-  //this->fft = std::make_unique<FFT>();
+  this->fft = std::make_unique<FFT>(npr_glob, npf_glob);
 
   astra::popRegion();
 }
