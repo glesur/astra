@@ -16,6 +16,9 @@
 #include <vector>
 #include <memory>
 #include <Kokkos_Core.hpp>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 #include "input.hpp"
 #include "version.hpp"

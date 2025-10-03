@@ -28,7 +28,6 @@ AstraOutStream cout;
 AstraErrStream cerr;
 Profiler prof;
 LoopPattern defaultLoopPattern;
-FFT fft;
 
 #ifdef DEBUG
 static int regionIndent = 0;

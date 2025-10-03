@@ -17,6 +17,7 @@
 #include "grid.hpp"
 #include "global.hpp"
 #include "loop.hpp"
+#include "fft.hpp"
 
 
 Advection::Advection(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>(input, grid) {

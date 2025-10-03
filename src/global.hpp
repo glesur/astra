@@ -12,7 +12,6 @@
 #include <vector>
 #include "arrays.hpp"
 #include "npy.hpp"
-#include "fft.hpp"
 
 namespace astra {
 int initialize();   // Initialisation routine for idefix
@@ -29,7 +28,6 @@ extern AstraErrStream cerr;              //< custom cerr for idefix
 extern Profiler prof;                   //< profiler (for memory & performance usage)
 extern LoopPattern defaultLoopPattern;  //< default loop patterns (for idefix_for loops)
 extern bool warningsAreErrors;    //< whether warnings should be considered as errors
-extern FFT fft;                     //< FFT wrapper class
 
 void pushRegion(const std::string&);
 void popRegion();

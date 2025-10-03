@@ -12,6 +12,7 @@
 #include "loop.hpp"
 #include "reduce.hpp"
 #include "global.hpp"
+#include "fft.hpp"
 
 Hydro::Hydro(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>(input, grid) {
   // Allocate all of the temporary arrays
@@ -181,6 +182,11 @@ real Hydro::GetInvDt() {
 
         },
     Kokkos::Max<real>(invdt));
+
+  #ifdef WITH_MPI
+    // Across all MPI processes
+    MPI_Allreduce(MPI_IN_PLACE, &invdt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  #endif
   astra::popRegion();
   return invdt;
 }

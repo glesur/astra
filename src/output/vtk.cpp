@@ -22,6 +22,7 @@
 #include "global.hpp"
 #include "arrays.hpp"
 #include "bigEndian.hpp"
+#include "fft.hpp"
 
 
 /*init the object */

@@ -19,6 +19,8 @@
 #include "timeIntegratorFactory.hpp"
 #include "rightHandSideFactory.hpp"
 #include "vtk.hpp"
+#include "transpose.hpp"
+#include "fft.hpp"
 
 
 void WriteFile(Input &input, 
@@ -120,7 +122,10 @@ int main( int argc, char* argv[] ) {
     grid.ShowConfig();
 
     #ifdef WITH_MPI
-    grid.fft->TestTranspose();
+    Transpose<complex> transpose_c(grid.npf);
+    transpose_c.Test();
+    Transpose<real> transpose_r(grid.npr);
+    transpose_r.Test();
     grid.fft->TestMPI();
     #endif
 
