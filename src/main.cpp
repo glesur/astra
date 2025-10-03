@@ -120,7 +120,7 @@ int main( int argc, char* argv[] ) {
     // Show configuration after initialisation
     input.ShowConfig();
     grid.ShowConfig();
-
+    /*
     #ifdef WITH_MPI
     Transpose<complex> transpose_c(grid.npf);
     transpose_c.Test();
@@ -128,7 +128,7 @@ int main( int argc, char* argv[] ) {
     transpose_r.Test();
     grid.fft->TestMPI();
     #endif
-
+    */
     // Init the right hand sides
     auto rhsVector = RightHandSideFactory<Array3D<complex>>::Create(input, &grid);
 

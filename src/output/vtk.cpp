@@ -31,6 +31,47 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
   // Initialise the root tag (used for MPI non-collective I/Os)
   this->isRoot = astra::prank == 0;
   this->grid = grid;
+
+  /* Note that there are two kinds of dimensions:
+     - nx1, nx2, nx3, derived from the grid, which are the global dimensions
+     - nx1loc,nx2loc,n3loc, which are the local dimensions of the current datablock
+  */
+
+  // Create the coordinate array required in VTK files
+  this->nx1 = grid->npr_glob[IDIR];
+  this->nx2 = grid->npr_glob[JDIR];
+  this->nx3 = grid->npr_glob[KDIR];
+
+  this->nx1loc = grid->npr[IDIR];
+  this->nx2loc = grid->npr[JDIR];
+  this->nx3loc = grid->npr[KDIR];
+
+  // Temporary storage on host for 3D arrays
+  this->vect3D = new float[nx1loc*nx2loc*nx3loc];
+
+  // Create MPI view when using MPI I/O
+  #ifdef WITH_MPI
+    int start[3];
+    int size[3];
+    int subsize[3];
+
+    for(int dir = 0; dir < 3 ; dir++) {
+      // VTK assumes Fortran array ordering, hence arrays dimensions are filled backwards
+      start[2-dir] = 0;
+      size[2-dir] = grid->npr_glob[dir];
+      subsize[2-dir] = grid->npr[dir];
+    }
+    // Fix starting point along x
+    start[2] = grid->npr[0]*astra::prank;
+
+    for(int dir = 0; dir < 3 ; dir++) {
+      astra::cout << "start=" << start[dir] << " size=" << size[dir]
+                  << " subsize=" << subsize[dir] << std::endl;
+    }
+    MPI_Type_create_subarray(3, size, subsize, start, MPI_ORDER_C, MPI_FLOAT, &this->view);
+    MPI_Type_commit(&this->view);
+  #endif // WITH_MPI
+
   // initialize output path
   if(input.CheckEntry("Output","vtk_dir")>=0) {
     outputDirectory = input.Get<std::string>("Output","vtk_dir",0);
@@ -38,7 +79,7 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
     outputDirectory = "./";
   }
 
-  if(astra::prank==0) {
+  if(isRoot) {
     if(!fs::is_directory(outputDirectory)) {
       try {
         if(!fs::create_directory(outputDirectory)) {
@@ -75,14 +116,14 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
 
   // Open file and write header
   #ifdef WITH_MPI
-  /*
+    this->comm = MPI_COMM_WORLD;
     MPI_Barrier(this->comm);
     // Open file for creating, return error if file already exists.
-    MPI_SAFE_CALL(MPI_File_open(this->comm, filename.c_str(),
-                                MPI_MODE_CREATE | MPI_MODE_RDWR
-                                | MPI_MODE_EXCL | MPI_MODE_UNIQUE_OPEN,
-                                MPI_INFO_NULL, &this->fileHdl));
-    this->offset = 0;*/
+    MPI_File_open(this->comm, filename.c_str(),
+                  MPI_MODE_CREATE | MPI_MODE_RDWR
+                  | MPI_MODE_EXCL | MPI_MODE_UNIQUE_OPEN,
+                  MPI_INFO_NULL, &this->fileHdl);
+    this->offset = 0;
   #else
     fileHdl = fopen(filename.c_str(),"wb");
 
@@ -94,46 +135,7 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
     }
   #endif
 
-  /* Note that there are two kinds of dimensions:
-     - nx1, nx2, nx3, derived from the grid, which are the global dimensions
-     - nx1loc,nx2loc,n3loc, which are the local dimensions of the current datablock
-  */
-
-  // Create the coordinate array required in VTK files
-  this->nx1 = grid->npr_glob[IDIR];
-  this->nx2 = grid->npr_glob[JDIR];
-  this->nx3 = grid->npr_glob[KDIR];
-
-  this->nx1loc = grid->npr[IDIR];
-  this->nx2loc = grid->npr[JDIR];
-  this->nx3loc = grid->npr[KDIR];
-
-  // Temporary storage on host for 3D arrays
-  this->vect3D = new float[nx1loc*nx2loc*nx3loc];
-
-  // Create MPI view when using MPI I/O
-#ifdef WITH_MPI
-/*
-  int start[3];
-  int size[3];
-  int subsize[3];
-
-  for(int dir = 0; dir < 3 ; dir++) {
-    // VTK assumes Fortran array ordering, hence arrays dimensions are filled backwards
-    start[2-dir] = data->gbeg[dir]-grid.nghost[dir];
-    size[2-dir] = grid.np_int[dir];
-    subsize[2-dir] = data->np_int[dir];
-  }
-
-  MPI_SAFE_CALL(MPI_Type_create_subarray(3, size, subsize, start, MPI_ORDER_C,
-                                         MPI_FLOAT, &this->view));
-  MPI_SAFE_CALL(MPI_Type_commit(&this->view));
-  this->comm = datain->mygrid->CartComm;
-  this->isRoot =   (data->mygrid->xproc[0] == 0)
-                && (data->mygrid->xproc[1] == 0)
-                && (data->mygrid->xproc[2] == 0);
-*/
-#endif
+  
 
   // Write the header
   std::string header;
@@ -210,15 +212,14 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
 
 void Vtk::WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk) {
   #ifdef WITH_MPI
-  /*
+  
     MPI_Status status;
-    MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_BYTE, MPI_CHAR,
-                                    "native", MPI_INFO_NULL ));
+    MPI_File_set_view(fvtk, this->offset, MPI_BYTE, MPI_CHAR, "native", MPI_INFO_NULL );
     if(this->isRoot) {
-      MPI_SAFE_CALL(MPI_File_write(fvtk, buffer, nelem*sizeof(T), MPI_CHAR, &status));
+      MPI_File_write(fvtk, buffer, nelem*sizeof(float), MPI_BYTE, &status);
     }
-    offset=offset+nelem*sizeof(T);
-    */
+    offset=offset+nelem*sizeof(float);
+    
   #else
     if(fwrite(buffer, sizeof(float), nelem, fvtk) != nelem) {
       throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
@@ -228,15 +229,13 @@ void Vtk::WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk) {
 
 void Vtk::WriteHeaderString(const char* header, VtkFileHandler fvtk) {
   #ifdef WITH_MPI
-  /*
+  
     MPI_Status status;
-    MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_BYTE,
-                                    MPI_CHAR, "native", MPI_INFO_NULL ));
+    MPI_File_set_view(fvtk, this->offset, MPI_BYTE, MPI_CHAR, "native", MPI_INFO_NULL );
     if(this->isRoot) {
-      MPI_SAFE_CALL(MPI_File_write(fvtk, header, strlen(header), MPI_CHAR, &status));
+      MPI_File_write(fvtk, header, strlen(header), MPI_CHAR, &status);
     }
     offset=offset+strlen(header);
-  */
   #else
     int rc = fprintf (fvtk, "%s", header);
     if(rc<0) {
@@ -272,7 +271,8 @@ void Vtk::Write(Field<Array3D<complex>> field) {
 Vtk::~Vtk() {
   
 #ifdef WITH_MPI
-  //MPI_SAFE_CALL(MPI_File_close(&fileHdl));
+  MPI_Type_free(&this->view);
+  MPI_File_close(&fileHdl);
 #else
   fclose(fileHdl);
 #endif
@@ -298,38 +298,18 @@ void Vtk::WriteScalar(VtkFileHandler fvtk, float* Vin,  const std::string &var_n
   WriteHeaderString(header.c_str(), fvtk);
 
 #ifdef WITH_MPI
-/*
-  MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_FLOAT, this->view,
-                                  "native", MPI_INFO_NULL));
+  MPI_File_set_view(fvtk, this->offset, MPI_FLOAT, this->view,
+                                  "native", MPI_INFO_NULL);
 
   int nwrite = nx1loc*nx2loc*nx3loc;
-  //if(idfx::prank != 0) nwrite = 0;
-  MPI_SAFE_CALL(MPI_File_write_all(fvtk, Vin, nwrite, MPI_FLOAT, MPI_STATUS_IGNORE));
+
+  MPI_File_write_all(fvtk, Vin, nwrite, MPI_FLOAT, MPI_STATUS_IGNORE);
 
   this->offset = this->offset + sizeof(float)*nx1*nx2*nx3;
-  */
+  
 #else
   if(fwrite(Vin,sizeof(float),nx1loc*nx2loc*nx3loc,fvtk) != nx1loc*nx2loc*nx3loc) {
     throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
   }
 #endif
-}
-
-void WriteHeaderString(const char* header, VtkFileHandler fvtk) {
-  #ifdef WITH_MPI
-  /*
-    MPI_Status status;
-    MPI_SAFE_CALL(MPI_File_set_view(fvtk, this->offset, MPI_BYTE,
-                                    MPI_CHAR, "native", MPI_INFO_NULL ));
-    if(this->isRoot) {
-      MPI_SAFE_CALL(MPI_File_write(fvtk, header, strlen(header), MPI_CHAR, &status));
-    }
-    offset=offset+strlen(header);
-    */
-  #else
-    int rc = fprintf (fvtk, "%s", header);
-    if(rc<0) {
-      throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
-    }
-  #endif
 }

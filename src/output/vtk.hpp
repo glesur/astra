@@ -73,7 +73,6 @@ class Vtk {
 #ifdef WITH_MPI
   MPI_Offset offset;
   MPI_Datatype view;
-  MPI_Datatype nodeView;
   MPI_Comm comm;
 #endif
 

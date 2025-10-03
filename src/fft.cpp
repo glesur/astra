@@ -72,6 +72,7 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
 
 // Perform a real-to-complex FFT
 void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out) {
+  astra::pushRegion("FFT::R2C");
   #ifdef WITH_MPI
     R2C_MPI(in, out);
   #else
@@ -81,7 +82,6 @@ void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out) {
       KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, out);
     }
   #endif
-
   astra::popRegion();
 }
 
