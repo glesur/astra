@@ -63,11 +63,7 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
     }
     // Fix starting point along x
     start[2] = grid->npr[0]*astra::prank;
-
-    for(int dir = 0; dir < 3 ; dir++) {
-      astra::cout << "start=" << start[dir] << " size=" << size[dir]
-                  << " subsize=" << subsize[dir] << std::endl;
-    }
+    
     MPI_Type_create_subarray(3, size, subsize, start, MPI_ORDER_C, MPI_FLOAT, &this->view);
     MPI_Type_commit(&this->view);
   #endif // WITH_MPI
