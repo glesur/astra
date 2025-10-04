@@ -16,22 +16,22 @@
 
 Hydro::Hydro(Input &input, Grid *grid) : RightHandSide<Array3D<complex>>(input, grid) {
   // Allocate all of the temporary arrays
-  vr1 = Array3D<real>("Hydro::vr1", grid->npr);
-  vr2 = Array3D<real>("Hydro::vr2", grid->npr);
-  vr3 = Array3D<real>("Hydro::vr3", grid->npr);
-  wr11 = Array3D<real>("Hydro::wr11", grid->npr);
-  wr12 = Array3D<real>("Hydro::wr12", grid->npr);
-  wr13 = Array3D<real>("Hydro::wr13", grid->npr);
-  wr22 = Array3D<real>("Hydro::wr22", grid->npr);
-  wr23 = Array3D<real>("Hydro::wr23", grid->npr);
-  wr33 = Array3D<real>("Hydro::wr33", grid->npr);
+  vr1 = Array3D<real>("Hydro::vr1", grid->npr_t);
+  vr2 = Array3D<real>("Hydro::vr2", grid->npr_t);
+  vr3 = Array3D<real>("Hydro::vr3", grid->npr_t);
+  wr11 = Array3D<real>("Hydro::wr11", grid->npr_t);
+  wr12 = Array3D<real>("Hydro::wr12", grid->npr_t);
+  wr13 = Array3D<real>("Hydro::wr13", grid->npr_t);
+  wr22 = Array3D<real>("Hydro::wr22", grid->npr_t);
+  wr23 = Array3D<real>("Hydro::wr23", grid->npr_t);
+  wr33 = Array3D<real>("Hydro::wr33", grid->npr_t);
   wf11 = Array3D<complex>("Hydro::wf11", grid->npf);
   wf12 = Array3D<complex>("Hydro::wf12", grid->npf);
   wf13 = Array3D<complex>("Hydro::wf13", grid->npf);
   wf22 = Array3D<complex>("Hydro::wf22", grid->npf);
   wf23 = Array3D<complex>("Hydro::wf23", grid->npf);
   wf33 = Array3D<complex>("Hydro::wf33", grid->npf);
-  npr=grid->npr;
+  npr=grid->npr_t;
   npf=grid->npf;
 
   this->nu = input.GetOrSet<real>("Hydro","viscosity",0,1e-3);
@@ -43,10 +43,10 @@ Hydro::~Hydro() {
 
 void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) {
   astra::pushRegion("Hydro::ExplicitStep");
-  // Fourier transform the velocity field to real space
-  grid->fft->C2R(fldin["vx1"], vr1);
-  grid->fft->C2R(fldin["vx2"], vr2);
-  grid->fft->C2R(fldin["vx3"], vr3);
+  // Fourier transform the velocity field to real space (use transposed arrays)
+  grid->fft->C2R(fldin["vx1"], vr1, false);
+  grid->fft->C2R(fldin["vx2"], vr2, false);
+  grid->fft->C2R(fldin["vx3"], vr3, false);
 
   // Compute the cross-correlation
   auto vr1 = this->vr1;
@@ -72,12 +72,12 @@ void Hydro::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>
     });
 
   // Fourier transform back to spectral space
-  grid->fft->R2C(wr11, wf11);
-  grid->fft->R2C(wr12, wf12);
-  grid->fft->R2C(wr13, wf13);
-  grid->fft->R2C(wr22, wf22);
-  grid->fft->R2C(wr23, wf23);
-  grid->fft->R2C(wr33, wf33);
+  grid->fft->R2C(wr11, wf11, false);
+  grid->fft->R2C(wr12, wf12, false);
+  grid->fft->R2C(wr13, wf13, false);
+  grid->fft->R2C(wr22, wf22, false);
+  grid->fft->R2C(wr23, wf23, false);
+  grid->fft->R2C(wr33, wf33, false);
   
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];

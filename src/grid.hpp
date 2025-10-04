@@ -40,6 +40,7 @@ class Grid {
 
   std::array<int,3> npr_glob;     ///< total number of grid points in real space
   std::array<int,3> npr;          ///< local process number of grid points in real space
+  std::array<int,3> npr_t;        ///< local process number of grid points in real space when using transposed FFT
 
   std::array<int,3> npf_glob;          ///< total number of grid points in Fourier space
   std::array<int,3> npf;          ///< local process number of grid points in Fourier space

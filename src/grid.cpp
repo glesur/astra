@@ -37,11 +37,15 @@ Grid::Grid(Input &input) {
     // #ifundef MPI
     npr[dir] = npr_glob[dir];
     npf[dir] = npf_glob[dir];
+    npr_t[dir] = npr[dir]; // by default no transposition
     #ifdef WITH_MPI
-      // We assume a decomposition along the first dimension only for now
-      npr[0] = npr_glob[0]/astra::psize;
-      npf[0] = npf_glob[0]/astra::psize;
+      if(dir == IDIR) {
+        // We assume a decomposition along the first dimension only for now
+        npr[dir] = npr_glob[dir]/astra::psize;
+        npf[dir] = npf_glob[dir]/astra::psize;
+      }
     #endif
+
     xbeg[dir] = xbeg_glob[dir] + astra::prank* (xend_glob[dir]-xbeg_glob[dir])/astra::psize;
     xend[dir] = xend_glob[dir];
 
@@ -52,6 +56,12 @@ Grid::Grid(Input &input) {
     dx[dir] = (xend_glob[dir] - xbeg_glob[dir])/npr_glob[dir];
     kmax[dir] = M_PI/dx[dir];
   }
+
+  #ifdef WITH_MPI
+    // Compute transposed sizes
+    npr_t[IDIR] = npr_glob[JDIR]/astra::psize;
+    npr_t[JDIR] = npr_glob[IDIR];
+  #endif
 
   this->InitGrid();
    astra::popRegion();
