@@ -33,11 +33,6 @@ Advection::~Advection() {}
 
 void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) {
   astra::pushRegion("Advection::ExplicitStep");
-  // Compute the advection term
-    static int vtk_counter_in = 0;
-  Vtk vtk(grid, t, "debug_advection_fldin"+std::to_string(vtk_counter_in));
-  vtk.Write(fldin);
-  vtk_counter_in++;
   
   for(auto& it : fldin) {
     auto view = it.second;
@@ -45,10 +40,6 @@ void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<compl
     auto kx = this->grid->kx[direction];
     int direction = this->direction;
     real velocity = this->velocity;
-    
-
-    
-
     astra_for("advection_"+it.first,fldin,
       KOKKOS_LAMBDA(int i,int j,int k) {
         complex kv;
@@ -59,15 +50,9 @@ void Advection::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<compl
         } else {
           kv = kx(k)*velocity;
         }
-        //kv = 1.0;
         dview(i,j,k) -= Kokkos::complex(0.0, 1.0)*kv*view(i,j,k);
-        //dview(i,j,k) = view(i,j,k);
     });
   }
-    static int vtk_counter_out = 0;
-  Vtk vtko(grid, t, "debug_advection_fldout"+std::to_string(vtk_counter_out));
-  vtko.Write(dfld);
-  vtk_counter_out++;
   astra::popRegion();
 }
 

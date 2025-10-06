@@ -15,6 +15,7 @@
 #include "field.hpp"
 #include "rightHandSide.hpp"
 #include "logger.hpp"
+#include <limits>
 
 template <typename T>
 class TimeIntegrator {
@@ -35,10 +36,12 @@ class TimeIntegrator {
     real GetTime() { return t; }
     real GetTimeStep() { return dt; }
     int GetCycle() { return ncycles; }
+    void SetDtMax(real dtmax) { dtMax = dtmax; }
 
   protected:
     real t{0.0};
     real dt{0.0};
+    real dtMax{std::numeric_limits<real>::max()};
     real cfl{1.0};
     int ncycles{0};
     Grid *grid;

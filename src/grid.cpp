@@ -45,8 +45,13 @@ Grid::Grid(Input &input) {
         npf[dir] = npf_glob[dir]/astra::psize;
       }
     #endif
-
-    xbeg[dir] = xbeg_glob[dir] + astra::prank* (xend_glob[dir]-xbeg_glob[dir])/astra::psize;
+    if(dir==0) {
+      xbeg[dir] = xbeg_glob[dir] + astra::prank* (xend_glob[dir]-xbeg_glob[dir])/astra::psize;
+      xend[dir] = xbeg_glob[dir] + (astra::prank+1)* (xend_glob[dir]-xbeg_glob[dir])/astra::psize;
+    } else {
+      xbeg[dir] = xbeg_glob[dir];
+      xend[dir] = xend_glob[dir];
+    }
     xend[dir] = xend_glob[dir];
 
     // #endif

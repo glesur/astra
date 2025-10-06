@@ -47,7 +47,7 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
         this->dt += rhs->GetInvDt();
       }
       // Get the timestep
-      this->dt = this->cfl/this->dt;;
+      this->dt = std::min(this->cfl/this->dt, this->dtMax);
 
       // Update the field
       for(auto& it : fld) {

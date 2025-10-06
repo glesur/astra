@@ -78,11 +78,11 @@ void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out, bool transpose) {
     R2C_MPI(in, out, transpose);
   #else
       // Ensure that in array is not erased
-    Kokkos::deep_copy(tempReal, in);
+    //Kokkos::deep_copy(tempReal, in);
     if(havePlan) {
-      KokkosFFT::execute(*(r2cPlan.get()), tempReal, out);
+      KokkosFFT::execute(*(r2cPlan.get()), in, out);
     } else {
-      KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), tempReal, out);
+      KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, out);
     }
   #endif
   astra::popRegion();
@@ -139,7 +139,7 @@ void FFT::R2C_Host(const ArrayHost3D<real>& in, ArrayHost3D<complex>& out) {
   astra::pushRegion("FFT::R2C_Host");
   Array3D<real> inDev = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), in);
   Array3D<complex> outDev = Kokkos::create_mirror_view(Kokkos::DefaultExecutionSpace(), out);
-  this->R2C(inDev, outDev);
+  this->R2C(inDev, outDev,true);
   Kokkos::deep_copy(out, outDev);
   astra::popRegion();
 }
@@ -148,7 +148,7 @@ void FFT::C2R_Host(const ArrayHost3D<complex>& in, ArrayHost3D<real>& out) {
   astra::pushRegion("FFT::C2R_Host");
   Array3D<complex> inDev = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), in);
   Array3D<real> outDev = Kokkos::create_mirror_view(Kokkos::DefaultExecutionSpace(), out);
-  this->C2R(inDev, outDev);
+  this->C2R(inDev, outDev,true);
   Kokkos::deep_copy(out, outDev);
   astra::popRegion();
 }
