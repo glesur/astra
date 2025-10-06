@@ -45,6 +45,10 @@ public:
   void R2C_Host(const ArrayHost3D<real>& in, ArrayHost3D<complex>& out);
   void C2R_Host(const ArrayHost3D<complex>& in, ArrayHost3D<real>& out);
   void TestMPI();
+
+  // Exchange last two dimensions of a 3D array
+  template <typename T>
+  void TransposeLocal(const Array3D<T>&in, Array3D<T>&out);
 private:
   bool havePlan{false};
   std::unique_ptr<PlanR2CType> r2cPlan;
@@ -63,6 +67,9 @@ private:
   Array3D<complex> tempComplex;
   Array3D<complex> tempTransposedComplex;
   Array3D<complex> tempTransposedComplex2;
+  Array3D<complex> tempT2Complex;
+  Array3D<complex> tempT2Complex2;
+  
   Array3D<real> tempTransposedReal;
   Array3D<real> tempReal;
 
@@ -75,5 +82,19 @@ private:
   std::array<int,3> npf_glob; // Global fourier space dimensions
   std::array<int,3> npr_glob; // Global real space dimensions
 };
+
+// exchange the last two dimensions of a 3D array
+template <typename T>
+void FFT::TransposeLocal(const Array3D<T>&in, Array3D<T>&out) {
+  astra::pushRegion("FFT::TransposeLocal");
+  astra_for("TransposeLocal",0, in.extent(0),
+                              0, in.extent(1),
+                              0, in.extent(2),
+    KOKKOS_LAMBDA(int i, int j, int k) {
+      out(i,k,j) = in(i,j,k);
+    }); 
+  astra::popRegion();
+}
+
 
 #endif // FFT_HPP_

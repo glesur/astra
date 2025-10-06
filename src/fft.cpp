@@ -52,16 +52,18 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
       this->tempTransposedComplex = Array3D<complex>("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
       this->tempTransposedComplex2 = Array3D<complex>("FFT transpose temp2", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
       this->tempTransposedReal = Array3D<real>("FFT transpose temp2", npr[1]/astra::psize, npr[0]*astra::psize, npr[2]);
+      this->tempT2Complex = Array3D<complex>("FFT temp2 complex", npf[0],npf[2], npf[1]);
+      this->tempT2Complex2 = Array3D<complex>("FFT temp2 complex2",  npf[0],npf[2], npf[1]);
       Array3D<complex> tempComplex2("FFT temp complex", npf);
 
      // MPI C2R Plans
       // Axis 1 transposed is axis2 for the fft library
-      this->c2ciMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempComplex, tempComplex2, KokkosFFT::Direction::backward, std::array<int,1>{-2});
+      this->c2ciMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempT2Complex, tempT2Complex2, KokkosFFT::Direction::backward, std::array<int,1>{-1});
       this->c2rMPIPlan_axis1t3 = std::make_unique<PlanC2RType2D>(Kokkos::DefaultExecutionSpace(), tempTransposedComplex, tempTransposedReal, KokkosFFT::Direction::backward, std::array<int,2>{-2,-1});
       
       // MPI R2C plans
       this->r2cMPIPlan_axis1t3 = std::make_unique<PlanR2CType2D>(Kokkos::DefaultExecutionSpace(), tempTransposedReal, tempTransposedComplex, KokkosFFT::Direction::forward, std::array<int,2>{-2,-1});      
-      this->c2cfMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempComplex, tempComplex2, KokkosFFT::Direction::forward, std::array<int,1>{-2});
+      this->c2cfMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempT2Complex, tempT2Complex2, KokkosFFT::Direction::forward, std::array<int,1>{-1});
     
       this->transposeComplex = std::make_unique<Transpose<complex>>(npf);
       this->transposeReal = std::make_unique<Transpose<real>>(npr);
@@ -102,10 +104,11 @@ void FFT::R2C_MPI(const Array3D<real>& in, Array3D<complex>& out, bool transpose
     astra::popRegion();
   }
   this->transposeComplex->Apply(tempTransposedComplex,tempComplex);
+  TransposeLocal(tempComplex,tempT2Complex);
   astra::pushRegion("FFT::R2C_MPI axis2");
-  KokkosFFT::execute(*(c2cfMPIPlan_axis2.get()), tempComplex, out);
+  KokkosFFT::execute(*(c2cfMPIPlan_axis2.get()), tempT2Complex, tempT2Complex2);
   astra::popRegion();
-
+  TransposeLocal(tempT2Complex2,out);
   astra::popRegion();
 }
 
@@ -130,7 +133,9 @@ void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out, bool transpose) {
 void FFT::C2R_MPI(const Array3D<complex>& in, Array3D<real>& out, bool transpose) {
   astra::pushRegion("FFT::C2R_MPI");
   astra::pushRegion("FFT::C2R_MPI axis2");
-  KokkosFFT::execute(*(c2ciMPIPlan_axis2.get()), in, tempComplex);
+  TransposeLocal(in,tempT2Complex);
+  KokkosFFT::execute(*(c2ciMPIPlan_axis2.get()), tempT2Complex, tempT2Complex2);
+  TransposeLocal(tempT2Complex2,tempComplex);
   astra::popRegion();
   this->transposeComplex->Apply(tempComplex,tempTransposedComplex);
   if(transpose) {
@@ -266,3 +271,5 @@ void FFT::TestMPI() {
     });
 #endif
 }
+
+
