@@ -28,10 +28,16 @@ void WriteFile(Input &input,
                Field<Array3D<complex>>& state,  
                int n,
                real time) {
+  std::string outputDirectory;
+  if(input.CheckEntry("Output","vtk_dir")>=0) {
+    outputDirectory = input.Get<std::string>("Output","vtk_dir",0);
+  } else {
+    outputDirectory = "./";
+  }
   std::stringstream ssfileName, ssvtkFileNum;
   ssvtkFileNum << std::setfill('0') << std::setw(4) << n;
   std::string filename = std::string("data.")+ssvtkFileNum.str();
-  Vtk vtk(input, grid, time, filename);
+  Vtk vtk(grid, time, filename,outputDirectory);
   vtk.Write(state);
 }
 
@@ -143,6 +149,8 @@ int main( int argc, char* argv[] ) {
     // Initial conditions
     initFlow.Init(state);
 
+    astra::cout << "Main1" << std::endl;
+    CoutArray(state["rho"]);
     // Write initial condition@
     real lastOutput = 0.0;
     real outputStep = input.GetOrSet<real>("Output","vtk",0,0.1);
@@ -150,12 +158,17 @@ int main( int argc, char* argv[] ) {
     WriteFile(input, &grid, state, nvtk, 0.0);
     nvtk++;
 
+    astra::cout << "Main2" << std::endl;
+    CoutArray(state["rho"]);
+
     astra::cout << "Main: Starting time integration..." << std::endl;
     // Init the time integrator
     auto *timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
     real tstop = input.Get<real>("TimeIntegrator","tstop",0);
     Kokkos::Timer timer;
     while(timeIntegrator->GetTime() < tstop) {
+      astra::cout << "MainLoop beg" << std::endl;
+      CoutArray(state["rho"]);
       timeIntegrator->Cycle(state);
       if(timeIntegrator->GetTime()-lastOutput>=outputStep) {
         WriteFile(input, &grid, state, nvtk, timeIntegrator->GetTime());

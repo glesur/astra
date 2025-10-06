@@ -44,7 +44,7 @@ class Grid;
 class Vtk {
 
  public:
-  Vtk(Input &, Grid *grid, real time, std::string filename = "data");   // init VTK object
+  Vtk(Grid *grid, real time, std::string filename = "data", std::string outputDirectory = "./");   // init VTK object
   void Write(Field<Array3D<complex>> field);     // Write content of a field class
   ~Vtk();  // Destructor
 
@@ -64,8 +64,6 @@ class Vtk {
 
   // File Handler
   VtkFileHandler fileHdl;
-  // output directory
-  fs::path outputDirectory;
 
   // BigEndian conversion
   BigEndian bigEndian;

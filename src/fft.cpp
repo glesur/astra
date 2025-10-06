@@ -40,8 +40,8 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
       this->npr_t[1] = npr_glob[0];
     #endif
 
-    Array3D<real> tempReal("FFT temp real", npr);
-    Array3D<complex> tempComplex("FFT temp complex", npf);
+    tempReal = Array3D<real>("FFT temp real", npr);
+    tempComplex = Array3D<complex>("FFT temp complex", npf);
 
     // Create the FFT plans
     this->r2cPlan = std::make_unique<PlanR2CType>(Kokkos::DefaultExecutionSpace(), tempReal, tempComplex, KokkosFFT::Direction::forward, std::array<int,3>{-3,-2,-1});
@@ -49,7 +49,6 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
     
     #ifdef WITH_MPI
       // Allocate temporary arrays for domain-splited FFTs and transposes
-      this->tempComplex = Array3D<complex>("FFT temp complex", npf);
       this->tempTransposedComplex = Array3D<complex>("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
       this->tempTransposedComplex2 = Array3D<complex>("FFT transpose temp2", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
       this->tempTransposedReal = Array3D<real>("FFT transpose temp2", npr[1]/astra::psize, npr[0]*astra::psize, npr[2]);
@@ -67,8 +66,6 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
       this->transposeComplex = std::make_unique<Transpose<complex>>(npf);
       this->transposeReal = std::make_unique<Transpose<real>>(npr);
 
-      // Check everything works
-      this->TestMPI();
       #endif
     havePlan = true;
   };
@@ -76,13 +73,16 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
 // Perform a real-to-complex FFT
 void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out, bool transpose) {
   astra::pushRegion("FFT::R2C");
+
   #ifdef WITH_MPI
     R2C_MPI(in, out, transpose);
   #else
+      // Ensure that in array is not erased
+    Kokkos::deep_copy(tempReal, in);
     if(havePlan) {
-      KokkosFFT::execute(*(r2cPlan.get()), in, out);
+      KokkosFFT::execute(*(r2cPlan.get()), tempReal, out);
     } else {
-      KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), in, out);
+      KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), tempReal, out);
     }
   #endif
   astra::popRegion();
@@ -109,10 +109,12 @@ void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out, bool transpose) {
     #ifdef WITH_MPI
       C2R_MPI(in,out,transpose);
     #else
+      // Ensure that in array is not erased
+      Kokkos::deep_copy(tempComplex, in);
       if(havePlan) {
-        KokkosFFT::execute(*(c2rPlan.get()), in, out);
+        KokkosFFT::execute(*(c2rPlan.get()), tempComplex, out);
       } else {
-        KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), in, out);
+        KokkosFFT::irfftn(Kokkos::DefaultExecutionSpace(), tempComplex, out);
       }
     #endif
 
@@ -153,6 +155,7 @@ void FFT::C2R_Host(const ArrayHost3D<complex>& in, ArrayHost3D<real>& out) {
 
 
 void FFT::TestMPI() {
+#ifdef WITH_MPI
   if(npr_glob[0] % astra::psize != 0 || npr_glob[1] % astra::psize != 0) {
     throw std::runtime_error("Global problem size must be dividible by the number of MPI processes");
   }
@@ -249,5 +252,5 @@ void FFT::TestMPI() {
         Kokkos::abort("incoherent values after MPI ifft");
       }
     });
-
+#endif
 }

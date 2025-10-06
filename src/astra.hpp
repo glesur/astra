@@ -4,7 +4,7 @@
 #include <Kokkos_Complex.hpp>
 
 using Device = Kokkos::DefaultExecutionSpace;
-using Layout = Kokkos::LayoutLeft;
+using Layout = Kokkos::LayoutRight;
 using real = double;
 using complex = Kokkos::complex<real>;
 

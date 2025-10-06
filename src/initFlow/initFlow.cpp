@@ -45,10 +45,14 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
   if(input->CheckEntry("InitFlow","large_scale_1d_noise")>=0) {
     LargeScale1DNoise(hfield);
   }
+  if(input->CheckEntry("InitFlow","pure_sine")>=0) {
+    PureSine(hfield);
+  }
 
   Projector(hfield);
   // Copy back to device
   field.CopyFrom(hfield);
+
 }
 
 void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
@@ -170,6 +174,7 @@ void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
   } 
 }
 
+
 void InitFlow::LargeScale1DNoise(Field<ArrayHost3D<complex>>& field) {
   // Implementation of large scale noise initialization
   int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
@@ -198,6 +203,26 @@ void InitFlow::LargeScale1DNoise(Field<ArrayHost3D<complex>>& field) {
       }
     }
   } 
+}
+
+void InitFlow::PureSine(Field<ArrayHost3D<complex>>& field) {
+  // Implementation of pure sine initialization
+  const int direction = input->Get<int>("InitFlow","pure_sine",0);
+  const real amplitude = input->Get<real>("InitFlow","pure_sine",1);
+
+  
+  for(auto& it : field) {
+    auto view = it.second;
+    if(direction == IDIR) {
+      view(1,0,0) += amplitude;
+    } else if(direction == JDIR) {
+      view(0,1,0) += amplitude;
+    } else if(direction == KDIR) {
+      view(0,0,1) += amplitude;
+    } else {
+      throw std::runtime_error("pure_sine direction must be 0, 1 or 2");
+    }
+  }
 }
 
 void InitFlow::Projector(Field<ArrayHost3D<complex>>& fldin) {

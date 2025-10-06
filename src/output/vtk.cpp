@@ -18,7 +18,6 @@
 #include "vtk.hpp"
 #include "version.hpp"
 #include "grid.hpp"
-#include "input.hpp"
 #include "global.hpp"
 #include "arrays.hpp"
 #include "bigEndian.hpp"
@@ -26,7 +25,7 @@
 
 
 /*init the object */
-Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
+Vtk::Vtk(Grid *grid, real time, std::string filebase, std::string directory) {
 
   // Initialise the root tag (used for MPI non-collective I/Os)
   this->isRoot = astra::prank == 0;
@@ -68,12 +67,7 @@ Vtk::Vtk(Input &input, Grid *grid, real time, std::string filebase) {
     MPI_Type_commit(&this->view);
   #endif // WITH_MPI
 
-  // initialize output path
-  if(input.CheckEntry("Output","vtk_dir")>=0) {
-    outputDirectory = input.Get<std::string>("Output","vtk_dir",0);
-  } else {
-    outputDirectory = "./";
-  }
+  fs::path outputDirectory = directory;
 
   if(isRoot) {
     if(!fs::is_directory(outputDirectory)) {

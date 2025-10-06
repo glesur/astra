@@ -64,6 +64,7 @@ private:
   Array3D<complex> tempTransposedComplex;
   Array3D<complex> tempTransposedComplex2;
   Array3D<real> tempTransposedReal;
+  Array3D<real> tempReal;
 
   std::unique_ptr<Transpose<complex>> transposeComplex;
   std::unique_ptr<Transpose<real>> transposeReal;
