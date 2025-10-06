@@ -93,12 +93,18 @@ void FFT::R2C_MPI(const Array3D<real>& in, Array3D<complex>& out, bool transpose
   
   if(transpose) {
     this->transposeReal->Apply(in,tempTransposedReal);
+    astra::pushRegion("FFT::R2C_MPI axis1t3");
     KokkosFFT::execute(*(r2cMPIPlan_axis1t3.get()), tempTransposedReal, tempTransposedComplex);
+    astra::popRegion();
   } else {
+    astra::pushRegion("FFT::R2C_MPI axis1t3");
     KokkosFFT::execute(*(r2cMPIPlan_axis1t3.get()), in, tempTransposedComplex);
+    astra::popRegion();
   }
   this->transposeComplex->Apply(tempTransposedComplex,tempComplex);
+  astra::pushRegion("FFT::R2C_MPI axis2");
   KokkosFFT::execute(*(c2cfMPIPlan_axis2.get()), tempComplex, out);
+  astra::popRegion();
 
   astra::popRegion();
 }
@@ -123,13 +129,19 @@ void FFT::C2R(const Array3D<complex>& in, Array3D<real>& out, bool transpose) {
 
 void FFT::C2R_MPI(const Array3D<complex>& in, Array3D<real>& out, bool transpose) {
   astra::pushRegion("FFT::C2R_MPI");
+  astra::pushRegion("FFT::C2R_MPI axis2");
   KokkosFFT::execute(*(c2ciMPIPlan_axis2.get()), in, tempComplex);
+  astra::popRegion();
   this->transposeComplex->Apply(tempComplex,tempTransposedComplex);
   if(transpose) {
+    astra::pushRegion("FFT::C2R_MPI axis1t3");
     KokkosFFT::execute(*(c2rMPIPlan_axis1t3.get()), tempTransposedComplex, tempTransposedReal);
+    astra::popRegion();
     this->transposeReal->Apply(tempTransposedReal,out);    
   } else {
+    astra::pushRegion("FFT::C2R_MPI axis1t3");
     KokkosFFT::execute(*(c2rMPIPlan_axis1t3.get()), tempTransposedComplex, out);
+    astra::popRegion();
   }
   astra::popRegion();
 }
