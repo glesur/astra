@@ -8,7 +8,7 @@ Here is a template for the `README.md` file based on the specifications provided
 
 ## Overview
 
-**Astra** is a modern, high-performance spectral code designed for the simulation of turbulent plasmas. It serves as an accelerated and modernized evolution of the [Snoopy code](https://ipag.osug.fr/~lesurg/snoopy).
+**Astra** is a modern, high-performance spectral code designed for the simulation of turbulent plasmas. It serves as an accelerated and modernized evolution of the [Snoopy code](https://ipag.osug.fr/~lesurg/snoopy), using an input file format and internal structure similar to the [Idefix code](https://github.com/idefix-code/idefix).
 
 By leveraging modern C++ abstraction layers, Astra achieves performance portability across a wide range of high-performance computing architectures without compromising the numerical accuracy established by its predecessor.
 
@@ -90,7 +90,7 @@ mpirun -np 4 ./astra -i ../problem/hydro_turbulence.ini
 
 ## License
 
-[Insert License Information Here]
+[CeCILL 2.1](https://en.wikipedia.org/wiki/CeCILL)
 
 ## Contact & Attribution
 
