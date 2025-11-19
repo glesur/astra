@@ -6,7 +6,7 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-//#ifdef WITH_MPI
+#ifdef WITH_MPI
 
 #ifndef MPI_HPP_
 #define MPI_HPP_
@@ -18,4 +18,4 @@
 
 
 #endif // MPI_HPP_
-//#endif // WITH_MPI
+#endif // WITH_MPI
