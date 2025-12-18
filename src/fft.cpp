@@ -234,7 +234,6 @@ void FFT::TestMPI() {
     this->R2C_MPI(localReal, localComplex);
 
     // Check on a per-process that they all agree
-    bool error = false;
     int offset = npf[0]*astra::prank;
 
     astra_for("Reshape local",0, npf[0],
