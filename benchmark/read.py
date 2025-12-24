@@ -22,7 +22,7 @@ for date_dir in date_dirs:
     for problem_size_dir in problem_size_dirs:
         performances_data[date_dir.name][problem_size_dir.name] = {}
         ncores_dirs = [d for d in problem_size_dir.iterdir() if d.is_dir()]
-        for ncores_dir in ncores_dirs:
+        for ncores_dir in sorted(ncores_dirs, key=lambda x: int(x.name)):
             output_file = ncores_dir / "astra.0.log"
             if output_file.exists():
                 print(f"Reading performance from {output_file}")
