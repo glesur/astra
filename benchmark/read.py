@@ -41,7 +41,7 @@ for date_dir in date_dirs:
                     except:
                         print("Exception in read")
                         f.close()
-                performances_data[date_dir.name, problem_size_dir.name, ncores_dir.name] = perfs
+                performances_data[date_dir.name][problem_size_dir.name][ncores_dir.name] = perfs
                 
             else:
                 print(f"Output file not found in {ncores_dir}")
