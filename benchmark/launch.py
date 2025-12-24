@@ -1,6 +1,7 @@
 import numpy as np
 from shutil import copy2
 from shutil import rmtree
+from datetime import datetime
 import os
 import re
 import stat
@@ -36,11 +37,12 @@ coresPerNode=args.cores_per_node
 coreList=(2**(np.arange(np.log2(minCores),np.log2(maxCores)+1))).astype(int)
 
 for ncores in coreList:
-    targetDir=args.run_directory+"/%d"%ncores
+    date = datetime.today().strftime('%Y-%m-%d')
+    targetDir=args.run_directory+"/"+date+"/%d/%d"%(problemSize,ncores)
     print("Doing %d cores setup"%ncores)
     if os.path.exists(targetDir):
         rmtree(targetDir)
-    os.mkdir(targetDir)
+    os.makedirs(targetDir)
     copy2(args.build_directory+"/astra",targetDir)
     copy2(args.input_file,targetDir)
 
