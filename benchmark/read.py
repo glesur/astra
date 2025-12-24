@@ -23,6 +23,7 @@ for date_dir in date_dirs:
         for ncores_dir in ncores_dirs:
             output_file = ncores_dir / "astra.0.log"
             if output_file.exists():
+                print(f"Reading performance from {output_file}")
                 with open(output_file, 'r') as f:
                     tag="Main: Perfs"
                     count = 0
@@ -33,14 +34,13 @@ for date_dir in date_dirs:
                             line=f.readline()
                             if tag in line:
                                 perfs=float(line.split()[3])
+                                f.close()
                                 break
                             if count > 1000:
                                 raise ValueError("cannot locate end of header in " + file)
                     except:
                         print("Exception in read")
                         f.close()
-                        break
-                f.close()
                 performances_data[date_dir.name, problem_size_dir.name, ncores_dir.name] = perfs
                 
             else:
