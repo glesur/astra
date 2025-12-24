@@ -15,6 +15,7 @@
 
 #include <string>
 #include <Kokkos_Core.hpp>
+#include "field.hpp"
 #ifdef DEBUG
 #include "global.hpp"
 #endif
@@ -105,6 +106,25 @@ inline void astra_reduce(const std::string & NAME,
     astra::popRegion();
     #endif
 }
+
+// Generic function taking a Field class in parameter.
+template <typename Function, typename Reducer, typename T>
+  inline void astra_reduce(const std::string & NAME,
+                       Field<T> fld,
+                       Function function,
+                       Reducer redFunction) {
+    auto dims = fld.GetDimensions();
+
+    if constexpr(T::rank == 1) {
+      astra_reduce(NAME, 0, dims[0],function, redFunction);
+    } else if constexpr(Field<T>::rank == 2) {
+      astra_reduce(NAME, 0, dims[0],0,dims[1],function, redFunction);
+    } else if constexpr(Field<T>::rank == 3) {
+      astra_reduce(NAME, 0, dims[0],0,dims[1],0,dims[2],function, redFunction);
+    } else if constexpr(Field<T>::rank == 4) {
+      astra_reduce(NAME, 0, dims[0],0,dims[1],0,dims[2],0,dims[3],function, redFunction);
+    } 
+  } 
 
 
 #endif // REDUCE_HPP_

@@ -19,6 +19,7 @@
 #include "timeIntegratorFactory.hpp"
 #include "rightHandSideFactory.hpp"
 #include "vtk.hpp"
+#include "timevar.hpp"
 #include "transpose.hpp"
 #include "fft.hpp"
 
@@ -156,6 +157,13 @@ int main( int argc, char* argv[] ) {
     WriteFile(input, &grid, state, nvtk, 0.0);
     nvtk++;
 
+    // Whether we want timevar
+    TimeVarOutput timevarOutput(input, &grid);
+    timevarOutput.Reset();
+    timevarOutput.Write(state, 0.0);
+    real lastTimevar = 0.0;
+    real timevarStep = input.GetOrSet<real>("Output","timevar_step",0,-1.0);
+
     astra::cout << "Main: Starting time integration..." << std::endl;
     // Init the time integrator
     auto *timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
@@ -164,10 +172,16 @@ int main( int argc, char* argv[] ) {
     while(timeIntegrator->GetTime() < tstop) {
       timeIntegrator->SetDtMax(tstop - timeIntegrator->GetTime());
       timeIntegrator->Cycle(state);
+
+      // Output
       if(timeIntegrator->GetTime()-lastOutput>=outputStep) {
         WriteFile(input, &grid, state, nvtk, timeIntegrator->GetTime());
         nvtk++;
         lastOutput += outputStep;
+      }
+      if(timevarStep>0.0 && timeIntegrator->GetTime()-lastTimevar>=timevarStep) {
+        timevarOutput.Write(state, timeIntegrator->GetTime());
+        lastTimevar += timevarStep;
       }
     }
 
