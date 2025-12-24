@@ -17,12 +17,18 @@
 #include "logger.hpp"
 #include <limits>
 
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
 template <typename T>
 class TimeIntegrator {
   public:
     TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : rhsVector(rhsVector), grid(grid), logger(input, grid, this) {
       logger.Start();
+      timer.reset();
       cfl = input.Get<real>("TimeIntegrator","cfl",0);
+      maxRuntime = 3600*input.GetOrSet<double>("TimeIntegrator","max_runtime",0.0,-1.0);
     }
     virtual ~TimeIntegrator() {}
 
@@ -38,6 +44,8 @@ class TimeIntegrator {
     int GetCycle() { return ncycles; }
     void SetDtMax(real dtmax) { dtMax = dtmax; }
 
+  bool CheckForMaxRuntime();  // Check whether maximum runtime has been reached
+
   protected:
     real t{0.0};
     real dt{0.0};
@@ -47,6 +55,34 @@ class TimeIntegrator {
     Grid *grid;
     std::vector<RightHandSide<T>*> rhsVector;
     Logger<T> logger;
+    double maxRuntime;      // Maximum runtime requested (disabled when negative)
+    Kokkos::Timer timer;    // Internal timer of the integrator
 };
 
+template <typename T>
+bool TimeIntegrator<T>::CheckForMaxRuntime() {
+    astra::pushRegion("TimeIntegrator::CheckForMaxRuntime");
+    // if maxRuntime is negative, this function is disabled (default)
+    if(this->maxRuntime < 0) {
+      astra::popRegion();
+      return(false);
+    }
+
+    double runtime = timer.seconds();
+    bool runtimeReached{false};
+  #ifdef WITH_MPI
+    int runtimeValue = 0;
+    if(runtime >= this->maxRuntime) runtimeValue = 1;
+    MPI_Bcast(&runtimeValue, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    runtimeReached = runtimeValue > 0;
+  #else
+    runtimeReached = runtime >= this->maxRuntime;
+  #endif
+    if(runtimeReached) {
+      astra::cout << "TimeIntegrator:CheckForMaxRuntime: Maximum runtime reached."
+                << std::endl;
+    }
+    astra::popRegion();
+    return(runtimeReached);
+  }
 #endif // TIMEINTEGRATOR_HPP_

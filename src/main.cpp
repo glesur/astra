@@ -183,6 +183,12 @@ int main( int argc, char* argv[] ) {
         timevarOutput.Write(state, timeIntegrator->GetTime());
         lastTimevar += timevarStep;
       }
+
+      // End?
+      if(input.CheckForAbort() || timeIntegrator->CheckForMaxRuntime()) {
+        astra::cout << "Main: Aborting time integration..." << std::endl;
+        break;
+      }
     }
 
     LogFinished(grid, input, timer, timeIntegrator);
