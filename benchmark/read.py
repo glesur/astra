@@ -17,8 +17,10 @@ current_dir = Path(args.run_directory)
 performances_data = {}
 date_dirs = [d for d in current_dir.iterdir() if d.is_dir()]
 for date_dir in date_dirs:
+    performances_data[date_dir.name] = {}
     problem_size_dirs = [d for d in date_dir.iterdir() if d.is_dir()]
     for problem_size_dir in problem_size_dirs:
+        performances_data[date_dir.name][problem_size_dir.name] = {}
         ncores_dirs = [d for d in problem_size_dir.iterdir() if d.is_dir()]
         for ncores_dir in ncores_dirs:
             output_file = ncores_dir / "astra.0.log"
