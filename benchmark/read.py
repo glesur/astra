@@ -38,7 +38,7 @@ for date_dir in date_dirs:
                                 perfs=float(line.split()[3])
                                 f.close()
                                 break
-                            if count > 1000:
+                            if count > 50000:
                                 raise ValueError("cannot locate end of header in " + file)
                     except:
                         print("Exception in read")
