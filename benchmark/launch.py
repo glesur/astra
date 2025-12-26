@@ -16,6 +16,7 @@ parser.add_argument('--cores-per-node', type=int)
 parser.add_argument('--input-file', type=str, default='kelvin_helmholtz.ini')
 parser.add_argument('--problem-size', type=int)
 parser.add_argument('--account', type=str)
+parser.add_argument('--strong', type=bool, default=False)
 parser.add_argument('--build-directory', type=str, default='./build')
 parser.add_argument('--run-directory', type=str, default='./run')
 parser.add_argument('--script-file', type=str, default='script.slurm')
@@ -32,6 +33,7 @@ problemSize=args.problem_size
 # coreperNode on the cluster we're running
 coresPerNode=args.cores_per_node
 
+strongScaling=args.strong
 
 #set number of cores
 coreList=(2**(np.arange(np.log2(minCores),np.log2(maxCores)+1))).astype(int)
@@ -65,6 +67,9 @@ for ncores in coreList:
     nproc2=1
     nproc3=1
 
+    if strongScaling:
+        nproc1=1
+        
     inputOptions={}
     inputOptions['resx1']="%d"%(nproc1*problemSize)
     inputOptions['resx2']="%d"%(nproc2*problemSize)
