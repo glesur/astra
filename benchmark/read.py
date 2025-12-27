@@ -34,12 +34,12 @@ for date_dir in date_dirs:
                         while True:
                             count=count+1
                             line=f.readline()
+                            if not line:
+                                raise ValueError("End of file reached without finding performance data in " + str(output_file))
                             if tag in line:
                                 perfs=float(line.split()[3])
                                 f.close()
                                 break
-                            if count > 500000:
-                                raise ValueError("cannot locate end of header in " + file)
                     except:
                         print("Exception in read")
                         f.close()
