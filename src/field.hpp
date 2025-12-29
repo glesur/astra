@@ -16,6 +16,7 @@
 template<typename T>
 class Field {
   public:
+    Field() = default;
     // Constructor with a name and dimensions. Arrays will be subsequently added with Add()
     Field(std::string name, std::array<int,T::rank> n) : name(name), np(n) {};
 

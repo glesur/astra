@@ -1,0 +1,234 @@
+// ***********************************************************************************
+// Idefix MHD astrophysical code
+// Copyright(C) Geoffroy R. J. Lesur <geoffroy.lesur@univ-grenoble-alpes.fr>
+// and other code contributors
+// Licensed under CeCILL 2.1 License, see COPYING for more information
+// ***********************************************************************************
+
+#ifndef OUTPUT_DUMP_HPP_
+#define OUTPUT_DUMP_HPP_
+
+#include <string>
+#include "field.hpp"
+#include "global.hpp"
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
+// File handler depends on the type of I/O we use
+#ifdef WITH_MPI
+using DumpFileHandler = MPI_File;
+#else
+using DumpFileHandler = FILE*;
+#endif
+
+class Grid;
+class Dump {
+  public:
+    Dump(Grid *grid, std::string filebase, std::string directory);
+
+    void Register(std::string name, Field<Array3D<complex>>);
+    void Register(std::string name, real);
+    void Register(std::string name, int);
+    void Write();
+
+    void Fetch(std::string name, Field<Array3D<complex>> &);
+    void Fetch(std::string name, real &);
+    void Fetch(std::string name, int &);
+    void Read();
+
+  private:
+    enum DataType {DoubleType, SingleType, 
+                  ComplexDoubleType, ComplexSingleType, 
+                  IntegerType, BoolType};
+    void WriteString(DumpFileHandler file, std::string str);
+    std::string ReadString(DumpFileHandler file);
+
+    template <typename T>
+    void WriteData(DumpFileHandler fileHdl, std::string name, T data);
+    
+    template <typename T>
+    void ReadData(DumpFileHandler fileHdl, T &data);
+
+    void ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &dim,
+                                         DataType &type, std::string &name);
+
+    
+
+    template <typename T>
+    DataType TypeToInt() {
+      if constexpr (std::is_same<T, double>::value) {
+        return DoubleType;
+      } else if constexpr (std::is_same<T, float>::value) {
+        return SingleType;
+      } else if constexpr (std::is_same<T, Kokkos::complex<double>>::value) {
+        return ComplexDoubleType;
+      } else if constexpr (std::is_same<T, Kokkos::complex<float>>::value) {
+        return ComplexSingleType;
+      } else if constexpr (std::is_same<T, int>::value) {
+        return IntegerType;
+      } else if constexpr (std::is_same<T, bool>::value) {
+        return BoolType;
+      } else {
+        throw std::runtime_error("Unsupported type for TypeToInt");
+      }
+      
+      return BoolType; // To suppress compiler warning
+    };
+    static constexpr int StringMaxLength{64};
+    bool isRoot{false};
+    int grid_nglob{1};
+    std::map<std::string, Field<Array3D<complex>>> fields;
+    std::map<std::string, real> reals;
+    std::map<std::string, int> ints;
+
+    std::string filebase;
+    std::string directory;
+    #ifdef WITH_MPI
+      MPI_Offset offset;
+      MPI_Datatype view;
+      MPI_Comm comm;
+    #endif
+};
+
+template <typename T>
+void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
+  astra::pushRegion("Dump::WriteData");
+  int ntot,size,type,ndim,nglob;
+  std::vector<int> dims = {1};
+  if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
+    ntot = data.extent(0)*data.extent(1)*data.extent(2);
+    ndim = 3;
+    type = static_cast<int>(TypeToInt<complex>());
+    size = sizeof(complex);
+    nglob = grid_nglob;
+    // Overwrite dims
+    dims = {static_cast<int>(data.extent(0)),
+            static_cast<int>(data.extent(1)),
+            static_cast<int>(data.extent(2))};
+  } else {
+    ntot = 1;   // Number of elements to be written
+    nglob = 1;
+    size = sizeof(T);
+    type = static_cast<int>(TypeToInt<T>());
+    ndim = 1;
+  }
+  
+  // Write field name
+  WriteString(fileHdl, name);
+
+  #ifdef WITH_MPI
+    MPI_Status status;
+    MPI_Datatype MpiType;
+
+    // Write data type
+    MPI_File_set_view(fileHdl, offset, MPI_BYTE,
+                                    MPI_CHAR, "native", MPI_INFO_NULL );
+    if(isRoot) {
+        MPI_File_write(fileHdl, &type, 1, MPI_INT, &status);
+    }
+    offset=offset+sizeof(int);
+
+    // Write dimensions
+    MPI_File_set_view(fileHdl, offset, MPI_BYTE,
+                                    MPI_CHAR, "native", MPI_INFO_NULL );
+    if(isRoot) {
+      MPI_File_write(fileHdl, &ndim, 1, MPI_INT, &status);
+    }
+    offset=offset+sizeof(int);
+
+    for(int n = 0 ; n < ndim ; n++) {
+      MPI_File_set_view(fileHdl, offset, MPI_BYTE,
+                                      MPI_CHAR, "native", MPI_INFO_NULL );
+      if(isRoot) {
+        MPI_File_write(fileHdl, &dims[n], 1, MPI_INT, &status);
+      }
+      offset=offset+sizeof(int);
+    }
+
+    if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
+      MPI_File_set_view(fileHdl, offset, MPI_C_DOUBLE_COMPLEX,  this->view, "native", MPI_INFO_NULL );
+      MPI_File_write_all(fileHdl, data.data(), ntot, MPI_C_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+    } else {
+      // Write raw data
+      MPI_File_set_view(fileHdl, offset, MPI_BYTE,
+                                      MPI_CHAR, "native", MPI_INFO_NULL );
+      if(isRoot) {
+        MPI_File_write(fileHdl, &data, ntot*size, MPI_BYTE, &status);
+      }
+    }
+    // increment offset accordingly
+    offset += nglob*size;
+
+  #else
+    // Write type of data
+    if(fwrite(&type, sizeof(int), 1, fileHdl) != 1) {
+      throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
+    }
+    // Write dimensions of array
+    if(fwrite(&ndim, sizeof(int), 1, fileHdl) != 1) {
+      throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
+    }
+    if(fwrite(dims.data(), sizeof(int), ndim, fileHdl) !=  static_cast<size_t>(ndim)) {
+      throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
+    }
+
+    if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
+      if(fwrite(data.data(), size, ntot, fileHdl) != ntot) {
+      throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
+    } else {
+      // Write raw data
+      if(fwrite(data, size, ntot, fileHdl) != ntot) {
+        throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
+      }
+    }
+  }
+  #endif
+  astra::popRegion();
+}
+
+template <typename T>
+void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
+  astra::pushRegion("Dump::ReadData");
+  int ntot,size,nglob;
+  if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
+    ntot = data.extent(0)*data.extent(1)*data.extent(2);
+    size = sizeof(complex);
+    nglob = grid_nglob;
+  } else {
+    size = sizeof(T);
+    ntot = 1;
+    nglob = 1;
+  }
+
+  #ifdef WITH_MPI
+    MPI_Status status;
+    if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
+      MPI_File_set_view(fileHdl, offset, MPI_C_DOUBLE_COMPLEX, this->view, "native", MPI_INFO_NULL );
+      MPI_File_read_all(fileHdl, data.data(), ntot, MPI_C_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+
+    } else {
+      MPI_File_set_view(fileHdl, this->offset, MPI_BYTE,
+                                      MPI_CHAR, "native", MPI_INFO_NULL );
+      if(isRoot) {
+        MPI_File_read(fileHdl, &data, ntot*size, MPI_BYTE, &status);
+      }
+      MPI_Bcast(&data, ntot*size, MPI_BYTE, 0, MPI_COMM_WORLD);
+    }
+    offset+= nglob*size;
+  #else
+    if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
+      if(fread(data.data(), size, ntot, fileHdl) < ntot) {
+        throw std::runtime_error("Error: unexpected end of dump file");
+      }
+     } else {
+      // Read raw data
+      if(fread(&data, size, ntot, fileHdl) < ntot) {
+        throw std::runtime_error("Error: unexpected end of dump file");
+      }
+    }
+  #endif
+  astra::popRegion();
+}
+
+#endif// OUTPUT_DUMP_HPP_

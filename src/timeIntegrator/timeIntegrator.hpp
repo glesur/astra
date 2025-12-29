@@ -41,6 +41,7 @@ class TimeIntegrator {
     };
     real GetTime() { return t; }
     real GetTimeStep() { return dt; }
+    void SetTime(real time) { t = time; }
     int GetCycle() { return ncycles; }
     void SetDtMax(real dtmax) { dtMax = dtmax; }
 
