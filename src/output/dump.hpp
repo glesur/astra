@@ -23,6 +23,24 @@ using DumpFileHandler = FILE*;
 #endif
 
 class Grid;
+
+// Check if type is a fundamental type for dump I/O
+template<typename T>
+struct IsFundamentalType { enum { result = false }; };
+
+// Template specializations for each fundamental type
+template<>
+struct IsFundamentalType<int> { enum { result = true }; };
+
+template<>
+struct IsFundamentalType<double> { enum { result = true }; };
+
+template<>
+struct IsFundamentalType<float> { enum { result = true }; };
+
+template<>
+struct IsFundamentalType<complex> { enum { result = true }; };
+
 class Dump {
   public:
     Dump(Grid *grid, std::string filebase, std::string directory);
@@ -70,7 +88,7 @@ class Dump {
       } else if constexpr (std::is_same<T, bool>::value) {
         return BoolType;
       } else {
-        throw std::runtime_error("Unsupported type for TypeToInt");
+        static_assert(false, "Unsupported type for TypeToInt");
       }
       
       return BoolType; // To suppress compiler warning
@@ -150,6 +168,7 @@ void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
       MPI_File_set_view(fileHdl, offset, MPI_C_DOUBLE_COMPLEX,  this->view, "native", MPI_INFO_NULL );
       MPI_File_write_all(fileHdl, data.data(), ntot, MPI_C_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
     } else {
+      static_assert(IsFundamentalType<T>::result, "Unsupported type for WriteData");
       // Write raw data
       MPI_File_set_view(fileHdl, offset, MPI_BYTE,
                                       MPI_CHAR, "native", MPI_INFO_NULL );
@@ -175,14 +194,15 @@ void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
 
     if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
       if(fwrite(data.data(), size, ntot, fileHdl) != ntot) {
-      throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
+        throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
+      }
     } else {
+      static_assert(IsFundamentalType<T>::result, "Unsupported type for WriteData");
       // Write raw data
-      if(fwrite(data, size, ntot, fileHdl) != ntot) {
+      if(fwrite(&data, size, ntot, fileHdl) != ntot) {
         throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
       }
     }
-  }
   #endif
   astra::popRegion();
 }
