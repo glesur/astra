@@ -121,8 +121,27 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
   real ly = grid->xend_glob[JDIR]-grid->xbeg_glob[JDIR];
   real lz = grid->xend_glob[KDIR]-grid->xbeg_glob[KDIR];
   // Number of modes that are excited (approx)
-  real nmodes = lx*ly*lz/(noiseCutLength*noiseCutLength*noiseCutLength);
+  // real nmodes = lx*ly*lz/(noiseCutLength*noiseCutLength*noiseCutLength);
 
+  // Count the number of modes excited
+  real nmodes = 0;
+  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+        real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
+                              kx[JDIR](j)*kx[JDIR](j)+
+                              kx[KDIR](k)*kx[KDIR](k))
+                                /(2.0*M_PI);
+        if(ktot*noiseCutLength < 1.0) {
+          nmodes += 1.0;
+        }
+      }
+    }
+  }
+  #ifdef WITH_MPI
+    MPI_Allreduce(MPI_IN_PLACE, &nmodes, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  #endif
+  real fact = pow(nmodes, 0.5);
   for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
     for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
       for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
@@ -133,9 +152,10 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
         if(ktot*noiseCutLength < 1.0) {
           for(auto& it : field) {
             auto view = it.second;
-            real phase = 2.0*M_PI*astra::randm();
-            real ampl = noiseAmplitude;
-            view(i,j,k) += Kokkos::complex(ampl*std::cos(phase), ampl*std::sin(phase))/nmodes*ntot;
+            const real ampl = noiseAmplitude*astra::randm();
+            const real phase = 2.0*M_PI*astra::randm();
+            
+            view(i,j,k) += Kokkos::complex(ampl*std::cos(phase), ampl*std::sin(phase))/fact*ntot;
           }
         }
       }
