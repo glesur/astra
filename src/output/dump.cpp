@@ -20,8 +20,6 @@
 #endif
 
 Dump::Dump(Grid *grid, std::string filename) {
-
-  
   // Initialise the root tag (used for MPI non-collective I/Os)
   this->isRoot = astra::prank == 0;
   this->npf = grid->npf;
@@ -86,7 +84,7 @@ void Dump::Write() {
 
   // Open file;
 
-  astra::cout << "Dump: Opening file " << this->filename.filename() << "..." << std::flush;
+  astra::cout << "Dump: Writing file " << this->filename.filename().c_str() << "..." << std::flush;
   // Reset timer
   Kokkos::Timer timer;
   timer.reset();
@@ -145,112 +143,12 @@ void Dump::Write() {
   astra::popRegion();
 }
 
-void Dump::ReadSnoopy() {
-astra::pushRegion("Dump::ReadSnoopy");
-  DumpFileHandler fileHdl;
-
-
-  astra::cout << "Dump: Reading Snoopy's dump " << this->filename.c_str() << "..." << std::flush;
-  // Reset timer
-  Kokkos::Timer timer;
-  timer.reset();
-  // Open file
-  #ifdef WITH_MPI
-    MPI_File_open(MPI_COMM_WORLD, filename.c_str(),
-                              MPI_MODE_RDONLY | MPI_MODE_UNIQUE_OPEN,
-                              MPI_INFO_NULL, &fileHdl);
-    this->offset = 0;
-  #else
-    fileHdl = fopen(filename.c_str(),"rb");
-    if(fileHdl == NULL) {
-      std::stringstream msg;
-      msg << "Failed to open dump file: " << this->filename.filename() << std::endl;
-      throw std::runtime_error(msg.str());
-    }
-  #endif
-
-
-  // Read and check header
-  int dumpVersion;
-  ReadSnoopyScalar(fileHdl, dumpVersion); // Ignore version for now
-  astra::cout << "Snoopy dump (version " << dumpVersion << ") " << std::endl;
-  int nx1, nx2, nx3;
-  ReadSnoopyScalar(fileHdl, nx1);
-  ReadSnoopyScalar(fileHdl, nx2);
-  ReadSnoopyScalar(fileHdl, nx3);
-  astra::cout << "with grid size (" << nx1 << ", " << nx2 << ", " << nx3 << ") " << std::endl;
-  int included_fields;
-  ReadSnoopyScalar(fileHdl, included_fields);
-  astra::cout << included_fields << " fields included." << std::endl;
-  
-  // Check that grid size matches
-  if(nx1 != npr_glob[0] || nx2 != npr_glob[1] || nx3 != npr_glob[2]) {
-    throw std::runtime_error("Error: grid size in dump file (" 
-          + std::to_string(nx1) + ", " + std::to_string(nx2) + ", " + std::to_string(nx3) +
-           ") does not match simulation grid size.");
-  }
-  fields["state"] = Field<Array3D<complex>>("state",npf);
-  ReadSnoopyArray(fileHdl, "vx1", fields["state"]);
-  ReadSnoopyArray(fileHdl, "vx2", fields["state"]);
-  ReadSnoopyArray(fileHdl, "vx3", fields["state"]);
-
-  if(included_fields & 1) {
-    // Boussinesq field
-    ReadSnoopyArray(fileHdl, "th", fields["state"]);
-  }
-  if(included_fields & 16) {
-    // concentration field
-    ReadSnoopyArray(fileHdl, "c", fields["state"]);
-  }
-  if(included_fields & 32) {
-    // concentration field
-    ReadSnoopyArray(fileHdl, "ch", fields["state"]);
-  }
-  if(included_fields & 2) {
-    // Magnetic field
-    ReadSnoopyArray(fileHdl, "bx1", fields["state"]);
-    ReadSnoopyArray(fileHdl, "bx2", fields["state"]);
-    ReadSnoopyArray(fileHdl, "bx3", fields["state"]);
-  }
-  if(included_fields & 4) {
-    // Particles
-    throw std::runtime_error("Error: reading particles from Snoopy dump files is not supported yet.");
-  }
-  if(included_fields & 8) {
-    // Compressible density field
-    ReadSnoopyArray(fileHdl, "rho", fields["state"]);
-  }
-  ReadSnoopyScalar(fileHdl,reals["time"]);
-  ReadSnoopyScalar(fileHdl,ints["nvtk"]);
-  ReadSnoopyScalar(fileHdl,ints["slice"]);
-  ReadSnoopyScalar(fileHdl,ints["ndmp"]);
-  ReadSnoopyScalar(fileHdl,reals["lastTimevar"]);
-  ReadSnoopyScalar(fileHdl,reals["lastVtkOutput"]);
-  ReadSnoopyScalar(fileHdl,reals["lastDmpOutput"]);
-  ReadSnoopyScalar(fileHdl,reals["lastSliceOutput"]);
-
-  int marker;
-  ReadSnoopyScalar(fileHdl,marker); // Read end marker
-  if(marker != 1981) {
-    throw std::runtime_error("Error: invalid end of Snoopy dump file.");
-  }
-  #ifdef WITH_MPI
-  MPI_File_close(&fileHdl);
-  #else
-  fclose(fileHdl);
-  #endif
-
-  astra::cout << "done in " << timer.seconds() << " s." << std::endl;
-  astra::popRegion();
-}
-
-
 void Dump::Read() {
   astra::pushRegion("Dump::Read");
   DumpFileHandler fileHdl;
   // Open file;
 
-  astra::cout << "Dump: Reading file " << this->filename.c_str() << "..." << std::flush;
+  astra::cout << "Dump: Reading file " << this->filename.filename().c_str() << "..." << std::flush;
   // Reset timer
   Kokkos::Timer timer;
   timer.reset();
@@ -327,6 +225,104 @@ void Dump::Fetch(std::string name, real &value) {
 void Dump::Fetch(std::string name, int &value) {
   value = this->ints.at(name);
 }
+
+void Dump::ReadSnoopy() {
+astra::pushRegion("Dump::ReadSnoopy");
+  DumpFileHandler fileHdl;
+  astra::cout << "Dump: Reading Snoopy's dump " << this->filename.c_str() << "..." << std::flush;
+  // Reset timer
+  Kokkos::Timer timer;
+  timer.reset();
+  // Open file
+  #ifdef WITH_MPI
+    MPI_File_open(MPI_COMM_WORLD, filename.c_str(),
+                              MPI_MODE_RDONLY | MPI_MODE_UNIQUE_OPEN,
+                              MPI_INFO_NULL, &fileHdl);
+    this->offset = 0;
+  #else
+    fileHdl = fopen(filename.c_str(),"rb");
+    if(fileHdl == NULL) {
+      std::stringstream msg;
+      msg << "Failed to open dump file: " << this->filename.filename() << std::endl;
+      throw std::runtime_error(msg.str());
+    }
+  #endif
+
+
+  // Read and check header
+  int dumpVersion;
+  ReadSnoopyScalar(fileHdl, dumpVersion); // Ignore version for now
+  if(dumpVersion != 5) {
+    throw std::runtime_error("Unsupported Snoopy dump version: " + std::to_string(dumpVersion));
+  }
+  int nx1, nx2, nx3;
+  ReadSnoopyScalar(fileHdl, nx1);
+  ReadSnoopyScalar(fileHdl, nx2);
+  ReadSnoopyScalar(fileHdl, nx3);
+  int included_fields;
+  ReadSnoopyScalar(fileHdl, included_fields);
+  
+  // Check that grid size matches
+  if(nx1 != npr_glob[0] || nx2 != npr_glob[1] || nx3 != npr_glob[2]) {
+    throw std::runtime_error("Error: grid size in dump file (" 
+          + std::to_string(nx1) + ", " + std::to_string(nx2) + ", " + std::to_string(nx3) +
+           ") does not match simulation grid size.");
+  }
+  fields["state"] = Field<Array3D<complex>>("state",npf);
+  ReadSnoopyArray(fileHdl, "vx1", fields["state"]);
+  ReadSnoopyArray(fileHdl, "vx2", fields["state"]);
+  ReadSnoopyArray(fileHdl, "vx3", fields["state"]);
+
+  if(included_fields & 1) {
+    // Boussinesq field
+    ReadSnoopyArray(fileHdl, "th", fields["state"]);
+  }
+  if(included_fields & 16) {
+    // concentration field
+    ReadSnoopyArray(fileHdl, "c", fields["state"]);
+  }
+  if(included_fields & 32) {
+    // concentration field
+    ReadSnoopyArray(fileHdl, "ch", fields["state"]);
+  }
+  if(included_fields & 2) {
+    // Magnetic field
+    ReadSnoopyArray(fileHdl, "bx1", fields["state"]);
+    ReadSnoopyArray(fileHdl, "bx2", fields["state"]);
+    ReadSnoopyArray(fileHdl, "bx3", fields["state"]);
+  }
+  if(included_fields & 4) {
+    // Particles
+    throw std::runtime_error("Error: reading particles from Snoopy dump files is not supported yet.");
+  }
+  if(included_fields & 8) {
+    // Compressible density field
+    ReadSnoopyArray(fileHdl, "rho", fields["state"]);
+  }
+  ReadSnoopyScalar(fileHdl,reals["time"]);
+  ReadSnoopyScalar(fileHdl,ints["nvtk"]);
+  ReadSnoopyScalar(fileHdl,ints["slice"]);
+  ReadSnoopyScalar(fileHdl,ints["ndmp"]);
+  ReadSnoopyScalar(fileHdl,reals["lastTimevar"]);
+  ReadSnoopyScalar(fileHdl,reals["lastVtkOutput"]);
+  ReadSnoopyScalar(fileHdl,reals["lastDmpOutput"]);
+  ReadSnoopyScalar(fileHdl,reals["lastSliceOutput"]);
+
+  int marker;
+  ReadSnoopyScalar(fileHdl,marker); // Read end marker
+  if(marker != 1981) {
+    throw std::runtime_error("Error: invalid end of Snoopy dump file.");
+  }
+  #ifdef WITH_MPI
+  MPI_File_close(&fileHdl);
+  #else
+  fclose(fileHdl);
+  #endif
+
+  astra::cout << "done in " << timer.seconds() << " s." << std::endl;
+  astra::popRegion();
+}
+
 
 // Internal functions
 ///////////////////////////////////

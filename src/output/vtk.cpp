@@ -92,7 +92,7 @@ Vtk::Vtk(Grid *grid, real time, std::string filebase, std::string directory) {
   ssfileName << filebase << ".vtk";
   filename = outputDirectory/ssfileName.str();
 
-  astra::cout << "Vtk: Opening file " << ssfileName.str() << "..." << std::flush;
+  astra::cout << "Vtk: Writing file " << ssfileName.str() << "..." << std::flush;
 
   timer.reset();
 
