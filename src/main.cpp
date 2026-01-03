@@ -240,7 +240,6 @@ int main( int argc, char* argv[] ) {
       if(restartFileNumber==-2) {
         dump.ReadSnoopy();
       } else {
-        astra::cout << "nof" << std::endl;
         dump.Read();
       }
       dump.Fetch("state", state);
