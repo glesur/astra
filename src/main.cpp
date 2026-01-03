@@ -46,7 +46,7 @@ void WriteFile(Input &input,
 std::string CreateDumpFileName(int n) {
   std::stringstream ssdmpFileNum;
   ssdmpFileNum << std::setfill('0') << std::setw(4) << n;
-  return std::string("dump.")+ssdmpFileNum.str();
+  return std::string("dump.")+ssdmpFileNum.str()+std::string(".dmp");
 }
 
 // Helper function to convert filesystem::file_time into std::time_t
@@ -218,16 +218,31 @@ int main( int argc, char* argv[] ) {
       // Restarting from dump file
       ///////////////////////////////
       int restartFileNumber = input.restartFileNumber;;
-      if(restartFileNumber<0) {
+      if(restartFileNumber==-1) {
         // Find the last dump file in the output directory
         restartFileNumber = GetLastDumpInDirectory(outputDmpDir);
         if(restartFileNumber<0) {
           throw std::runtime_error("No dump file found in directory "+outputDmpDir+" for restart.");
         }
       }
-      astra::cout << "Main: Restarting from dump file number " << restartFileNumber << std::endl;
-      Dump dump(&grid, CreateDumpFileName(restartFileNumber), outputDmpDir);
-      dump.Read();
+      std::string filename;
+
+      if(restartFileNumber==-2) {
+        // Restart from Snoopy dump
+        filename = input.Get<std::string>("CommandLine","snoopy_restart",0);
+        astra::cout << "Main: Restarting from Snoopy dump file " << filename << std::endl;
+      } else {
+        filename = outputDmpDir+"/"+CreateDumpFileName(restartFileNumber);
+        astra::cout << "Main: Restarting from dump file number " << restartFileNumber << std::endl;
+      }
+      
+      Dump dump(&grid, filename);
+      if(restartFileNumber==-2) {
+        dump.ReadSnoopy();
+      } else {
+        astra::cout << "nof" << std::endl;
+        dump.Read();
+      }
       dump.Fetch("state", state);
       dump.Fetch("time", t0);
       dump.Fetch("lastVtkOutput", lastVtkOutput);
@@ -255,7 +270,7 @@ int main( int argc, char* argv[] ) {
 
       // Write initial dump if requested
       if(outputDmpStep>0.0) {
-        Dump dump(&grid, CreateDumpFileName(ndmp), outputDmpDir);
+        Dump dump(&grid, outputDmpDir+"/"+CreateDumpFileName(ndmp));
         dump.Register("state", state);
         dump.Register("time", 0.0);
         dump.Register("lastVtkOutput", lastVtkOutput);
@@ -290,7 +305,7 @@ int main( int argc, char* argv[] ) {
         lastTimevar += timevarStep;
       }
       if(outputDmpStep>0.0 && timeIntegrator->GetTime()-lastDmpOutput>=outputDmpStep) {
-        Dump dump(&grid, CreateDumpFileName(ndmp), outputDmpDir);
+        Dump dump(&grid, outputDmpDir+"/"+CreateDumpFileName(ndmp));
         ndmp++;
         lastDmpOutput += outputDmpStep;
         dump.Register("state", state);

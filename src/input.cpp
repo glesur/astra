@@ -142,6 +142,16 @@ void Input::ParseCommandLine(int argc, char **argv) {
       inputParameters["CommandLine"]["restart"].push_back(sirestart);
       this->restartRequested = true;
       this->restartFileNumber = std::stoi(sirestart);
+    } else if(std::string(argv[i]) == "-snoopy_restart") {
+      // -snoopy_restart must be followed by a filename
+      if((i+1) >= argc) {
+        throw std::invalid_argument(
+                      "You must specify -snoopy_restart filename where filename is the name of the Snoopy dump file.");
+      }
+      std::string snoopyFileName = std::string(argv[++i]);
+      inputParameters["CommandLine"]["snoopy_restart"].push_back(snoopyFileName);
+      this->restartRequested = true;
+      this->restartFileNumber = -2; // indicate a snoopy restart
     } else if(std::string(argv[i]) == "-i") {
       // Loop on dimensions
       if((++i) >= argc) throw std::invalid_argument(
@@ -316,8 +326,10 @@ void Input::PrintOptions() {
   astra::cout << "List of valid arguments:" << std::endl << std::endl;
 
   astra::cout << " -restart n" << std::endl;
-  astra::cout << "         Restart from dumpfile n. If n is ommited, Idefix restart from the latest"
+  astra::cout << "         Restart from dumpfile n. If n is ommited, Astra restart from the latest"
              << " generated dump file." << std::endl;
+  astra::cout << " -snoopy_restart filename" << std::endl;
+  astra::cout << "         Restart from Snoopy dump \"filename\"." << std::endl;
   astra::cout << " -i xxx" << std::endl;
   astra::cout << "         Use the input file xxx instead of the default idefix.ini" << std::endl;
   astra::cout << " -maxcycles n" << std::endl;

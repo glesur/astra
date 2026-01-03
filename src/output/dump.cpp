@@ -19,14 +19,16 @@
   error "Missing the <filesystem> header."
 #endif
 
-Dump::Dump(Grid *grid, std::string filebase, std::string directory) {
+Dump::Dump(Grid *grid, std::string filename) {
 
   
   // Initialise the root tag (used for MPI non-collective I/Os)
   this->isRoot = astra::prank == 0;
-  this->grid_nglob = grid->npf_glob[0]*grid->npf_glob[1]*grid->npf_glob[2];
-  this->filebase = filebase;
-  this->directory = directory;
+  this->npf = grid->npf;
+  this->npf_glob = grid->npf_glob;
+  this->npr_glob= grid->npr_glob;
+
+  this->filename = filename;
 
   // Create MPI view when using MPI I/O
   #ifdef WITH_MPI
@@ -36,12 +38,12 @@ Dump::Dump(Grid *grid, std::string filebase, std::string directory) {
 
     for(int dir = 0; dir < 3 ; dir++) {
       // VTK assumes Fortran array ordering, hence arrays dimensions are filled backwards
-      start[2-dir] = 0;
-      size[2-dir] = grid->npf_glob[dir];
-      subsize[2-dir] = grid->npf[dir];
+      start[dir] = 0;
+      size[dir] = grid->npf_glob[dir];
+      subsize[dir] = grid->npf[dir];
     }
     // Fix starting point along x
-    start[2] = grid->npf[0]*astra::prank;
+    start[0] = grid->npf[0]*astra::prank;
     
     MPI_Type_create_subarray(3, size, subsize, start, MPI_ORDER_C, MPI_C_DOUBLE_COMPLEX, &this->view);
     MPI_Type_commit(&this->view);
@@ -62,7 +64,7 @@ void Dump::Register(std::string name, int value) {
 
 void Dump::Write() {
   astra::pushRegion("Dump::Write");
-  fs::path outputDirectory = directory;
+  fs::path outputDirectory = this->filename.parent_path();
   DumpFileHandler fileHdl;
 
   if(isRoot) {
@@ -83,12 +85,8 @@ void Dump::Write() {
   }
 
   // Open file;
-  fs::path filename;
-  std::stringstream ssfileName;
-  ssfileName << filebase << ".dmp";
-  filename = outputDirectory/ssfileName.str();
 
-  astra::cout << "Dump: Opening file " << ssfileName.str() << "..." << std::flush;
+  astra::cout << "Dump: Opening file " << this->filename.filename() << "..." << std::flush;
   // Reset timer
   Kokkos::Timer timer;
   timer.reset();
@@ -147,18 +145,12 @@ void Dump::Write() {
   astra::popRegion();
 }
 
-void Dump::Read() {
-  astra::pushRegion("Dump::Read");
+void Dump::ReadSnoopy() {
+astra::pushRegion("Dump::ReadSnoopy");
   DumpFileHandler fileHdl;
-  // Open file;
-  fs::path filename;
-  fs::path outputDirectory = directory;
-  std::stringstream ssfileName;
-  ssfileName << filebase << ".dmp";
-  
-  filename = outputDirectory/ssfileName.str();
 
-  astra::cout << "Dump: Reading file " << ssfileName.str() << "..." << std::flush;
+
+  astra::cout << "Dump: Reading Snoopy's dump " << this->filename.c_str() << "..." << std::flush;
   // Reset timer
   Kokkos::Timer timer;
   timer.reset();
@@ -172,11 +164,111 @@ void Dump::Read() {
     fileHdl = fopen(filename.c_str(),"rb");
     if(fileHdl == NULL) {
       std::stringstream msg;
-      msg << "Failed to open dump file: " << std::string(filename) << std::endl;
+      msg << "Failed to open dump file: " << this->filename.filename() << std::endl;
       throw std::runtime_error(msg.str());
     }
   #endif
 
+
+  // Read and check header
+  int dumpVersion;
+  ReadSnoopyScalar(fileHdl, dumpVersion); // Ignore version for now
+  astra::cout << "Snoopy dump (version " << dumpVersion << ") " << std::endl;
+  int nx1, nx2, nx3;
+  ReadSnoopyScalar(fileHdl, nx1);
+  ReadSnoopyScalar(fileHdl, nx2);
+  ReadSnoopyScalar(fileHdl, nx3);
+  astra::cout << "with grid size (" << nx1 << ", " << nx2 << ", " << nx3 << ") " << std::endl;
+  int included_fields;
+  ReadSnoopyScalar(fileHdl, included_fields);
+  astra::cout << included_fields << " fields included." << std::endl;
+  
+  // Check that grid size matches
+  if(nx1 != npr_glob[0] || nx2 != npr_glob[1] || nx3 != npr_glob[2]) {
+    throw std::runtime_error("Error: grid size in dump file (" 
+          + std::to_string(nx1) + ", " + std::to_string(nx2) + ", " + std::to_string(nx3) +
+           ") does not match simulation grid size.");
+  }
+  fields["state"] = Field<Array3D<complex>>("state",npf);
+  ReadSnoopyArray(fileHdl, "vx1", fields["state"]);
+  ReadSnoopyArray(fileHdl, "vx2", fields["state"]);
+  ReadSnoopyArray(fileHdl, "vx3", fields["state"]);
+
+  if(included_fields & 1) {
+    // Boussinesq field
+    ReadSnoopyArray(fileHdl, "th", fields["state"]);
+  }
+  if(included_fields & 16) {
+    // concentration field
+    ReadSnoopyArray(fileHdl, "c", fields["state"]);
+  }
+  if(included_fields & 32) {
+    // concentration field
+    ReadSnoopyArray(fileHdl, "ch", fields["state"]);
+  }
+  if(included_fields & 2) {
+    // Magnetic field
+    ReadSnoopyArray(fileHdl, "bx1", fields["state"]);
+    ReadSnoopyArray(fileHdl, "bx2", fields["state"]);
+    ReadSnoopyArray(fileHdl, "bx3", fields["state"]);
+  }
+  if(included_fields & 4) {
+    // Particles
+    throw std::runtime_error("Error: reading particles from Snoopy dump files is not supported yet.");
+  }
+  if(included_fields & 8) {
+    // Compressible density field
+    ReadSnoopyArray(fileHdl, "rho", fields["state"]);
+  }
+  ReadSnoopyScalar(fileHdl,reals["time"]);
+  ReadSnoopyScalar(fileHdl,ints["nvtk"]);
+  ReadSnoopyScalar(fileHdl,ints["slice"]);
+  ReadSnoopyScalar(fileHdl,ints["ndmp"]);
+  ReadSnoopyScalar(fileHdl,reals["lastTimevar"]);
+  ReadSnoopyScalar(fileHdl,reals["lastVtkOutput"]);
+  ReadSnoopyScalar(fileHdl,reals["lastDmpOutput"]);
+  ReadSnoopyScalar(fileHdl,reals["lastSliceOutput"]);
+
+  int marker;
+  ReadSnoopyScalar(fileHdl,marker); // Read end marker
+  if(marker != 1981) {
+    throw std::runtime_error("Error: invalid end of Snoopy dump file.");
+  }
+  #ifdef WITH_MPI
+  MPI_File_close(&fileHdl);
+  #else
+  fclose(fileHdl);
+  #endif
+
+  astra::cout << "done in " << timer.seconds() << " s." << std::endl;
+  astra::popRegion();
+}
+
+
+void Dump::Read() {
+  astra::pushRegion("Dump::Read");
+  DumpFileHandler fileHdl;
+  // Open file;
+
+  astra::cout << "Dump: Reading file " << this->filename.c_str() << "..." << std::flush;
+  // Reset timer
+  Kokkos::Timer timer;
+  timer.reset();
+  // Open file
+  #ifdef WITH_MPI
+    MPI_File_open(MPI_COMM_WORLD, filename.c_str(),
+                              MPI_MODE_RDONLY | MPI_MODE_UNIQUE_OPEN,
+                              MPI_INFO_NULL, &fileHdl);
+    this->offset = 0;
+  #else
+    fileHdl = fopen(this->filename.c_str(),"rb");
+    if(fileHdl == NULL) {
+      std::stringstream msg;
+      msg << "Failed to open dump file: " << std::string(this->filename) << std::endl;
+      throw std::runtime_error(msg.str());
+    }
+  #endif
+  
   // Read and check header
   std::string header = ReadString(fileHdl);
   if(header.substr(0,6)!="ASTRA ") {
@@ -195,12 +287,12 @@ void Dump::Read() {
     if(type == ComplexDoubleType && dim.size() == 3) {
       std::string fieldName = name.substr(0,name.find("\\"));
       std::string arrayName = name.substr(name.find("\\")+1);
-      ArrayHost3D<complex> arrHost("temp", dim[0], dim[1], dim[2]);
+      ArrayHost3D<complex> arrHost("temp", npf[0], npf[1], npf[2]);
       ReadData(fileHdl, arrHost);
       // Check if Field name exists
       if(fields.find(fieldName) == fields.end()) {
         //  Create field
-        fields[fieldName] = Field<Array3D<complex>>(fieldName,{dim[0], dim[1], dim[2]});
+        fields[fieldName] = Field<Array3D<complex>>(fieldName,npf);
       }
       fields[fieldName].Add(arrayName);
       Kokkos::deep_copy(fields[fieldName][arrayName],arrHost);;
@@ -347,3 +439,30 @@ void Dump::ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &di
   #endif
 }
 
+void Dump::ReadSnoopyArray(DumpFileHandler fileHdl, std::string name, Field<Array3D<complex>> &data) {
+  astra::pushRegion("Dump::ReadSnoopyArray");
+  int ntot,size,nglob;
+  ntot = data.GetDimensions()[0]*data.GetDimensions()[1]*data.GetDimensions()[2];
+  size = sizeof(complex);
+  nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
+  
+  ArrayHost3D<complex> temp("temp", data.GetDimensions()[0], data.GetDimensions()[1], data.GetDimensions()[2]);
+  #ifdef WITH_MPI
+    MPI_Status status;
+
+    MPI_File_set_view(fileHdl, offset, MPI_C_DOUBLE_COMPLEX, this->view, "native", MPI_INFO_NULL );
+    MPI_File_read_all(fileHdl, temp.data(), ntot, MPI_C_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+
+
+    offset+= nglob*size;
+  #else
+    if(fread(temp.data(), size, ntot, fileHdl) < ntot) {
+      throw std::runtime_error("Error: unexpected end of dump file");
+    }
+  #endif
+
+  // Allocate data and copy to the field
+  data.Add(name);
+  Kokkos::deep_copy(data[name], temp);
+  astra::popRegion();
+}

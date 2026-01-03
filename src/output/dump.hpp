@@ -14,6 +14,15 @@
 #ifdef WITH_MPI
 #include <mpi.h>
 #endif
+#if __has_include(<filesystem>)
+  #include <filesystem> // NOLINT [build/c++17]
+  namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+  #include <experimental/filesystem>
+  namespace fs = std::experimental::filesystem;
+#else
+  error "Missing the <filesystem> header."
+#endif
 
 // File handler depends on the type of I/O we use
 #ifdef WITH_MPI
@@ -43,7 +52,7 @@ struct IsFundamentalType<complex> { enum { result = true }; };
 
 class Dump {
   public:
-    Dump(Grid *grid, std::string filebase, std::string directory);
+    Dump(Grid *grid, std::string filename);
 
     void Register(std::string name, Field<Array3D<complex>>);
     void Register(std::string name, real);
@@ -54,6 +63,8 @@ class Dump {
     void Fetch(std::string name, real &);
     void Fetch(std::string name, int &);
     void Read();
+
+    void ReadSnoopy(); // Read snoopy dump files
 
   private:
     enum DataType {DoubleType, SingleType, 
@@ -67,6 +78,11 @@ class Dump {
     
     template <typename T>
     void ReadData(DumpFileHandler fileHdl, T &data);
+
+    template <typename T>
+    void ReadSnoopyScalar(DumpFileHandler fileHdl, T &data);
+    void ReadSnoopyArray(DumpFileHandler fileHdl, std::string name, Field<Array3D<complex>> &data);
+
 
     void ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &dim,
                                          DataType &type, std::string &name);
@@ -95,13 +111,12 @@ class Dump {
     };
     static constexpr int StringMaxLength{64};
     bool isRoot{false};
-    int grid_nglob{1};
+    std::array<int,3> npf_glob, npf, npr_glob;
     std::map<std::string, Field<Array3D<complex>>> fields;
     std::map<std::string, real> reals;
     std::map<std::string, int> ints;
 
-    std::string filebase;
-    std::string directory;
+    fs::path filename;
     #ifdef WITH_MPI
       MPI_Offset offset;
       MPI_Datatype view;
@@ -119,7 +134,7 @@ void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
     ndim = 3;
     type = static_cast<int>(TypeToInt<complex>());
     size = sizeof(complex);
-    nglob = grid_nglob;
+    nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
     // Overwrite dims
     dims = {static_cast<int>(data.extent(0)),
             static_cast<int>(data.extent(1)),
@@ -214,7 +229,7 @@ void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
   if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
     ntot = data.extent(0)*data.extent(1)*data.extent(2);
     size = sizeof(complex);
-    nglob = grid_nglob;
+    nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
   } else {
     size = sizeof(T);
     ntot = 1;
@@ -251,4 +266,27 @@ void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
   astra::popRegion();
 }
 
+
+template <typename T>
+void Dump::ReadSnoopyScalar(DumpFileHandler fileHdl, T &data) {
+  const int size = sizeof(T);
+  #ifdef WITH_MPI
+    MPI_Status status;
+
+    MPI_File_set_view(fileHdl, this->offset, MPI_BYTE,
+                                      MPI_CHAR, "native", MPI_INFO_NULL );
+    if(isRoot) {
+      MPI_File_read(fileHdl, &data, size, MPI_BYTE, &status);
+    }
+    MPI_Bcast(&data, size, MPI_BYTE, 0, MPI_COMM_WORLD);
+    offset+= size;
+  #else
+
+  // Read raw data
+  if(fread(&data, size, 1, fileHdl) < 1) {
+    throw std::runtime_error("Error: unexpected end of dump file");
+  }
+  #endif
+
+}
 #endif// OUTPUT_DUMP_HPP_
