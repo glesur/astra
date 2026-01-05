@@ -12,6 +12,7 @@
 #include "rightHandSide.hpp"
 #include "input.hpp"
 #include "arrays.hpp"
+#include "shear.hpp"
 
 class Grid;
 
@@ -141,12 +142,33 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
       complex mask = (std::fabs(kx1(i))< 2./3*kx1max 
                    && std::fabs(kx2(j))< 2./3*kx2max 
                    && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
-      dvx1(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf11(i,j,k)+kx2(j)*wf12(i,j,k)+kx3(k)*wf13(i,j,k))*mask;
-      dvx2(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf12(i,j,k)+kx2(j)*wf22(i,j,k)+kx3(k)*wf23(i,j,k))*mask;
-      dvx3(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1(i)*wf13(i,j,k)+kx2(j)*wf23(i,j,k)+kx3(k)*wf33(i,j,k))*mask;
+      const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
+      const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
+      const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
+      dvx1(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1t*wf11(i,j,k)+kx2t*wf12(i,j,k)+kx3t*wf13(i,j,k))*mask;
+      dvx2(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1t*wf12(i,j,k)+kx2t*wf22(i,j,k)+kx3t*wf23(i,j,k))*mask;
+      dvx3(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1t*wf13(i,j,k)+kx2t*wf23(i,j,k)+kx3t*wf33(i,j,k))*mask;
   });
 
-  Projector(dfld);
+  // Pressure term
+  // Project the velocity field to be divergence free
+  auto vx1 = fldin["vx1"];
+
+  astra_for("hydro_pressure", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
+    KOKKOS_LAMBDA(int i, int j, int k) {
+      const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
+      const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
+      const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
+      const real k2t = kx1t*kx1t + kx2t*kx2t + kx3t*kx3t;
+      if(k2t > 0.0) {
+        complex kv_dot_v = kx1t*dvx1(i,j,k)+kx2t*dvx2(i,j,k)+kx3t*dvx3(i,j,k);
+        kv_dot_v += 0*shear.shearRate * kx2(j) * vx1(i,j,k); // Shear contribution = dk/dt.v
+        dvx1(i,j,k) -= kv_dot_v*kx1t/k2t;
+        dvx2(i,j,k) -= kv_dot_v*kx2t/k2t;
+        dvx3(i,j,k) -= kv_dot_v*kx3t/k2t;
+      }
+  });
+
   astra::popRegion();
 }
 
@@ -161,15 +183,20 @@ void Hydro<Shear>::Projector(Field<Array3D<complex>>& fldin) {
   auto vx2 = fldin["vx2"];
   auto vx3 = fldin["vx3"];
 
+  Shear shear = this->shear;
+
   // Project the velocity field to be divergence free
   astra_for("hydro_projector", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int i, int j, int k) {
-      real k2 = kx1(i)*kx1(i)+kx2(j)*kx2(j)+kx3(k)*kx3(k);
-      if(k2 > 0.0) {
-        complex kv_dot_v = kx1(i)*vx1(i,j,k)+kx2(j)*vx2(i,j,k)+kx3(k)*vx3(i,j,k);
-        vx1(i,j,k) -= kv_dot_v*kx1(i)/k2;
-        vx2(i,j,k) -= kv_dot_v*kx2(j)/k2;
-        vx3(i,j,k) -= kv_dot_v*kx3(k)/k2;
+      const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
+      const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
+      const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
+      real k2t = kx1t*kx1t + kx2t*kx2t + kx3t*kx3t;
+      if(k2t > 0.0) {
+        complex kv_dot_v = kx1t*vx1(i,j,k)+kx2t*vx2(i,j,k)+kx3t*vx3(i,j,k);
+        vx1(i,j,k) -= kv_dot_v*kx1t/k2t;
+        vx2(i,j,k) -= kv_dot_v*kx2t/k2t;
+        vx3(i,j,k) -= kv_dot_v*kx3t/k2t;
       }
   });
   astra::popRegion();
@@ -188,11 +215,17 @@ void Hydro<Shear>::ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt)
   auto vx3 = fldin["vx3"];
 
   real nu= this->nu;
+  Shear shear = this->shear;
+  shear.Refresh(t);
   astra_for("hydro_viscosity", fldin,
     KOKKOS_LAMBDA(int i, int j, int k) {
-      real k2 = kx1(i)*kx1(i)+kx2(j)*kx2(j)+kx3(k)*kx3(k);
+      const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
+      const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
+      const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
+      const real k2t = kx1t*kx1t + kx2t*kx2t + kx3t*kx3t;
+
       //real factor = (1-0.5*dt*nu*k2)/(1+0.5*dt*nu*k2); // Crank-Nicholson
-      real factor = std::exp(-dt * nu*k2); // Exact integration
+      real factor = std::exp(-dt * nu*k2t); // Exact integration
       vx1(i,j,k) *= factor;
       vx2(i,j,k) *= factor;
       vx3(i,j,k) *= factor;
@@ -204,9 +237,9 @@ template <typename Shear>
 real Hydro<Shear>::GetInvDt() {
   astra::pushRegion("Hydro::GetInvDt");
   real invdt = 0.0;
-  real kx1max = this->grid->kmax[IDIR];
-  real kx2max = this->grid->kmax[JDIR];
-  real kx3max = this->grid->kmax[KDIR];
+  real kx1max = this->shear.kx1tmax();
+  real kx2max = this->shear.kx2tmax();
+  real kx3max = this->shear.kx3tmax();
 
   auto vr1 = this->vr1;
   auto vr2 = this->vr2;

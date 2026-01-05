@@ -22,6 +22,7 @@ class RightHandSideConcept {
     virtual ~RightHandSideConcept() = default;
     virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld, real t) = 0;
     virtual void ImplicitStep(Field<T>& fldin, real t, real dt) = 0;
+    virtual void SetTinit(real t0) = 0;
     virtual real GetInvDt() = 0;
     virtual std::vector<std::string> GetVariables() = 0;
 };
@@ -29,11 +30,14 @@ class RightHandSideConcept {
 template <typename T, typename Shear>
 class RightHandSide : public RightHandSideConcept<T> {
   public:
-    RightHandSide(Input &input, Grid *grid) : grid(grid), shear(input) {}
+    RightHandSide(Input &input, Grid *grid) : grid(grid), shear(input, grid) {}
     virtual ~RightHandSide() {}
 
     virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld, real t) = 0;
     virtual void ImplicitStep(Field<T>& fldin, real t, real dt) = 0;
+    void SetTinit(real t0) {
+      this->shear.SetTinit(t0);
+    }
     virtual real GetInvDt() = 0;
     virtual std::vector<std::string> GetVariables() = 0;
 

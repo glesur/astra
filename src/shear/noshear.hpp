@@ -12,19 +12,28 @@
 #include "astra.hpp"
 #include "input.hpp"
 #include "arrays.hpp"
+#include "grid.hpp"
 
 class NoShear {
  public:
-  real shearRate{0.0};
+  const real shearRate{0.0};
   NoShear() = default;
   ~NoShear() = default;
-  NoShear(Input &input) {};
+  NoShear(Input &input, Grid* grid) {
+    kx1max = grid->kmax[IDIR];
+    kx2max = grid->kmax[JDIR];
+    kx3max = grid->kmax[KDIR];
+  };
 
   void Refresh(real time) {
     // Nothing to do
   }
 
   void Remap(real time, Array3D<complex>& field) {
+    // Nothing to do
+  }
+
+  void SetTinit(real t0) {
     // Nothing to do
   }
   KOKKOS_INLINE_FUNCTION real kx1t(real kx1, real kx2, real kx3) const {
@@ -38,6 +47,18 @@ class NoShear {
   KOKKOS_INLINE_FUNCTION real kx3t(real kx1, real kx2, real kx3) const {
     return kx3;
   }
+
+  real kx1tmax() const {
+    return kx1max;
+  }
+  real kx2tmax() const {
+    return kx2max;
+  }
+  real kx3tmax() const {
+    return kx3max;
+  }
+  protected:
+    real kx1max, kx2max, kx3max;
 };
 
 #endif // SHEAR_NOSHEAR_HPP_

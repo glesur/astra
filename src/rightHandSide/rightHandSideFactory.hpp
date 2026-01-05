@@ -32,11 +32,11 @@ public:
     if(numRhs < 1) {
       throw std::runtime_error("No right hand side specified in the input file [Physics]:rhs");
     }
-    std::string shearTypeStr = input.GetOrSet<std::string>("Physics","shear_type",0,"NoShear");
+    std::string shearTypeStr = input.GetOrSet<std::string>("Physics","shear_type",0,"disabled");
     ShearType shearType;
-    if(shearTypeStr =="NoShear") {
+    if(shearTypeStr =="disabled") {
       shearType = ShearType::NoShear;
-    } else if(shearTypeStr =="LinearShear") {
+    } else if(shearTypeStr =="linear") {
       shearType = ShearType::LinearShear;
     } else {
       throw std::runtime_error("Unknown shear type: " + shearTypeStr);
