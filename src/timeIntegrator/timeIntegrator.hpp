@@ -13,8 +13,9 @@
 #define TIMEINTEGRATOR_HPP_
 
 #include "field.hpp"
-#include "rightHandSide.hpp"
+#include "grid.hpp"
 #include "logger.hpp"
+#include "rightHandSide.hpp"
 #include <limits>
 
 #ifdef WITH_MPI
@@ -24,11 +25,14 @@
 template <typename T>
 class TimeIntegrator {
   public:
-    TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : rhsVector(rhsVector), grid(grid), logger(input, grid, this) {
+    TimeIntegrator(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector)  : grid(grid), logger(input, grid, this) {
       logger.Start();
       timer.reset();
       cfl = input.Get<real>("TimeIntegrator","cfl",0);
       maxRuntime = 3600*input.GetOrSet<double>("TimeIntegrator","max_runtime",0.0,-1.0);
+      for (auto& rhs : rhsVector) {
+        this->rhsVector.push_back(rhs.get());
+      }
     }
     virtual ~TimeIntegrator() {}
 
@@ -54,7 +58,7 @@ class TimeIntegrator {
     real cfl{1.0};
     int ncycles{0};
     Grid *grid;
-    std::vector<RightHandSide<T>*> rhsVector;
+    std::vector<RightHandSideConcept<T>*> rhsVector;
     Logger<T> logger;
     double maxRuntime;      // Maximum runtime requested (disabled when negative)
     Kokkos::Timer timer;    // Internal timer of the integrator

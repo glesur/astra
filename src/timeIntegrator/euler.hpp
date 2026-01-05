@@ -15,9 +15,9 @@
 template <typename T>
 class EulerTimeIntegrator : public TimeIntegrator<T> {
   public:
-    EulerTimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("Euler dfld",grid->npf) {
+    EulerTimeIntegrator(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("Euler dfld",grid->npf) {
       // Init dfld vector for the rhs
-      for(auto rhs : rhsVector) {
+      for(auto &rhs : rhsVector) {
         for(auto var : rhs->GetVariables()) {
           dfld.Add(var);
         }

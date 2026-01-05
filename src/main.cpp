@@ -191,7 +191,7 @@ int main( int argc, char* argv[] ) {
 
     // Create a state matching rhsVector requirements
     Field<Array3D<complex>> state("state",grid.npf);
-    for(auto rhs : rhsVector) {
+    for(auto &rhs : rhsVector) {
       for(auto var : rhs->GetVariables()) {
         state.Add(var);
       }
@@ -285,7 +285,7 @@ int main( int argc, char* argv[] ) {
 
     astra::cout << "Main: Starting time integration..." << std::endl;
     // Init the time integrator
-    auto *timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
+    auto timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
     timeIntegrator->SetTime(t0);
     real tstop = input.Get<real>("TimeIntegrator","tstop",0);
     Kokkos::Timer timer;
@@ -324,15 +324,10 @@ int main( int argc, char* argv[] ) {
       }
     }
 
-    LogFinished(grid, input, timer, timeIntegrator);
+    LogFinished(grid, input, timer, timeIntegrator.get());
     // Show profiler output
     astra::prof.Show();
 
-    // Clean up
-    delete timeIntegrator;
-    for(auto rhs : rhsVector) {
-      delete rhs;
-    }
     astra::cout << "Main: Job completed successfully." << std::endl;
   }
   Kokkos::finalize();

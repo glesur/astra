@@ -17,9 +17,19 @@
 class Grid;
 
 template <typename T>
-class RightHandSide {
+class RightHandSideConcept {
   public:
-    RightHandSide(Input &input, Grid *grid) : grid(grid) {}
+    virtual ~RightHandSideConcept() = default;
+    virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld, real t) = 0;
+    virtual void ImplicitStep(Field<T>& fldin, real t, real dt) = 0;
+    virtual real GetInvDt() = 0;
+    virtual std::vector<std::string> GetVariables() = 0;
+};
+
+template <typename T, typename Shear>
+class RightHandSide : public RightHandSideConcept<T> {
+  public:
+    RightHandSide(Input &input, Grid *grid) : grid(grid), shear(input) {}
     virtual ~RightHandSide() {}
 
     virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld, real t) = 0;
@@ -29,6 +39,7 @@ class RightHandSide {
 
   protected:
     Grid *grid{nullptr};
+    Shear shear;
 };
 
 #endif // RIGHTHANDSIDE_HPP_

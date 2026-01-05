@@ -82,6 +82,7 @@ target_include_directories(astra PUBLIC
                            src/initFlow
                            src/timeIntegrator
                            src/rightHandSide
+                           src/shear
                            src/output
                            src/output/timevar
                            )

@@ -22,14 +22,14 @@
 template<typename T>
 class TimeIntegratorFactory {
 public:
-  static TimeIntegrator<T>* Create(Input &input, Grid *grid, std::vector<RightHandSide<T>*> &rhsVector) {
+  static std::unique_ptr<TimeIntegrator<T>> Create(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector) {
     std::string method = input.Get<std::string>("TimeIntegrator","method",0);
     if(method == "rk3") {
-      return new RK3TimeIntegrator<T>(input, grid, rhsVector);
+      return std::make_unique<RK3TimeIntegrator<T>>(input, grid, rhsVector);
     } else if(method == "rk2") {
-      return new RK2TimeIntegrator<T>(input, grid, rhsVector);
+      return std::make_unique<RK2TimeIntegrator<T>>(input, grid, rhsVector);
     } else if(method == "euler") {
-      return new EulerTimeIntegrator<T>(input, grid, rhsVector);
+      return std::make_unique<EulerTimeIntegrator<T>>(input, grid, rhsVector);
     } else {
       throw std::runtime_error("Unknown time integrator method: " + method);
     }

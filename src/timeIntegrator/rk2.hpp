@@ -16,9 +16,9 @@
 template <typename T>
 class RK2TimeIntegrator : public TimeIntegrator<T> {
   public:
-    RK2TimeIntegrator(Input &input, Grid *grid, std::vector<RightHandSide<T>*> rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK2 dfld",grid->npf), fld0("RK2 fld0",grid->npf) {
+    RK2TimeIntegrator(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK2 dfld",grid->npf), fld0("RK2 fld0",grid->npf) {
       // Init dfld vector for the rhs
-      for(auto rhs : rhsVector) {
+      for(auto &rhs : rhsVector) {
         for(auto var : rhs->GetVariables()) {
           dfld.Add(var);
           fld0.Add(var);
