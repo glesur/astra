@@ -14,6 +14,7 @@
 #include "input.hpp"
 #include "arrays.hpp"
 #include "grid.hpp"
+#include "transpose.hpp"
 
 class LinearShear : public NoShear {
  public:
@@ -47,32 +48,55 @@ class LinearShear : public NoShear {
 
   void Remap(real time, Array3D<complex>& field) {
     astra::pushRegion("LinearShear::Remap");
-    // Nothing to do
+
     int n = static_cast<int>(0.5 + time/remapInterval) - nremaps;
     if(n<=0) throw std::runtime_error("LinearShear::Remap called but no remap needed");
 
-    Array3D<complex> temp("temp", field.extent(0), field.extent(1), field.extent(2));
-    Kokkos::deep_copy(temp, Kokkos::complex(0.0,0.0));
-
     int nx_glob = this->grid->npf_glob[IDIR];
     int ny_glob = this->grid->npf_glob[JDIR];
+    #ifdef WITH_MPI
+      Array3D<complex> transposed("transposed", this->grid->npf_glob[JDIR]/astra::psize, this->grid->npf_glob[IDIR], this->grid->npf_glob[KDIR]);
+      Transpose<complex> transpose(this->grid->npf);
+      transpose.Apply(field, transposed);
+      Array3D<complex> temp("temp", transposed.extent(0), transposed.extent(1), transposed.extent(2));
+      Kokkos::deep_copy(temp, Kokkos::complex(0.0,0.0));
+      const int ny_start = this->grid->npf_glob[JDIR]*astra::prank/astra::psize;
+      astra_for("shear_remap", 0,transposed.extent(0),0,transposed.extent(1),0,transposed.extent(2),
+        KOKKOS_LAMBDA (const int j, const int i, const int k) {
+          // unfold Fourier modes
+          const int nx = (i+nx_glob/2) % nx_glob - nx_glob/2;
+          const int ny = (j+ny_start+ny_glob/2) % ny_glob - ny_glob/2;
 
-    astra_for("shear_remap", 0,field.extent(0),0,field.extent(1),0,field.extent(2),
-      KOKKOS_LAMBDA (const int i, const int j, const int k) {
-        // unfold Fourier modes
-        const int nx = (i+nx_glob/2) % nx_glob - nx_glob/2;
-        const int ny = (j+ny_glob/2) % ny_glob - ny_glob/2;
+          const int nxtarget = nx + n*ny;
 
-        const int nxtarget = nx + n*ny;
-
-        // Check if mode goes out of bounds
-        if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
-          const int inew = (nxtarget + nx_glob) % nx_glob;
-          temp(inew,j,k) = field(i,j,k);
+          // Check if mode goes out of bounds
+          if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
+            const int inew = (nxtarget + nx_glob) % nx_glob;
+            temp(j,inew,k) = transposed(j,i,k);
+          }
         }
-      }
-    );
-    Kokkos::deep_copy(field, temp);
+      );
+      transpose.Apply(temp, field);
+    #else
+      Array3D<complex> temp("temp", field.extent(0), field.extent(1), field.extent(2));
+      Kokkos::deep_copy(temp, Kokkos::complex(0.0,0.0));
+      astra_for("shear_remap", 0,field.extent(0),0,field.extent(1),0,field.extent(2),
+        KOKKOS_LAMBDA (const int i, const int j, const int k) {
+          // unfold Fourier modes
+          const int nx = (i+nx_glob/2) % nx_glob - nx_glob/2;
+          const int ny = (j+ny_glob/2) % ny_glob - ny_glob/2;
+
+          const int nxtarget = nx + n*ny;
+
+          // Check if mode goes out of bounds
+          if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
+            const int inew = (nxtarget + nx_glob) % nx_glob;
+            temp(inew,j,k) = field(i,j,k);
+          }
+        }
+      );
+      Kokkos::deep_copy(field, temp);
+    #endif
     // Done
     astra::popRegion();
   }
@@ -106,7 +130,7 @@ class LinearShear : public NoShear {
     );
   }
 
-  
+
   KOKKOS_INLINE_FUNCTION real kx1t(real kx1, real kx2, real kx3) const {
     return kx1 + shearRate * tremap * kx2;
   }
