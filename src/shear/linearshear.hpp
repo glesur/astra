@@ -113,6 +113,7 @@ class LinearShear : public NoShear {
     real tremap = this->tremap;
     real x0advection = this->x0advection;
     real shearRate = this->shearRate;
+    real x0 = this->x0;
     // Shear remap along x1
     astra_for("shear_remap", 0,field.extent(0),0,field.extent(1),0,field.extent(2),
       KOKKOS_LAMBDA (const int i, const int j, const int k) {
