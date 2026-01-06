@@ -103,10 +103,8 @@ class Dump {
         return IntegerType;
       } else if constexpr (std::is_same<T, bool>::value) {
         return BoolType;
-      } else {
-        static_assert(false, "Unsupported type for TypeToInt");
       }
-      
+      throw std::runtime_error("Unsupported type for TypeToInt");
       return BoolType; // To suppress compiler warning
     };
     static constexpr int StringMaxLength{64};
