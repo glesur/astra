@@ -39,8 +39,8 @@ void WriteFile(Input &input,
   std::stringstream ssfileName, ssvtkFileNum;
   ssvtkFileNum << std::setfill('0') << std::setw(4) << n;
   std::string filename = std::string("data.")+ssvtkFileNum.str();
-  Vtk vtk(grid, time, filename,outputDirectory);
-  vtk.Write(state);
+  Vtk vtk(grid, input, time, filename,outputDirectory);
+  vtk.Write(state, time);
 }
 
 std::string CreateDumpFileName(int n) {

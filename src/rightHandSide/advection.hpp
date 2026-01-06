@@ -24,8 +24,8 @@ class Advection : public RightHandSide<Array3D<complex>, Shear> {
     ~Advection();
 
     void ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) override;
-
     void ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt) override;
+    void PostStage(Field<Array3D<complex>>& fldin, real t) override {};
 
     real GetInvDt() override;
 

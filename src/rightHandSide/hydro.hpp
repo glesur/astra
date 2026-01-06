@@ -25,14 +25,16 @@ public:
 
   void ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) override;
   void ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt) override;
-
-  void Projector(Field<Array3D<complex>>& fldin);
+  void PostStage(Field<Array3D<complex>>& fldin, real t) override;
+  void Projector(Field<Array3D<complex>>& fldin, real t);
 
   real GetInvDt() override;
   std::vector<std::string> GetVariables() override;
 
 private:
   real nu;
+  bool haveSourceTerm{false};
+  real Omega;
   Array3D<real> vr1, vr2, vr3;
   Array3D<real> wr11,wr12,wr13,wr22,wr23,wr33;
   Array3D<complex> wf11,wf12,wf13,wf22,wf23,wf33;
@@ -69,7 +71,13 @@ Hydro<Shear>::Hydro(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, 
   npf=grid->npf;
 
   this->nu = input.GetOrSet<real>("Hydro","viscosity",0,1e-3);
+  this->Omega = input.GetOrSet<real>("Hydro","omega",0,0.0);
+  this->haveSourceTerm = (input.CheckEntry("Hydro","omega") >0 || Shear::isEnabled);
+
   astra::cout << "Hydro rhs with viscosity nu=" << nu << std::endl;
+  if(haveSourceTerm) {
+    astra::cout << "  Including source terms with Omega=" << Omega << " and shear rate S=" << this->shear.shearRate << std::endl;
+  }
 }
 
 template <typename Shear>
@@ -80,9 +88,13 @@ template <typename Shear>
 void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) {
   astra::pushRegion("Hydro::ExplicitStep");
   // Fourier transform the velocity field to real space (use transposed arrays)
-  this->grid->fft->C2R(fldin["vx1"], vr1, false);
-  this->grid->fft->C2R(fldin["vx2"], vr2, false);
-  this->grid->fft->C2R(fldin["vx3"], vr3, false);
+  auto vx1 = fldin["vx1"];
+  auto vx2 = fldin["vx2"];
+  auto vx3 = fldin["vx3"];
+
+  this->grid->fft->C2R(vx1, vr1, false);
+  this->grid->fft->C2R(vx2, vr2, false);
+  this->grid->fft->C2R(vx3, vr3, false);
 
   // Compute the cross-correlation
   auto vr1 = this->vr1;
@@ -95,7 +107,7 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
   auto wr23 = this->wr23;
   auto wr33 = this->wr33;
 
-  Shear shear = this->shear;
+  Shear &shear = this->shear;
   shear.Refresh(t);
   astra_for("hydro_windup", 0,npr[IDIR],0,npr[JDIR],0,npr[KDIR],
     KOKKOS_LAMBDA(int i, int j, int k) {
@@ -150,10 +162,18 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
       dvx3(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1t*wf13(i,j,k)+kx2t*wf23(i,j,k)+kx3t*wf33(i,j,k))*mask;
   });
 
+  // Source terms
+  if(haveSourceTerm) {
+    real Omega = this->Omega;
+    real S = this->shear.shearRate;
+    astra_for("hydro_source_terms", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
+      KOKKOS_LAMBDA(int i, int j, int k) {
+        dvx1(i,j,k) += 2.0*Omega*vx2(i,j,k);
+        dvx2(i,j,k) += -(2.0*Omega - S)*vx1(i,j,k);
+    });
+  }
   // Pressure term
-  // Project the velocity field to be divergence free
-  auto vx1 = fldin["vx1"];
-
+  
   astra_for("hydro_pressure", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int i, int j, int k) {
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
@@ -161,8 +181,8 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
       const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
       const real k2t = kx1t*kx1t + kx2t*kx2t + kx3t*kx3t;
       if(k2t > 0.0) {
-        complex kv_dot_v = kx1t*dvx1(i,j,k)+kx2t*dvx2(i,j,k)+kx3t*dvx3(i,j,k);
-        kv_dot_v += 0*shear.shearRate * kx2(j) * vx1(i,j,k); // Shear contribution = dk/dt.v
+        complex kv_dot_v = kx1t*dvx1(i,j,k) + kx2t*dvx2(i,j,k) + kx3t*dvx3(i,j,k);
+        kv_dot_v += shear.shearRate * kx2(j) * vx1(i,j,k); // Shear contribution = dk/dt.v
         dvx1(i,j,k) -= kv_dot_v*kx1t/k2t;
         dvx2(i,j,k) -= kv_dot_v*kx2t/k2t;
         dvx3(i,j,k) -= kv_dot_v*kx3t/k2t;
@@ -173,7 +193,7 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
 }
 
 template <typename Shear>
-void Hydro<Shear>::Projector(Field<Array3D<complex>>& fldin) {
+void Hydro<Shear>::Projector(Field<Array3D<complex>>& fldin, real t) {
   astra::pushRegion("Hydro::Projector");
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];
@@ -183,7 +203,8 @@ void Hydro<Shear>::Projector(Field<Array3D<complex>>& fldin) {
   auto vx2 = fldin["vx2"];
   auto vx3 = fldin["vx3"];
 
-  Shear shear = this->shear;
+  Shear &shear = this->shear;
+  shear.Refresh(t);
 
   // Project the velocity field to be divergence free
   astra_for("hydro_projector", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
@@ -205,7 +226,7 @@ void Hydro<Shear>::Projector(Field<Array3D<complex>>& fldin) {
 template <typename Shear>
 void Hydro<Shear>::ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt) {
   astra::pushRegion("Hydro::ImplicitStep");
-  Projector(fldin);
+  Projector(fldin, t);
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];
   auto kx3 = this->grid->kx[KDIR];
@@ -254,7 +275,6 @@ real Hydro<Shear>::GetInvDt() {
       real idtx2 = std::fabs(vr2(i,j,k)*kx2max);
       real idtx3 = std::fabs(vr3(i,j,k)*kx3max);
       dtmax = std::fmax(dtmax,idtx1+idtx2+idtx3);
-
         },
     Kokkos::Max<real>(invdt));
 
@@ -269,6 +289,20 @@ real Hydro<Shear>::GetInvDt() {
 template <typename Shear>
 std::vector<std::string> Hydro<Shear>::GetVariables() {
   return {"vx1","vx2","vx3"};
+}
+
+template <typename Shear>
+void Hydro<Shear>::PostStage(Field<Array3D<complex>>& fldin, real t) {
+  if constexpr(Shear::isEnabled) {
+    if(this->shear.NeedRemap(t)) {
+      astra::cout << "Hydro rhs: remapping fields at t=" << t << std::endl;
+      this->shear.Remap(t, fldin["vx1"]);
+      this->shear.Remap(t, fldin["vx2"]);
+      this->shear.Remap(t, fldin["vx3"]);
+
+      this->shear.SetTinit(t);
+    }
+  }
 }
 
 #endif // HYDRO_HPP_

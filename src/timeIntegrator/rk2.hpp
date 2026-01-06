@@ -106,8 +106,13 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
       }
 
       // Call base class cycle to update time and cycle count
-      astra::popRegion();
       TimeIntegrator<T>::Cycle(fld);
+
+      // Post stage operations
+      for(auto rhs : this->rhsVector) {
+        rhs->PostStage(fld, this->t);
+      }
+      astra::popRegion();
     }
 
   private:

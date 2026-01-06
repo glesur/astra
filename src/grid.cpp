@@ -84,7 +84,7 @@ void Grid::InitGrid() {
     real xe = this->xend_glob[dir];
     astra_for("Init grid array", 0, npr_glob[dir],
       KOKKOS_LAMBDA(int i) {
-        x(i) = xb + (i+1./2.)*dx;
+        x(i) = xb + i*dx;
       });
 
     x = this->x[dir];
@@ -92,7 +92,7 @@ void Grid::InitGrid() {
     xe = this->xend[dir];
     astra_for("Init grid array", 0, npr[dir],
       KOKKOS_LAMBDA(int i) {
-        x(i) = xb + (i+1./2.)*dx;
+        x(i) = xb + i*dx;
       });
   }
 

@@ -22,10 +22,12 @@
 #include "arrays.hpp"
 #include "bigEndian.hpp"
 #include "fft.hpp"
+#include "shear.hpp"
+#include "input.hpp"
 
 
 /*init the object */
-Vtk::Vtk(Grid *grid, real time, std::string filebase, std::string directory) {
+Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string directory) {
 
   // Initialise the root tag (used for MPI non-collective I/Os)
   this->isRoot = astra::prank == 0;
@@ -67,7 +69,14 @@ Vtk::Vtk(Grid *grid, real time, std::string filebase, std::string directory) {
     MPI_Type_commit(&this->view);
   #endif // WITH_MPI
 
+  // Check if we have shear
+
   fs::path outputDirectory = directory;
+  std::string shearTypeStr = input.GetOrSet<std::string>("Physics","shear_type",0,"disabled");
+  if(shearTypeStr =="linear") {
+    this->haveShear = true;
+    this->linearShear = std::make_unique<LinearShear>(input, grid);
+  }
 
   if(isRoot) {
     if(!fs::is_directory(outputDirectory)) {
@@ -234,7 +243,7 @@ void Vtk::WriteHeaderString(const char* header, VtkFileHandler fvtk) {
   #endif
   }
 
-void Vtk::Write(Field<Array3D<complex>> field) {
+void Vtk::Write(Field<Array3D<complex>> field, real time) {
   astra::pushRegion("Vtk::Write");
 
   Array3D<real> realView("VTK_rfft_view",nx1loc,nx2loc,nx3loc);
@@ -243,6 +252,11 @@ void Vtk::Write(Field<Array3D<complex>> field) {
   for(auto const& [name, view] : field) {
     grid->fft->C2R(view, realView);
     Kokkos::fence();
+    // Check if we have linear shear
+    if(haveShear) {
+      this->linearShear->SetTinit(time);
+      this->linearShear->UnshearFrame(realView);
+    }
     // Copy data to host
     Kokkos::deep_copy(realHostView, realView);
     for(int k = 0; k < nx3loc ; k++ ) {

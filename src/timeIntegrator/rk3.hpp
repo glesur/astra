@@ -123,8 +123,14 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
         rhs->ImplicitStep(fld, stageTime, this->dt*(this->gammaRK[2]+this->xiRK[1]));
       }
       // Call base class cycle to update time and cycle count
-      astra::popRegion();
       TimeIntegrator<T>::Cycle(fld);
+
+      // Post stage operations
+      for(auto rhs : this->rhsVector) {
+        rhs->PostStage(fld, this->t);
+      }
+
+      astra::popRegion();
     }
 
   private:

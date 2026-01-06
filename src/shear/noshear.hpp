@@ -16,6 +16,7 @@
 
 class NoShear {
  public:
+  static constexpr bool isEnabled{false};
   const real shearRate{0.0};
   NoShear() = default;
   ~NoShear() = default;
@@ -31,6 +32,10 @@ class NoShear {
 
   void Remap(real time, Array3D<complex>& field) {
     // Nothing to do
+  }
+
+  bool NeedRemap(real time) {
+    return false;
   }
 
   void SetTinit(real t0) {

@@ -57,6 +57,11 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
       }
       // Call base class cycle to update time and cycle count
       TimeIntegrator<T>::Cycle(field);
+
+      // Post stage operations
+      for(auto rhs : this->rhsVector) {
+        rhs->PostStage(field, this->t);
+      }
       astra::popRegion();
     }
 

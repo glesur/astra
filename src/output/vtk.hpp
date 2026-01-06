@@ -26,6 +26,7 @@
 #include "arrays.hpp"
 #include "field.hpp"
 #include "bigEndian.hpp"
+#include "input.hpp"
 
 #ifdef WITH_MPI
 #include <mpi.h>
@@ -40,12 +41,13 @@ using VtkFileHandler = FILE*;
 #endif
 
 class Grid;
+class LinearShear;
 
 class Vtk {
 
  public:
-  Vtk(Grid *grid, real time, std::string filename = "data", std::string outputDirectory = "./");   // init VTK object
-  void Write(Field<Array3D<complex>> field);     // Write content of a field class
+  Vtk(Grid *grid, Input &input, real time, std::string filename = "data", std::string outputDirectory = "./");   // init VTK object
+  void Write(Field<Array3D<complex>> field, real time);     // Write content of a field class
   ~Vtk();  // Destructor
 
  private:
@@ -73,7 +75,8 @@ class Vtk {
   MPI_Datatype view;
   MPI_Comm comm;
 #endif
-
+  bool haveShear{false};
+  std::unique_ptr<LinearShear> linearShear;
   void WriteHeader(VtkFileHandler, real);
   void WriteScalar(VtkFileHandler, float*,  const std::string &);
   void WriteHeaderString(const char* header, VtkFileHandler fvtk);
