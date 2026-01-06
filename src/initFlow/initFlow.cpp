@@ -132,7 +132,7 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
                               kx[JDIR](j)*kx[JDIR](j)+
                               kx[KDIR](k)*kx[KDIR](k))
                                 /(2.0*M_PI);
-        if(ktot*noiseCutLength < 1.0) {
+        if(ktot*noiseCutLength < 1.0 && ktot>0.0) {
           nmodes += 1.0;
         }
       }
@@ -149,7 +149,7 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
                               kx[JDIR](j)*kx[JDIR](j)+
                               kx[KDIR](k)*kx[KDIR](k))
                                 /(2.0*M_PI);
-        if(ktot*noiseCutLength < 1.0) {
+        if(ktot*noiseCutLength < 1.0 && ktot>0.0) {
           for(auto& it : field) {
             auto view = it.second;
             const real ampl = noiseAmplitude*astra::randm();
@@ -181,7 +181,7 @@ void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
         real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
                               kx[JDIR](j)*kx[JDIR](j))
                                 /(2.0*M_PI);
-        if(ktot*noiseCutLength < 1.0 && kx[KDIR](k) == 0.0) {
+        if(ktot*noiseCutLength < 1.0 && kx[KDIR](k) == 0.0 && ktot>0.0) {
           for(auto& it : field) {
             auto view = it.second;
             real phase = 2.0*M_PI*astra::randm();
@@ -212,7 +212,7 @@ void InitFlow::LargeScale1DNoise(Field<ArrayHost3D<complex>>& field) {
         real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
                               kx[JDIR](j)*kx[JDIR](j))
                                 /(2.0*M_PI);
-        if(ktot*noiseCutLength < 1.0 && kx[KDIR](k) == 0.0 && kx[JDIR](j) == 0.0) {
+        if(ktot*noiseCutLength < 1.0 && kx[KDIR](k) == 0.0 && kx[JDIR](j) == 0.0 && ktot>0.0) {
           for(auto& it : field) {
             auto view = it.second;
             real phase = 2.0*M_PI*astra::randm();
