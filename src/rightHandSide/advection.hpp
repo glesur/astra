@@ -45,8 +45,8 @@ class Advection : public RightHandSide<Array3D<complex>, Shear> {
 
 template <typename Shear>
 Advection<Shear>::Advection(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, Shear>(input, grid) {
-  direction = input.Get<int>("Advection","direction",0);
-  velocity = input.GetOrSet<real>("Advection","velocity", 0,1.0);
+  direction = input.Get<int>("Physics","direction",0);
+  velocity = input.GetOrSet<real>("Physics","velocity", 0,1.0);
   if(direction < 0 || direction > 2) {
     throw std::runtime_error("Advection direction must be 0, 1 or 2");
   }

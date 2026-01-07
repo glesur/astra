@@ -33,6 +33,7 @@ public:
 
 private:
   real nu;
+  int viscosityOrder{1};
   bool haveSourceTerm{false};
   real Omega;
   Array3D<real> vr1, vr2, vr3;
@@ -70,13 +71,14 @@ Hydro<Shear>::Hydro(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, 
   npr=grid->npr_t;
   npf=grid->npf;
 
-  this->nu = input.GetOrSet<real>("Hydro","viscosity",0,1e-3);
-  this->Omega = input.GetOrSet<real>("Hydro","omega",0,0.0);
-  this->haveSourceTerm = (input.CheckEntry("Hydro","omega") >0 || Shear::isEnabled);
+  this->nu = input.GetOrSet<real>("Physics","viscosity",0,1e-3);
+  this->viscosityOrder = input.GetOrSet<int>("Physics","viscosity",1,1);
+  this->Omega = input.GetOrSet<real>("Physics","omega",0,0.0);
+  this->haveSourceTerm = (input.CheckEntry("Physics","omega") >0 || Shear::isEnabled);
 
-  astra::cout << "Hydro rhs with viscosity nu=" << nu << std::endl;
+  astra::cout << "Hydro: viscosity nu=" << nu << std::endl;
   if(haveSourceTerm) {
-    astra::cout << "  Including source terms with Omega=" << Omega << " and shear rate S=" << this->shear.shearRate << std::endl;
+    astra::cout << "Hydro: Omega=" << Omega << " and shear rate S=" << this->shear.shearRate << std::endl;
   }
 }
 
@@ -236,6 +238,7 @@ void Hydro<Shear>::ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt)
   auto vx3 = fldin["vx3"];
 
   real nu= this->nu;
+  int n = this->viscosityOrder;
   Shear shear = this->shear;
   shear.Refresh(t);
   astra_for("hydro_viscosity", fldin,
@@ -246,7 +249,7 @@ void Hydro<Shear>::ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt)
       const real k2t = kx1t*kx1t + kx2t*kx2t + kx3t*kx3t;
 
       //real factor = (1-0.5*dt*nu*k2)/(1+0.5*dt*nu*k2); // Crank-Nicholson
-      real factor = std::exp(-dt * nu*k2t); // Exact integration
+      real factor = std::exp(-dt * pow(nu*k2t, n)); // Exact integration
       vx1(i,j,k) *= factor;
       vx2(i,j,k) *= factor;
       vx3(i,j,k) *= factor;
