@@ -303,7 +303,22 @@ int main( int argc, char* argv[] ) {
         timevarOutput.Write(state, timeIntegrator->GetTime());
         lastTimevar += timevarStep;
       }
-      if(outputDmpStep>0.0 && timeIntegrator->GetTime()-lastDmpOutput>=outputDmpStep) {
+
+      // Abort checks
+      bool abortRequested = false;  
+      if(input.CheckForAbort()) {
+        abortRequested = true;
+        astra::cout << "Main: Abort signal received." << std::endl;
+      }
+      abortRequested = abortRequested || timeIntegrator->CheckForMaxRuntime();
+
+      if(input.maxCycles>0 && timeIntegrator->GetCycle()>=input.maxCycles) {
+        abortRequested = true;
+        astra::cout << "Main: Maximum number of cycles reached." << std::endl;
+      }
+
+      // Dump when requested or on abort
+      if((outputDmpStep>0.0 && timeIntegrator->GetTime()-lastDmpOutput>=outputDmpStep) || abortRequested) {
         Dump dump(&grid, outputDmpDir+"/"+CreateDumpFileName(ndmp));
         ndmp++;
         lastDmpOutput += outputDmpStep;
@@ -317,8 +332,7 @@ int main( int argc, char* argv[] ) {
         dump.Write();
     }
 
-      // End?
-      if(input.CheckForAbort() || timeIntegrator->CheckForMaxRuntime()) {
+      if(abortRequested) {
         astra::cout << "Main: Aborting time integration..." << std::endl;
         break;
       }
