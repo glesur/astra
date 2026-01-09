@@ -58,7 +58,7 @@ int initialize() {
   //#endif
 
   return(0);
-}   // Initialisation routine for idefix
+}   // Initialisation routine for astra
 
 void pushRegion(const std::string& kName) {
   Kokkos::Profiling::pushRegion(kName);
