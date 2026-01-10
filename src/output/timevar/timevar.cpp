@@ -14,6 +14,7 @@
 #include "timevarEnergy.hpp"
 #include "timevarEnstrophy.hpp"
 #include "timevarMinMax.hpp"
+#include "timevarStress.hpp"
 #include "fft.hpp"
 
 #if __has_include(<filesystem>)
@@ -112,6 +113,11 @@ TimeVarOutput::TimeVarOutput(Input &input, Grid *grid) {
         timevarList.push_back(std::make_unique<TimeVarEnstrophy>(input, grid, varname, directory));
         break;
       default:
+        // Check it contains a dot, in which case it's a stress tensor component
+        if(varname.find(".") != std::string::npos) {
+          timevarList.push_back(std::make_unique<TimeVarStress>(input, grid, varname, directory));
+          break;
+        }
         std::stringstream msg;
         msg << "Unknown timevar variable requested: " << varname << std::endl;
         throw std::runtime_error(msg.str());
