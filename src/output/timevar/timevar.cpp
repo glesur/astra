@@ -110,37 +110,43 @@ TimeVarOutput::TimeVarOutput(Input &input, Grid *grid) {
   for(int i=0; i<nvars; i++) {
     std::string varname = input.Get<std::string>("Output","timevar",i);
     // Create timevar object
-    switch(str2int(varname)) {
-      case str2int("ev"):
-        timevarList.push_back(std::make_unique<TimeVarEnergy>(input, grid, varname, directory));
-        break;
-      case str2int("vxmax"):
-      case str2int("vxmin"):
-      case str2int("vymax"):
-      case str2int("vymin"):
-      case str2int("vzmax"):
-      case str2int("vzmin"):
-        timevarList.push_back(std::make_unique<TimeVarMinMax>(input, grid, varname, directory));
-        break;
-      case str2int("w2"):
-      case str2int("j2"):
-        timevarList.push_back(std::make_unique<TimeVarEnstrophy>(input, grid, varname, directory));
-        break;
-      default:
-        // check if it contains "spectrum_"
-        if(varname.find("spectrum_") != std::string::npos) {
-          timevarList.push_back(std::make_unique<TimeVarSpectrum>(input, grid, varname, directory));
+    try {
+      switch(str2int(varname)) {
+        case str2int("ev"):
+          timevarList.push_back(std::make_unique<TimeVarEnergy>(input, grid, varname, directory));
           break;
-        }
-        // Check it contains a dot, in which case it's a stress tensor component
-        if(varname.find(".") != std::string::npos) {
-          timevarList.push_back(std::make_unique<TimeVarStress>(input, grid, varname, directory));
+        case str2int("vxmax"):
+        case str2int("vxmin"):
+        case str2int("vymax"):
+        case str2int("vymin"):
+        case str2int("vzmax"):
+        case str2int("vzmin"):
+          timevarList.push_back(std::make_unique<TimeVarMinMax>(input, grid, varname, directory));
           break;
-        }
-        std::stringstream msg;
-        msg << "Unknown timevar variable requested: " << varname << std::endl;
-        throw std::runtime_error(msg.str());
+        case str2int("w2"):
+        case str2int("j2"):
+          timevarList.push_back(std::make_unique<TimeVarEnstrophy>(input, grid, varname, directory));
+          break;
+        default:
+          // check if it contains "spectrum_"
+          if(varname.find("spectrum_") != std::string::npos) {
+            timevarList.push_back(std::make_unique<TimeVarSpectrum>(input, grid, varname, directory));
+            break;
+          }
+          // Check it contains a dot, in which case it's a stress tensor component
+          if(varname.find(".") != std::string::npos) {
+            timevarList.push_back(std::make_unique<TimeVarStress>(input, grid, varname, directory));
+            break;
+          }
+          std::stringstream msg;
+          msg << "Unknown timevar variable requested: " << varname << std::endl;
+          throw std::runtime_error(msg.str());
+      }
+    } catch(const std::exception& e) {
+      std::stringstream msg;
+      msg << "Unable to create timevar for variable " << varname << std::endl;
+      msg << e.what();
+      throw std::runtime_error(msg.str());
     }
   }
-
 }
