@@ -8,28 +8,26 @@
 
 // A generic interface for energy statistics
 
-#ifndef OUTPUT_TIMEVAR_TIMEVARSTRESS_HPP_
-#define OUTPUT_TIMEVAR_TIMEVARSTRESS_HPP_
+#ifndef OUTPUT_TIMEVAR_TIMEVARSPECTRUM_HPP_
+#define OUTPUT_TIMEVAR_TIMEVARSPECTRUM_HPP_
 
 #include "timevar.hpp"
 #include "arrays.hpp"
+#include "linearshear.hpp"
 
-class TimeVarStress : public TimeVar {
+class TimeVarSpectrum : public TimeVar {
  public:
-  TimeVarStress(Input &input, Grid *grid, std::string name, std::string directory) : TimeVar(input, grid, name, directory) {
-    size_t dotLocation = this->name.find(".");
-    var1 = this->name.substr(0, dotLocation);
-    var2 = this->name.substr(dotLocation+1);
-    
-    // translate variable names from snoopy
-    var1 = this->ExtractVarName(var1);
-    var2 = this->ExtractVarName(var2);
-  };
-  ~TimeVarStress() override {}
+  TimeVarSpectrum(Input &input, Grid *grid, std::string name, std::string directory);
+
+  ~TimeVarSpectrum() override {}
   void Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) override;
- private:
+private:
   std::string var1, var2;
+  int nbins{0};
+  real kmin{0.0}, kmax{0.0};
+  bool haveLinearShear{false};
+  std::unique_ptr<LinearShear> linearShear;
 };
 
 
-#endif // OUTPUT_TIMEVAR_TIMEVARSTRESS_HPP_
+#endif // OUTPUT_TIMEVAR_TIMEVARSPECTRUM_HPP_

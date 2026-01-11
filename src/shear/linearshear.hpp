@@ -14,26 +14,28 @@
 #include "input.hpp"
 #include "arrays.hpp"
 #include "grid.hpp"
+#ifdef WITH_MPI
 #include "transpose.hpp"
+#endif
+#include "noshear.hpp"
 
 class LinearShear : public NoShear {
  public:
-  real shearRate;
   static constexpr bool isEnabled{true};
   LinearShear() = default;
   ~LinearShear() = default;
   LinearShear(Input &input, Grid* grid) : NoShear(input,grid) {
-    shearRate = input.Get<real>("Physics","shear_rate",0);
+    this->shearRate = input.Get<real>("Physics","shear_rate",0);
     lx = grid->xend_glob[IDIR] - grid->xbeg_glob[IDIR];
     ly = grid->xend_glob[JDIR] - grid->xbeg_glob[JDIR];
     x0 = grid->xbeg_glob[IDIR];
-    remapInterval = ly / (shearRate * lx);
+    remapInterval = ly / (this->shearRate * lx);
     this->grid = grid;
   };
   
   void Refresh(real t) {
     tremap = t - nremaps * remapInterval;
-    x0advection = std::fmod(t*shearRate*x0, ly);
+    x0advection = std::fmod(t*this->shearRate*x0, ly);
   }
 
   void SetTinit(real t0) {
@@ -133,11 +135,11 @@ class LinearShear : public NoShear {
 
 
   KOKKOS_INLINE_FUNCTION real kx1t(real kx1, real kx2, real kx3) const {
-    return kx1 + shearRate * tremap * kx2;
+    return kx1 + this->shearRate * tremap * kx2;
   }
 
   real kx1tmax() const {
-    return this->kx1max + std::fabs(shearRate * tremap) * this->kx2max;
+    return this->kx1max + std::fabs(this->shearRate * tremap) * this->kx2max;
   }
   
   // kx2t and kx3t are unchanged

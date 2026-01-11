@@ -27,15 +27,7 @@ TimeVarMinMax::TimeVarMinMax(Input &input, Grid *grid, std::string name, std::st
   } else {
     throw std::runtime_error("Unknown TimeVarMinMax type: " + name);
   }
-  if(name.substr(0,2).compare("vx") == 0) {
-    varname = "vx1"; // velocity component 1
-  } else if(name.substr(0,2).compare("vy") == 0) {
-    varname = "vx2"; // velocity component 2
-  } else if(name.substr(0,2).compare("vz") == 0) {
-    varname = "vx3"; // velocity component 3
-  } else {
-    throw std::runtime_error("Unknown TimeVarMinMax field: " + name);
-  }
+  varname = this->ExtractVarName(name.substr(0,2));
 }
 
 void TimeVarMinMax::Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) {

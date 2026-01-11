@@ -15,6 +15,7 @@
 #include "timevarEnstrophy.hpp"
 #include "timevarMinMax.hpp"
 #include "timevarStress.hpp"
+#include "timevarSpectrum.hpp"
 #include "fft.hpp"
 
 #if __has_include(<filesystem>)
@@ -44,6 +45,19 @@ void TimeVar::Reset() {
       fs::remove(filename);
     } 
   }
+}
+
+std::string TimeVar::ExtractVarName(const std::string& name) {
+  // Translate snoopy variable names to astra variable names
+  std::string varname;
+  if(name == "vx") varname = "vx1";
+  else if(name == "vy") varname = "vx2";
+  else if(name == "vz") varname = "vx3";
+  else if(name == "bx") varname = "bx1";
+  else if(name == "by") varname = "bx2";
+  else if(name == "bz") varname = "bx3";
+  else varname = name;
+  return varname;
 }
   
 void TimeVarOutput::Write(Field<Array3D<complex>>& field, const real t) {
@@ -113,6 +127,11 @@ TimeVarOutput::TimeVarOutput(Input &input, Grid *grid) {
         timevarList.push_back(std::make_unique<TimeVarEnstrophy>(input, grid, varname, directory));
         break;
       default:
+        // check if it contains "spectrum_"
+        if(varname.find("spectrum_") != std::string::npos) {
+          timevarList.push_back(std::make_unique<TimeVarSpectrum>(input, grid, varname, directory));
+          break;
+        }
         // Check it contains a dot, in which case it's a stress tensor component
         if(varname.find(".") != std::string::npos) {
           timevarList.push_back(std::make_unique<TimeVarStress>(input, grid, varname, directory));

@@ -10,7 +10,7 @@
 #define TRANSPOSE_HPP_
 
 #include <Kokkos_Core.hpp>
-
+#include <mpi.h>
 
 template <typename T>
 class Transpose {

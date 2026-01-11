@@ -17,7 +17,7 @@
 class NoShear {
  public:
   static constexpr bool isEnabled{false};
-  const real shearRate{0.0};
+  real shearRate{0.0};
   NoShear() = default;
   ~NoShear() = default;
   NoShear(Input &input, Grid* grid) {

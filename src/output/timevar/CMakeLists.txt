@@ -9,4 +9,6 @@ target_sources(astra
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/timevarMinMax.cpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/timevarStress.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/timevarStress.cpp  
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/timevarSpectrum.hpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/timevarSpectrum.cpp  
   )

@@ -19,31 +19,10 @@
 #include <mpi.h>
 #endif
 
-std::string extractVarName(const std::string& name) {
-  std::string varname;
-  if(name == "vx") varname = "vx1";
-  else if(name == "vy") varname = "vx2";
-  else if(name == "vz") varname = "vx3";
-  else if(name == "bx") varname = "bx1";
-  else if(name == "by") varname = "bx2";
-  else if(name == "bz") varname = "bx3";
-  else varname = name;
-  return varname;
-}
+
 void TimeVarStress::Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) {
     astra::pushRegion("TimeVarStress::Write");
-    // Compute energy
-    real energy_total = 0.0;
-    std::string var1, var2;
-
-    size_t dotLocation = this->name.find(".");
-    var1 = this->name.substr(0, dotLocation);
-    var2 = this->name.substr(dotLocation+1);
-    
-    // translate variable names from snoopy
-    var1 = extractVarName(var1);
-    var2 = extractVarName(var2);
-
+    // Compute stress
     real stress = 0.0;
 
     auto view1 = fieldReal[var1];

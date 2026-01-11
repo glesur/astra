@@ -43,6 +43,7 @@ class TimeVar {
     fs::path filename;
     std::string directory;
     bool isRoot{false};
+    std::string ExtractVarName(const std::string& name);
 };
 
 
