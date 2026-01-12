@@ -36,6 +36,8 @@ class TimeVar {
     virtual ~TimeVar() {}
     virtual void Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) = 0;
     void Reset();
+    std::string GetName() const { return name; }
+
 
   protected:
     Grid *grid;

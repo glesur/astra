@@ -68,7 +68,15 @@ void TimeVarOutput::Write(Field<Array3D<complex>>& field, const real t) {
     this->grid->fft->C2R(view, viewReal);
   }
   for(auto& timevar : this->timevarList) {
-    timevar->Write(t, field, fieldReal);
+    try {
+      timevar->Write(t, field, fieldReal);
+    } catch(const std::exception& e) {
+      std::stringstream msg;
+      msg <<  e.what() << std::endl
+          << "TimeVarOutput: Error writing timevar variable: \"" << timevar->GetName() << "\"" << std::endl 
+          << "Check that this is a valid timevar variable name. " << std::endl;
+      throw std::runtime_error(msg.str());
+    }
   }
 }
 
@@ -139,13 +147,13 @@ TimeVarOutput::TimeVarOutput(Input &input, Grid *grid) {
             break;
           }
           std::stringstream msg;
-          msg << "Unknown timevar variable requested: " << varname << std::endl;
+          msg << "TimeVarOutput: Unknown timevar variable requested: \"" << varname << "\"" << std::endl;
           throw std::runtime_error(msg.str());
       }
     } catch(const std::exception& e) {
       std::stringstream msg;
-      msg << "Unable to create timevar for variable " << varname << std::endl;
-      msg << e.what();
+      msg << e.what() << std::endl;
+      msg << "TimeVarOutput: Unable to create timevar for variable \"" << varname << "\"" << std::endl;
       throw std::runtime_error(msg.str());
     }
   }

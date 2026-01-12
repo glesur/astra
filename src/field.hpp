@@ -60,11 +60,19 @@ class Field {
 
   // Accessors to make it behave like a map (but throw exception if key not found)
     T & operator[] (std::string var) {
-      return this->map.at(var);
+      try{
+        return this->map.at(var);
+      } catch(const std::out_of_range& e) {
+        throw std::runtime_error("Field: Variable \"" + var + "\" not found in Field \"" + name + "\"");
+      }
     }
 
     T operator[] (std::string var) const {
-      return this->map.at(var);
+      try {
+        return this->map.at(var);
+      } catch(const std::out_of_range& e) {
+        throw std::runtime_error("Field: Variable \"" + var + "\" not found in Field \"" + name + "\"");
+      }
     }
 
     // iterators through the fields
