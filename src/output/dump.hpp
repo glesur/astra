@@ -261,6 +261,25 @@ void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
       }
     }
   #endif
+  // Check that data was read correctly
+  if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
+    for(int i=0 ; i < data.extent(0) ; i++) {
+      for(int j=0 ; j < data.extent(1) ; j++) {
+        for(int k=0 ; k < data.extent(2) ; k++) {
+          if(std::isnan(data(i,j,k).real()) || std::isnan(data(i,j,k).imag())) {
+            throw std::runtime_error("Error: NaN value encountered when reading dump file at (i,j,k)=(" +
+                                     std::to_string(i) + "," +
+                                     std::to_string(j) + "," +
+                                     std::to_string(k) + ")");
+          }
+        }
+      }
+    }
+  } else {
+    if(std::isnan(data)) {
+      throw std::runtime_error("Error: NaN value encountered when reading dump file");
+    }
+  }
   astra::popRegion();
 }
 

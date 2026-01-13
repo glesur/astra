@@ -181,27 +181,33 @@ void Dump::Read() {
     if(name.compare("EOF") == 0) {
       break;
     }
-
-    if(type == ComplexDoubleType && dim.size() == 3) {
-      std::string fieldName = name.substr(0,name.find("\\"));
-      std::string arrayName = name.substr(name.find("\\")+1);
-      ArrayHost3D<complex> arrHost("temp", npf[0], npf[1], npf[2]);
-      ReadData(fileHdl, arrHost);
-      // Check if Field name exists
-      if(fields.find(fieldName) == fields.end()) {
-        //  Create field
-        fields[fieldName] = Field<Array3D<complex>>(fieldName,npf);
+    try {
+      if(type == ComplexDoubleType && dim.size() == 3) {
+        std::string fieldName = name.substr(0,name.find("\\"));
+        std::string arrayName = name.substr(name.find("\\")+1);
+        ArrayHost3D<complex> arrHost("temp", npf[0], npf[1], npf[2]);
+        ReadData(fileHdl, arrHost);
+        // Check if Field name exists
+        if(fields.find(fieldName) == fields.end()) {
+          //  Create field
+          fields[fieldName] = Field<Array3D<complex>>(fieldName,npf);
+        }
+        fields[fieldName].Add(arrayName);
+        Kokkos::deep_copy(fields[fieldName][arrayName],arrHost);;
+      } else if(type == DoubleType) {
+        real &value = reals[name];
+        ReadData(fileHdl, value);
+      } else if(type == IntegerType) {
+        int &value = ints[name];
+        ReadData(fileHdl, value);
+      } else {
+        throw std::runtime_error("Unsupported data type in dump file for variable "+name);
       }
-      fields[fieldName].Add(arrayName);
-      Kokkos::deep_copy(fields[fieldName][arrayName],arrHost);;
-    } else if(type == DoubleType) {
-      real &value = reals[name];
-      ReadData(fileHdl, value);
-    } else if(type == IntegerType) {
-      int &value = ints[name];
-      ReadData(fileHdl, value);
-    } else {
-      throw std::runtime_error("Unsupported data type in dump file for variable "+name);
+    } catch(const std::exception& e) {
+      std::stringstream msg;
+      msg << e.what() << std::endl;
+      msg << "Dump:Read: Error reading \"" << name << "\"" << std::endl;
+      throw std::runtime_error(msg.str());
     }
   }
   #ifdef WITH_MPI
