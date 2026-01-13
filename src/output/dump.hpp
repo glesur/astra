@@ -268,6 +268,7 @@ void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
     }
   #endif
   // Check that data was read correctly
+  
   if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
     for(int i=0 ; i < data.extent(0) ; i++) {
       for(int j=0 ; j < data.extent(1) ; j++) {
