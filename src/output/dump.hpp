@@ -125,14 +125,18 @@ class Dump {
 template <typename T>
 void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
   astra::pushRegion("Dump::WriteData");
-  int ntot,size,type,ndim,nglob;
+  int type,ndim;
+  size_t ntot,size,nglob;
+
   std::vector<int> dims = {1};
   if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
     ntot = data.extent(0)*data.extent(1)*data.extent(2);
     ndim = 3;
     type = static_cast<int>(TypeToInt<complex>());
     size = sizeof(complex);
-    nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
+    nglob = static_cast<size_t>(npf_glob[0])*
+            static_cast<size_t>(npf_glob[1])*
+            static_cast<size_t>(npf_glob[2]);
     // Overwrite dims
     dims = {static_cast<int>(data.extent(0)),
             static_cast<int>(data.extent(1)),
@@ -223,11 +227,13 @@ void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
 template <typename T>
 void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
   astra::pushRegion("Dump::ReadData");
-  int ntot,size,nglob;
+  size_t ntot,size,nglob;
   if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
     ntot = data.extent(0)*data.extent(1)*data.extent(2);
     size = sizeof(complex);
-    nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
+    nglob = static_cast<size_t>(npf_glob[0])*
+            static_cast<size_t>(npf_glob[1])*
+            static_cast<size_t>(npf_glob[2]);
   } else {
     size = sizeof(T);
     ntot = 1;

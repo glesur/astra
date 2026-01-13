@@ -185,12 +185,13 @@ void Dump::Read() {
       if(type == ComplexDoubleType && dim.size() == 3) {
         std::string fieldName = name.substr(0,name.find("\\"));
         std::string arrayName = name.substr(name.find("\\")+1);
-        ArrayHost3D<complex> arrHost("temp", npf[0], npf[1], npf[2]);
+        ArrayHost3D<complex> arrHost("temp", dim[0], dim[1], dim[2]);
         ReadData(fileHdl, arrHost);
         // Check if Field name exists
         if(fields.find(fieldName) == fields.end()) {
           //  Create field
-          fields[fieldName] = Field<Array3D<complex>>(fieldName,npf);
+          std::array<int,3> dim_array = {dim[0],dim[1],dim[2]};
+          fields[fieldName] = Field<Array3D<complex>>(fieldName,dim_array);
         }
         fields[fieldName].Add(arrayName);
         Kokkos::deep_copy(fields[fieldName][arrayName],arrHost);;
