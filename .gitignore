@@ -6,6 +6,11 @@
 **/idefix
 bin*/**
 
+# generated doc files
+doc/build/**
+doc/source/api/**
+doc/source/xml/**
+
 # generated files
 *.log
 src/version.hpp
