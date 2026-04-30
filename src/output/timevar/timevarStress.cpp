@@ -32,7 +32,7 @@ void TimeVarStress::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
           local_sum += view1(i,j,k) * view2(i,j,k);
       }, Kokkos::Sum<real>(stress));
 
-    stress *= grid->dx[IDIR]*grid->dx[JDIR]*grid->dx[KDIR];
+    stress /= grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
     #ifdef WITH_MPI
       // Reduce across all processes
       real q0;

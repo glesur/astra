@@ -39,7 +39,8 @@ void TimeVarEnergy::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
       }, Kokkos::Sum<real>(energy));
       energy_total += energy;
     }
-    energy_total *= grid->dx[IDIR]*grid->dx[JDIR]*grid->dx[KDIR];
+    // divide by total number of points to get mean energy per point
+    energy_total /= grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
     #ifdef WITH_MPI
       // Reduce across all processes
       real q0;
