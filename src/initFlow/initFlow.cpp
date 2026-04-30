@@ -36,6 +36,9 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
   if(input->CheckEntry("InitFlow","mean_flow")>=0) {
     MeanFlow(hfield);
   }
+  if(input->CheckEntry("InitFlow","mean_field")>=0) {
+    MeanField(hfield);
+  }
   if(input->CheckEntry("InitFlow","large_scale_3d_noise")>=0) {
     LargeScale3DNoise(hfield);
   }
@@ -104,6 +107,14 @@ void InitFlow::MeanFlow(Field<ArrayHost3D<complex>>& hfield) {
   hfield["vx1"](0,0,0) = input->Get<real>("InitFlow","mean_flow",0)*ntot;
   hfield["vx2"](0,0,0) = input->Get<real>("InitFlow","mean_flow",1)*ntot;
   hfield["vx3"](0,0,0) = input->Get<real>("InitFlow","mean_flow",2)*ntot;
+}
+
+void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
+  // Implementation of mean field initialization
+  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  hfield["bx1"](0,0,0) = input->Get<real>("InitFlow","mean_field",0)*ntot;
+  hfield["bx2"](0,0,0) = input->Get<real>("InitFlow","mean_field",1)*ntot;
+  hfield["bx3"](0,0,0) = input->Get<real>("InitFlow","mean_field",2)*ntot;
 }
 
 
