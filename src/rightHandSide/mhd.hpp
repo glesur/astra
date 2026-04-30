@@ -248,6 +248,33 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
       dbx2(i,j,k) = Kokkos::complex(0.0,1.0)*(kx3t*wf11(i,j,k)-kx1t*wf13(i,j,k))*mask;
       dbx3(i,j,k) = Kokkos::complex(0.0,1.0)*(kx1t*wf12(i,j,k)-kx2t*wf11(i,j,k))*mask;
   });
+
+  // Source terms
+  if(haveSourceTerm) {
+    real Omega = this->Omega;
+    real S = this->shear.shearRate;
+    astra_for("hydro_source_terms", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
+      KOKKOS_LAMBDA(int i, int j, int k) {
+        dvx1(i,j,k) += 2.0*Omega*vx2(i,j,k);
+        dvx2(i,j,k) += -(2.0*Omega - S)*vx1(i,j,k);
+        dbx2(i,j,k) += - S*bx1(i,j,k);
+    });
+  }
+  // Pressure term
+  astra_for("hydro_pressure", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
+    KOKKOS_LAMBDA(int i, int j, int k) {
+      const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
+      const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
+      const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
+      const real k2t = kx1t*kx1t + kx2t*kx2t + kx3t*kx3t;
+      if(k2t > 0.0) {
+        complex kv_dot_v = kx1t*dvx1(i,j,k) + kx2t*dvx2(i,j,k) + kx3t*dvx3(i,j,k);
+        kv_dot_v += shear.shearRate * kx2(j) * vx1(i,j,k); // Shear contribution = dk/dt.v
+        dvx1(i,j,k) -= kv_dot_v*kx1t/k2t;
+        dvx2(i,j,k) -= kv_dot_v*kx2t/k2t;
+        dvx3(i,j,k) -= kv_dot_v*kx3t/k2t;
+      }
+  });
   astra::popRegion();
 }
 
@@ -262,11 +289,15 @@ void Mhd<Shear>::Projector(Field<Array3D<complex>>& fldin, real t) {
   auto vx2 = fldin["vx2"];
   auto vx3 = fldin["vx3"];
 
+  auto bx1 = fldin["bx1"];
+  auto bx2 = fldin["bx2"];
+  auto bx3 = fldin["bx3"];
+
   Shear &shear = this->shear;
   shear.Refresh(t);
 
   // Project the velocity field to be divergence free
-  astra_for("hydro_projector", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
+  astra_for("mhd_projector", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int i, int j, int k) {
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
@@ -277,6 +308,11 @@ void Mhd<Shear>::Projector(Field<Array3D<complex>>& fldin, real t) {
         vx1(i,j,k) -= kv_dot_v*kx1t/k2t;
         vx2(i,j,k) -= kv_dot_v*kx2t/k2t;
         vx3(i,j,k) -= kv_dot_v*kx3t/k2t;
+
+        complex kv_dot_b = kx1t*bx1(i,j,k)+kx2t*bx2(i,j,k)+kx3t*bx3(i,j,k);
+        bx1(i,j,k) -= kv_dot_b*kx1t/k2t;
+        bx2(i,j,k) -= kv_dot_b*kx2t/k2t;
+        bx3(i,j,k) -= kv_dot_b*kx3t/k2t;
       }
   });
   astra::popRegion();
@@ -391,6 +427,7 @@ void Mhd<Shear>::PostStage(Field<Array3D<complex>>& fldin, real t) {
       this->shear.SetTinit(t);
     }
   }
+  this->Projector(fldin, t);
 }
 
 #endif // MHD_HPP_
