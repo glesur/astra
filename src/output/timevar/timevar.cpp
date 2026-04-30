@@ -121,6 +121,7 @@ TimeVarOutput::TimeVarOutput(Input &input, Grid *grid) {
     try {
       switch(str2int(varname)) {
         case str2int("ev"):
+        case str2int("eb"):
           timevarList.push_back(std::make_unique<TimeVarEnergy>(input, grid, varname, directory));
           break;
         case str2int("vxmax"):
@@ -129,6 +130,12 @@ TimeVarOutput::TimeVarOutput(Input &input, Grid *grid) {
         case str2int("vymin"):
         case str2int("vzmax"):
         case str2int("vzmin"):
+        case str2int("bxmax"):
+        case str2int("bxmin"):
+        case str2int("bymax"):
+        case str2int("bymin"):
+        case str2int("bzmax"):
+        case str2int("bzmin"):
           timevarList.push_back(std::make_unique<TimeVarMinMax>(input, grid, varname, directory));
           break;
         case str2int("w2"):
