@@ -17,6 +17,7 @@
 #include "grid.hpp"
 #include "advection.hpp"
 #include "hydro.hpp"
+#include "mhd.hpp"
 #include "input.hpp"
 #include "shear.hpp"
 
@@ -55,6 +56,12 @@ public:
           rhsVector.emplace_back(std::move(std::make_unique<Hydro<NoShear>>(input, grid)));
         } else if(shearType == ShearType::LinearShear) {
           rhsVector.emplace_back(std::move(std::make_unique<Hydro<LinearShear>>(input, grid)));
+        }
+      } else if(method == "mhd") {
+        if(shearType == ShearType::NoShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<Mhd<NoShear>>(input, grid)));
+        } else if(shearType == ShearType::LinearShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<Mhd<LinearShear>>(input, grid)));
         }
       } else {
         throw std::runtime_error("Unknown right hand side method: " + method);
