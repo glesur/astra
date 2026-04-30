@@ -26,7 +26,7 @@ private:
   Grid *grid;
   Input *input;
   void ShearLayer(Field<ArrayHost3D<complex>>& field);
-  void MeanField(Field<ArrayHost3D<complex>>& field);
+  void MeanFlow(Field<ArrayHost3D<complex>>& field);
   void PureSine(Field<ArrayHost3D<complex>>& field);
   void LargeScale3DNoise(Field<ArrayHost3D<complex>>& field);
   void LargeScale2DNoise(Field<ArrayHost3D<complex>>& field);
