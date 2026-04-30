@@ -30,7 +30,7 @@ class LinearShear : public NoShear {
     lx = grid->xend_glob[IDIR] - grid->xbeg_glob[IDIR];
     ly = grid->xend_glob[JDIR] - grid->xbeg_glob[JDIR];
     x0 = grid->xbeg_glob[IDIR];
-    remapInterval = ly / (this->shearRate * lx);
+    remapInterval = ly / (std::fabs(this->shearRate) * lx);
     this->grid = grid;
   };
   

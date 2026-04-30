@@ -375,8 +375,8 @@ real Mhd<Shear>::GetInvDt() {
   auto br2 = this->br2;
   auto br3 = this->br3;
 
-  real Omega = this->Omega;
-  real S = this->shear.shearRate;
+  real Omega = std::fabs(this->Omega);
+  real S = std::fabs(this->shear.shearRate);
   astra_reduce("mhd_timestep_reduction",
     0,npr[IDIR],
     0,npr[JDIR],
@@ -387,8 +387,8 @@ real Mhd<Shear>::GetInvDt() {
       real idtx3 = std::fabs(vr3(i,j,k)*kx3max);
 
       real gamma_v = idtx1+idtx2+idtx3;
-      gamma_v += std::fabs(Omega); // rotation source term
-      gamma_v += std::fabs(S); // shear source term
+      gamma_v += Omega; // rotation source term
+      gamma_v += S; // shear source term
 
       idtx1 = std::fabs(br1(i,j,k)*kx1max); // Alfvén velocity contribution
       idtx2 = std::fabs(br2(i,j,k)*kx2max);

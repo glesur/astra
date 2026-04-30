@@ -268,8 +268,9 @@ real Hydro<Shear>::GetInvDt() {
   auto vr1 = this->vr1;
   auto vr2 = this->vr2;
   auto vr3 = this->vr3;
-
-  astra_reduce("Timestep_reduction_dust",
+  real Omega = std::fabs(this->Omega);
+  real S = std::fabs(this->shear.shearRate);
+  astra_reduce("Timestep_reduction",
     0,npr[IDIR],
     0,npr[JDIR],
     0,npr[KDIR],
@@ -277,7 +278,12 @@ real Hydro<Shear>::GetInvDt() {
       real idtx1 = std::fabs(vr1(i,j,k)*kx1max);
       real idtx2 = std::fabs(vr2(i,j,k)*kx2max);
       real idtx3 = std::fabs(vr3(i,j,k)*kx3max);
-      dtmax = std::fmax(dtmax,idtx1+idtx2+idtx3);
+
+      real gamma_v = idtx1+idtx2+idtx3;
+      gamma_v += Omega; // rotation source term
+      gamma_v += S; // shear source term
+      dtmax = std::fmax(dtmax, gamma_v);
+
         },
     Kokkos::Max<real>(invdt));
 
