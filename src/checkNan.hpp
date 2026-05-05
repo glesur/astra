@@ -16,6 +16,7 @@ namespace astra {
 
 template<typename ArrayType, typename = std::enable_if_t<Kokkos::is_view<ArrayType>::value>>
 void CheckNan(ArrayType array) {
+  astra::pushRegion("CheckNan(Array)");
   int nNan = 0;
   if constexpr(ArrayType::rank == 1) {
     astra_reduce("checkNan", 0, array.extent(0),
@@ -51,12 +52,14 @@ void CheckNan(ArrayType array) {
     }
 
   if (nNan > 0) {
-    throw std::runtime_error("checkNan: NaN values found in array "+array.label()+" (Count: " + std::to_string(nNan) + ")");
+    throw std::runtime_error("checkNan: NaN values found in array \""+array.label()+"\" (nan count: " + std::to_string(nNan) + ")");
   }
+  astra::popRegion();
 }
 
 template<typename T>
 void CheckNan(Field<T>& field) {
+  astra::pushRegion("CheckNan(Field)");
   try{
      for(auto it : field) {
         CheckNan(it.second);  
@@ -64,5 +67,6 @@ void CheckNan(Field<T>& field) {
   } catch(const std::runtime_error& e) {
     throw std::runtime_error("NaN values found in Field \"" + field.GetName() + "\": " + e.what());
   }
+  astra::popRegion();
 }
 }

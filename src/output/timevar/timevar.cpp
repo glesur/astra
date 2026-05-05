@@ -17,6 +17,7 @@
 #include "timevarStress.hpp"
 #include "timevarSpectrum.hpp"
 #include "fft.hpp"
+#include "checkNan.hpp"
 
 #if __has_include(<filesystem>)
   #include <filesystem> // NOLINT [build/c++17]
@@ -61,12 +62,15 @@ std::string TimeVar::ExtractVarName(const std::string& name) {
 }
   
 void TimeVarOutput::Write(Field<Array3D<complex>>& field, const real t) {
+  astra::pushRegion("TimeVarOutput::Write");
+  astra::CheckNan(field);
   Field<Array3D<real>> fieldReal("tempReal", grid->npr);
   for(auto const& [name, view] : field) {
     fieldReal.Add(name);
     auto viewReal = fieldReal[name];
     this->grid->fft->C2R(view, viewReal);
   }
+  astra::CheckNan(fieldReal);
   for(auto& timevar : this->timevarList) {
     try {
       timevar->Write(t, field, fieldReal);
@@ -78,6 +82,7 @@ void TimeVarOutput::Write(Field<Array3D<complex>>& field, const real t) {
       throw std::runtime_error(msg.str());
     }
   }
+  astra::popRegion();
 }
 
 void TimeVarOutput::Reset() {
