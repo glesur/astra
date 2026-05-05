@@ -8,6 +8,7 @@ target_sources(astra
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/astra.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/main.cpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/arrays.hpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/checkNan.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/global.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/global.cpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/fft.hpp

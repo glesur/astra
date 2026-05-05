@@ -23,6 +23,7 @@
 #include "timevar.hpp"
 #include "transpose.hpp"
 #include "fft.hpp"
+#include "checkNan.hpp"
 
 
 void WriteFile(Input &input, 

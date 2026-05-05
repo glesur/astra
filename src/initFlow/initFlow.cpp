@@ -15,6 +15,7 @@
 #include "global.hpp"
 #include "loop.hpp"
 #include "fft.hpp"
+#include "checkNan.hpp"
 
 InitFlow::InitFlow(Input &input, Grid *grid) : grid(grid), input(&input) {
   for(int dir = 0 ; dir < 3 ; dir++) {
