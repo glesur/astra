@@ -38,7 +38,7 @@ void TimeVarMinMax::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
     auto view = fieldReal[varname];
     if(isMax) {
       astra_reduce("timevar_max_compute_"+varname, fieldReal,
-        KOKKOS_LAMBDA(int i,int j,int k, real& myMax) {
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k, real& myMax) {
           myMax = fmax(myMax, view(i,j,k));
       }, Kokkos::Max<real>(v));
       #ifdef WITH_MPI
@@ -49,7 +49,7 @@ void TimeVarMinMax::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
       #endif
     } else {
       astra_reduce("timevar_min_compute_"+varname, fieldReal,
-        KOKKOS_LAMBDA(int i,int j,int k, real& myMin) {
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k, real& myMin) {
           myMin = fmin(myMin, view(i,j,k));
       }, Kokkos::Min<real>(v));
       #ifdef WITH_MPI

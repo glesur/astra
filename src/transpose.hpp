@@ -17,8 +17,8 @@ class Transpose {
 public:
   Transpose(std::array<int,3> n) {
     // Allocate temporary arrays for domain-splited FFTs and transposes
-    int n1 = n[0]*n[1]; // Block size
-    int nk = n[2];
+    int64_t n1 = n[0]*n[1]; // Block size
+    int64_t nk = n[2];
     this->tempB = Kokkos::View<T**, Kokkos::LayoutRight, Device>("FFT transpose tempB", n1,nk);
     this->tempC = Kokkos::View<T**, Kokkos::LayoutRight, Device>("FFT transpose tempC", n1,nk);
   }
@@ -128,11 +128,11 @@ template <typename T>
 void Transpose<T>::Apply(const Array3D<T>& in, Array3D<T>& out) {
   astra::pushRegion("Transpose::Apply");
   #ifdef WITH_MPI
-  const int n = astra::psize; // number of MPI processes
-  const int ni = in.extent(0); // Size of local block
-  const int nj = in.extent(1)/n;
-  const int nk = in.extent(2);
-  const int n1 = ni*nj*n; // Full size of the first dimension
+  const int64_t n = astra::psize; // number of MPI processes
+  const int64_t ni = in.extent(0); // Size of local block
+  const int64_t nj = in.extent(1)/n;
+  const int64_t nk = in.extent(2);
+  const int64_t n1 = ni*nj*n; // Full size of the first dimension
 
 
   //Array2D<complex> tempB("FFT transpose temp", n1,nk);
@@ -144,12 +144,12 @@ void Transpose<T>::Apply(const Array3D<T>& in, Array3D<T>& out) {
   }
   
   astra_for("FFT::TransposeLocal1", 0,n1, 0, nk,
-    KOKKOS_LAMBDA(const int ij, const int k) {
+    KOKKOS_LAMBDA(const int64_t ij, const int64_t k) {
     // for in array, ij = j'+nj*p +i'*nj*n= j+i'*nj*n (given that j=j'+nj*p)
     // For tempB, ij=i'+ni*(j'+nj*p) 
-     int i = ij / (nj*n);
-     int j = ij- i*nj*n;
-     int ijprime = i + ni*j;
+     int64_t i = ij / (nj*n);
+     int64_t j = ij- i*nj*n;
+     int64_t ijprime = i + ni*j;
      tempB(ijprime, k) = in(i,j,k);
     });
     Kokkos::fence();
@@ -163,15 +163,15 @@ void Transpose<T>::Apply(const Array3D<T>& in, Array3D<T>& out) {
                          MPI_COMM_WORLD);
 
   astra_for("FFT::TransposeBlock", 0,n1, 0, nk,
-    KOKKOS_LAMBDA(const int ij, const int k) {
+    KOKKOS_LAMBDA(const int64_t ij, const int64_t k) {
       // For tempC, ij = i' + ni*(j'+m*nj)
       // For out, ij = i' + m*ni + j'*ni*n (given that i = i'+m*ni)
 
-      const int j = ij / (ni*n);
-      const int i = ij - j*ni*n;
-      const int m = i / ni;
-      const int iprime = i - m*ni;
-      const int ijprime = iprime +ni*(j + m*nj);
+      const int64_t j = ij / (ni*n);
+      const int64_t i = ij - j*ni*n;
+      const int64_t m = i / ni;
+      const int64_t iprime = i - m*ni;
+      const int64_t ijprime = iprime +ni*(j + m*nj);
 
       out(j,i,k) = tempC(ijprime,k);
     });
@@ -185,11 +185,11 @@ template <typename T>
 void Transpose<T>::Test() {
 
   astra::cout << "Testing FFT Transpose" << std::endl;
-  const int n = astra::psize; // number of MPI processes
-  const int rank = astra::prank; // rank of the current process
-  const int ni = 3; // Size of local block
-  const int nj = 4;
-  const int nk = 9;
+  const int64_t n = astra::psize; // number of MPI processes
+  const int64_t rank = astra::prank; // rank of the current process
+  const int64_t ni = 3; // Size of local block
+  const int64_t nj = 4;
+  const int64_t nk = 9;
 
 
   Transpose<T> myTranspose({ni,nj*n,nk});
@@ -198,7 +198,7 @@ void Transpose<T>::Test() {
 
   // Fill the input array with some test values
   astra_for("FFT::TestTransposeFill", 0,ni, 0,nj*n, 0,nk,
-    KOKKOS_LAMBDA(const int i, const int j, const int k) {
+    KOKKOS_LAMBDA(const int64_t i, const int64_t j, const int64_t k) {
       in(i,j,k) = k+10*j+100*(i+rank*ni);
     });
   myTranspose.Apply(in, out);
@@ -206,9 +206,9 @@ void Transpose<T>::Test() {
 
   // Check the output values
   bool error = false;
-  for(int j = 0 ; j < nj ; j++) {
-    for(int i = 0 ; i < ni*n ; i++) {
-      for(int k = 0 ; k < nk ; k++) {
+  for(int64_t j = 0 ; j < nj ; j++) {
+    for(int64_t i = 0 ; i < ni*n ; i++) {
+      for(int64_t k = 0 ; k < nk ; k++) {
         if(outHost(j,i,k) != k+10*(j+rank*nj)+100*(i)) {
           astra::cout << "rank " << rank << " Transpose error at (" << i << "," << j << "," << k << "): got " << outHost(j,i,k) << " instead of " << k+10*(j+rank*nj)+100*(i) << std::endl;
           error = true;

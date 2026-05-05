@@ -130,7 +130,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   Shear &shear = this->shear;
   shear.Refresh(t);
   astra_for("hydro_windup", 0,npr[IDIR],0,npr[JDIR],0,npr[KDIR],
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       real v1 = vr1(i, j, k);
       real v2 = vr2(i, j, k);
       real v3 = vr3(i, j, k);
@@ -172,7 +172,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   real kx3max = this->grid->kmax[KDIR];
   // Compute the nonlinear advection term in spectral space
   astra_for("hydro_nonlinear", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       // 2/3 de-aliasing rule
       complex mask = (std::fabs(kx1(i))< 2./3*kx1max 
                    && std::fabs(kx2(j))< 2./3*kx2max 
@@ -190,14 +190,14 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
     real Omega = this->Omega;
     real S = this->shear.shearRate;
     astra_for("hydro_source_terms", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-      KOKKOS_LAMBDA(int i, int j, int k) {
+      KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
         dvx1(i,j,k) += 2.0*Omega*vx2(i,j,k);
         dvx2(i,j,k) += -(2.0*Omega - S)*vx1(i,j,k);
     });
   }
   // Pressure term
   astra_for("hydro_pressure", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
       const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
@@ -214,7 +214,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   // Magnetic field induction
   // vxB in real space 
   astra_for("mhd_emf", 0,npr[IDIR],0,npr[JDIR],0,npr[KDIR],
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       real v1 = vr1(i, j, k);
       real v2 = vr2(i, j, k);
       real v3 = vr3(i, j, k);
@@ -236,7 +236,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   auto dbx3 = dfld["bx3"];
   // Compute the induction term in spectral space
   astra_for("mhd_induction", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       // 2/3 de-aliasing rule
       complex mask = (std::fabs(kx1(i))< 2./3*kx1max 
                    && std::fabs(kx2(j))< 2./3*kx2max 
@@ -254,7 +254,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
     real Omega = this->Omega;
     real S = this->shear.shearRate;
     astra_for("hydro_source_terms", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-      KOKKOS_LAMBDA(int i, int j, int k) {
+      KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
         dvx1(i,j,k) += 2.0*Omega*vx2(i,j,k);
         dvx2(i,j,k) += -(2.0*Omega - S)*vx1(i,j,k);
         dbx2(i,j,k) += - S*bx1(i,j,k);
@@ -262,7 +262,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   }
   // Pressure term
   astra_for("hydro_pressure", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
       const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
@@ -298,7 +298,7 @@ void Mhd<Shear>::Projector(Field<Array3D<complex>>& fldin, real t) {
 
   // Project the velocity field to be divergence free
   astra_for("mhd_projector", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
       const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
@@ -340,7 +340,7 @@ void Mhd<Shear>::ImplicitStep(Field<Array3D<complex>>& fldin, real t, real dt) {
   Shear shear = this->shear;
   shear.Refresh(t);
   astra_for("mhd_diffusion", fldin,
-    KOKKOS_LAMBDA(int i, int j, int k) {
+    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
       const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
@@ -381,7 +381,7 @@ real Mhd<Shear>::GetInvDt() {
     0,npr[IDIR],
     0,npr[JDIR],
     0,npr[KDIR],
-    KOKKOS_LAMBDA (int i, int j, int k, real &dtmax) {
+    KOKKOS_LAMBDA (int64_t i, int64_t j, int64_t k, real &dtmax) {
       real idtx1 = std::fabs(vr1(i,j,k)*kx1max);
       real idtx2 = std::fabs(vr2(i,j,k)*kx2max);
       real idtx3 = std::fabs(vr3(i,j,k)*kx3max);

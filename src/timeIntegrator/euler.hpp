@@ -46,7 +46,7 @@ class EulerTimeIntegrator : public TimeIntegrator<T> {
         auto dview = dfld[it.first];
         real dt = this->dt;
         astra_for("euler_update_"+it.first,field,
-          KOKKOS_LAMBDA(int i,int j,int k) {
+          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
             view(i,j,k) += dt * dview(i,j,k);
         }); 
       }

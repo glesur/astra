@@ -23,7 +23,7 @@
 // 1D default loop pattern
 template <typename Function, typename Reducer>
 inline void astra_reduce(const std::string & NAME,
-                const int & IB, const int & IE,
+                const int64_t & IB, const int64_t & IE,
                 Function function,
                 Reducer redFunction) {
     #ifdef DEBUG
@@ -40,8 +40,8 @@ inline void astra_reduce(const std::string & NAME,
 // 2D default loop pattern
 template <typename Function, typename Reducer>
 inline void astra_reduce(const std::string & NAME,
-                const int & JB, const int & JE,
-                const int & IB, const int & IE,
+                const int64_t & JB, const int64_t & JE,
+                const int64_t & IB, const int64_t & IE,
                 Function function,
                 Reducer redFunction) {
     #ifdef DEBUG
@@ -63,9 +63,9 @@ inline void astra_reduce(const std::string & NAME,
 // 3D default loop pattern
 template <typename Function, typename Reducer>
 inline void astra_reduce(const std::string & NAME,
-                const int & KB, const int & KE,
-                const int & JB, const int & JE,
-                const int & IB, const int & IE,
+                const int64_t & KB, const int64_t & KE,
+                const int64_t & JB, const int64_t & JE,
+                const int64_t & IB, const int64_t & IE,
                 Function function,
                 Reducer redFunction) {
     // We only implement MDRange reductions here since the other implementations are too
@@ -86,10 +86,10 @@ inline void astra_reduce(const std::string & NAME,
 // 4D default loop pattern
 template <typename Function, typename Reducer>
 inline void astra_reduce(const std::string & NAME,
-                const int & NB, const int & NE,
-                const int & KB, const int & KE,
-                const int & JB, const int & JE,
-                const int & IB, const int & IE,
+                const int64_t & NB, const int64_t & NE,
+                const int64_t & KB, const int64_t & KE,
+                const int64_t & JB, const int64_t & JE,
+                const int64_t & IB, const int64_t & IE,
                 Function function,
                 Reducer redFunction) {
     // We only implement MDRange reductions here since the other implementations are too

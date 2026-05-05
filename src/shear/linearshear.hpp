@@ -119,7 +119,7 @@ class LinearShear : public NoShear {
     real x0 = this->x0;
     // Shear remap along x1
     astra_for("shear_remap", 0,field.extent(0),0,field.extent(1),0,field.extent(2),
-      KOKKOS_LAMBDA (const int i, const int j, const int k) {
+      KOKKOS_LAMBDA (const int64_t i, const int64_t j, const int64_t k) {
         real phase = kx2(j)*(shearRate*tremap*(x1(i)-x0)+x0advection);
         temp(i,j,k) *= Kokkos::complex(cos(phase), sin(phase));
       }
@@ -128,7 +128,7 @@ class LinearShear : public NoShear {
     KokkosFFT::ifft(Kokkos::DefaultExecutionSpace(), temp, temp2, KokkosFFT::Normalization::backward, -2);
     // Copy real part back to field
     astra_for("copy_real_part", 0,field.extent(0),0,field.extent(1),0,field.extent(2),
-      KOKKOS_LAMBDA (const int i, const int j, const int k) {
+      KOKKOS_LAMBDA (const int64_t i, const int64_t j, const int64_t k) {
         field(i,j,k) = temp2(i,j,k).real();
       }
     );

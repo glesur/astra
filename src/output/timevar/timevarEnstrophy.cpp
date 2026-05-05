@@ -38,7 +38,7 @@ void TimeVarEnstrophy::Write(const real t, Field<Array3D<complex>>& field, Field
     auto kx3 = this->grid->kx[KDIR];
 
     astra_for("compute_curl_wx", field,
-      KOKKOS_LAMBDA(int i,int j,int k) {
+      KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
         Kokkos::complex ikx = Kokkos::complex(0.0, kx1(i));
         Kokkos::complex iky = Kokkos::complex(0.0, kx2(j));
         Kokkos::complex ikz = Kokkos::complex(0.0, kx3(k));
@@ -57,7 +57,7 @@ void TimeVarEnstrophy::Write(const real t, Field<Array3D<complex>>& field, Field
 
     // Compute enstrophy
     astra_reduce("timevar_enstrophy_compute_", fieldReal,
-        KOKKOS_LAMBDA(int i,int j,int k, real& local_sum) {
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k, real& local_sum) {
           local_sum += 0.5 * ( wr1(i,j,k) * wr1(i,j,k) 
                              + wr2(i,j,k) * wr2(i,j,k) 
                              + wr3(i,j,k) * wr3(i,j,k) );

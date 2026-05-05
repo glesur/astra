@@ -55,7 +55,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
         real dt = this->dt;
         const real gamma = gammaRK[0];
         astra_for("rk3_update1_"+it.first,fld,
-          KOKKOS_LAMBDA(int i,int j,int k) {
+          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
             view(i,j,k) += gamma * dt * dview(i,j,k);
         }); 
       }
@@ -84,7 +84,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
         const real gamma = gammaRK[1];
         const real xi = xiRK[0];
         astra_for("rk3_update2_"+it.first,fld,
-          KOKKOS_LAMBDA(int i,int j,int k) {
+          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
             view(i,j,k) += dt * (gamma * dview1(i,j,k) + xi * dview(i,j,k));
         }); 
       }
@@ -113,7 +113,7 @@ class RK3TimeIntegrator : public TimeIntegrator<T> {
         const real gamma = gammaRK[2];
         const real xi = xiRK[1];
         astra_for("rk3_update2_"+it.first,fld,
-          KOKKOS_LAMBDA(int i,int j,int k) {
+          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
             view(i,j,k) += dt * (gamma * dview(i,j,k) + xi * dview1(i,j,k));
         }); 
       }

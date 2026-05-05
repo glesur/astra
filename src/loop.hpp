@@ -65,12 +65,12 @@ typedef Kokkos::TeamPolicy<>::member_type  member_type;
 // 1D loop
 template <typename Function>
 inline void astra_for(const std::string & NAME,
-                       const int & IB, const int & IE,
+                       const int64_t & IB, const int64_t & IE,
                        Function function) {
-  const int NI = IE - IB;
+  const int64_t NI = IE - IB;
   Kokkos::parallel_for(NAME, NI,
     KOKKOS_LAMBDA (const int& IDX) {
-      int i = IDX;
+      int64_t i = IDX;
       i += IB;
       function(i);
   });
@@ -80,18 +80,18 @@ inline void astra_for(const std::string & NAME,
 // 2D loop
 template <typename Function>
 inline void astra_for(const std::string & NAME,
-                       const int & JB, const int & JE,
-                       const int & IB, const int & IE,
+                       const int64_t & JB, const int64_t & JE,
+                       const int64_t & IB, const int64_t & IE,
                        Function function) {
   // Kokkos 1D Range
   if constexpr(defaultLoop == LoopPattern::RANGE) {
-    const int NJ = JE - JB;
-    const int NI = IE - IB;
-    const int NJNI = NJ * NI;
+    const int64_t NJ = JE - JB;
+    const int64_t NI = IE - IB;
+    const int64_t NJNI = NJ * NI;
     Kokkos::parallel_for(NAME, NJNI,
       KOKKOS_LAMBDA (const int& IDX) {
-        int j = IDX  / NI;
-        int i = IDX - j*NI;
+        int64_t j = IDX  / NI;
+        int64_t i = IDX - j*NI;
         j += JB;
         i += IB;
         function(j,i);
@@ -105,12 +105,12 @@ inline void astra_for(const std::string & NAME,
 
     // TeamPolicies with single inner loops
   } else if constexpr(defaultLoop == LoopPattern::TPX || defaultLoop == LoopPattern::TPTTRTVR ) {
-    const int NJ = JE - JB;
+    const int64_t NJ = JE - JB;
     Kokkos::parallel_for(NAME, team_policy (NJ, Kokkos::AUTO,KOKKOS_VECTOR_LENGTH),
       KOKKOS_LAMBDA (member_type team_member) {
-        const int j = team_member.league_rank() + JB;
+        const int64_t j = team_member.league_rank() + JB;
         Kokkos::parallel_for(TPINNERLOOP<>(team_member,IB,IE),
-                             [&] (const int i) {
+                             [&] (const int64_t i) {
                                function(j,i);
                             });
     });
@@ -130,22 +130,22 @@ inline void astra_for(const std::string & NAME,
 // 3D loop
 template <typename Function>
 inline void astra_for(const std::string & NAME,
-                       const int & KB, const int & KE,
-                       const int & JB, const int & JE,
-                       const int & IB, const int & IE,
+                       const int64_t & KB, const int64_t & KE,
+                       const int64_t & JB, const int64_t & JE,
+                       const int64_t & IB, const int64_t & IE,
                        Function function) {
   // Kokkos 1D Range
   if constexpr(defaultLoop == LoopPattern::RANGE) {
-    const int NK = KE - KB;
-    const int NJ = JE - JB;
-    const int NI = IE - IB;
-    const int NKNJNI = NK*NJ*NI;
-    const int NJNI = NJ * NI;
+    const int64_t NK = KE - KB;
+    const int64_t NJ = JE - JB;
+    const int64_t NI = IE - IB;
+    const int64_t NKNJNI = NK*NJ*NI;
+    const int64_t NJNI = NJ * NI;
     Kokkos::parallel_for(NAME,NKNJNI,
       KOKKOS_LAMBDA (const int& IDX) {
-        int k = IDX / NJNI;
-        int j = (IDX - k*NJNI) / NI;
-        int i = IDX - k*NJNI - j*NI;
+        int64_t k = IDX / NJNI;
+        int64_t j = (IDX - k*NJNI) / NI;
+        int64_t i = IDX - k*NJNI - j*NI;
         k += KB;
         j += JB;
         i += IB;
@@ -160,33 +160,33 @@ inline void astra_for(const std::string & NAME,
 
   // TeamPolicy with single inner loops
   } else if constexpr(defaultLoop == LoopPattern::TPX) {
-    const int NK = KE - KB;
-    const int NJ = JE - JB;
-    const int NKNJ = NK * NJ;
+    const int64_t NK = KE - KB;
+    const int64_t NJ = JE - JB;
+    const int64_t NKNJ = NK * NJ;
     Kokkos::parallel_for(NAME,
       team_policy (NKNJ, Kokkos::AUTO,KOKKOS_VECTOR_LENGTH),
       KOKKOS_LAMBDA (member_type team_member) {
-        const int k = team_member.league_rank() / NJ + KB;
-        const int j = team_member.league_rank() % NJ + JB;
+        const int64_t k = team_member.league_rank() / NJ + KB;
+        const int64_t j = team_member.league_rank() % NJ + JB;
         Kokkos::parallel_for(TPINNERLOOP<>(team_member,IB,IE),
-          [&] (const int i) {
+          [&] (const int64_t i) {
             function(k,j,i);
         });
       });
 
   // TeamPolicy with nested TeamThreadRange and ThreadVectorRange
   } else if constexpr(defaultLoop == LoopPattern::TPTTRTVR) {
-    const int NK = KE - KB;
+    const int64_t NK = KE - KB;
     Kokkos::parallel_for(NAME,
       team_policy (NK, Kokkos::AUTO,KOKKOS_VECTOR_LENGTH),
       KOKKOS_LAMBDA (member_type team_member) {
-        const int k = team_member.league_rank() + KB;
+        const int64_t k = team_member.league_rank() + KB;
         Kokkos::parallel_for(
           Kokkos::TeamThreadRange<>(team_member,JB,JE),
-          [&] (const int j) {
+          [&] (const int64_t j) {
             Kokkos::parallel_for(
               Kokkos::ThreadVectorRange<>(team_member,IB,IE),
-              [&] (const int i) {
+              [&] (const int64_t i) {
                 function(k,j,i);
               });
           });
@@ -207,26 +207,26 @@ inline void astra_for(const std::string & NAME,
 // 4D loop
 template <typename Function>
 inline void astra_for(const std::string & NAME,
-                       const int NB, const int NE,
-                       const int KB, const int KE,
-                       const int JB, const int JE,
-                       const int IB, const int IE,
+                       const int64_t NB, const int64_t NE,
+                       const int64_t KB, const int64_t KE,
+                       const int64_t JB, const int64_t JE,
+                       const int64_t IB, const int64_t IE,
                        Function function) {
   // Kokkos 1D Range
   if constexpr(defaultLoop == LoopPattern::RANGE) {
-    const int NN = (NE) - (NB);
-    const int NK = (KE) - (KB);
-    const int NJ = (JE) - (JB);
-    const int NI = (IE) - (IB);
-    const int NNNKNJNI = NN*NK*NJ*NI;
-    const int NKNJNI = NK*NJ*NI;
-    const int NJNI = NJ * NI;
+    const int64_t NN = (NE) - (NB);
+    const int64_t NK = (KE) - (KB);
+    const int64_t NJ = (JE) - (JB);
+    const int64_t NI = (IE) - (IB);
+    const int64_t NNNKNJNI = NN*NK*NJ*NI;
+    const int64_t NKNJNI = NK*NJ*NI;
+    const int64_t NJNI = NJ * NI;
     Kokkos::parallel_for(NAME,NNNKNJNI,
       KOKKOS_LAMBDA (const int& IDX) {
-        int n = IDX / NKNJNI;
-        int k = (IDX - n*NKNJNI) / NJNI;
-        int j = (IDX - n*NKNJNI - k*NJNI) / NI;
-        int i = IDX - n*NKNJNI - k*NJNI - j*NI;
+        int64_t n = IDX / NKNJNI;
+        int64_t k = (IDX - n*NKNJNI) / NJNI;
+        int64_t j = (IDX - n*NKNJNI - k*NJNI) / NI;
+        int64_t i = IDX - n*NKNJNI - k*NJNI - j*NI;
         n += (NB);
         k += (KB);
         j += (JB);
@@ -242,42 +242,42 @@ inline void astra_for(const std::string & NAME,
 
   // TeamPolicy loops
   } else if constexpr(defaultLoop == LoopPattern::TPX) {
-    const int NN = NE - NB;
-    const int NK = KE - KB;
-    const int NJ = JE - JB;
-    const int NKNJ = NK * NJ;
-    const int NNNKNJ = NN * NK * NJ;
+    const int64_t NN = NE - NB;
+    const int64_t NK = KE - KB;
+    const int64_t NJ = JE - JB;
+    const int64_t NKNJ = NK * NJ;
+    const int64_t NNNKNJ = NN * NK * NJ;
     Kokkos::parallel_for(NAME,
       team_policy (NNNKNJ, Kokkos::AUTO,KOKKOS_VECTOR_LENGTH),
       KOKKOS_LAMBDA (member_type team_member) {
-        int n = team_member.league_rank() / NKNJ;
-        int k = (team_member.league_rank() - n*NKNJ) / NJ;
-        int j = team_member.league_rank() - n*NKNJ - k*NJ + JB;
+        int64_t n = team_member.league_rank() / NKNJ;
+        int64_t k = (team_member.league_rank() - n*NKNJ) / NJ;
+        int64_t j = team_member.league_rank() - n*NKNJ - k*NJ + JB;
         n += NB;
         k += KB;
         Kokkos::parallel_for(
           TPINNERLOOP<>(team_member,IB,IE),
-          [&] (const int i) {
+          [&] (const int64_t i) {
             function(n,k,j,i);
           });
       });
 
   // TeamPolicy with nested TeamThreadRange and ThreadVectorRange
   } else if constexpr(defaultLoop == LoopPattern::TPTTRTVR) {
-    const int NN = NE - NB;
-    const int NK = KE - KB;
-    const int NNNK = NN * NK;
+    const int64_t NN = NE - NB;
+    const int64_t NK = KE - KB;
+    const int64_t NNNK = NN * NK;
     Kokkos::parallel_for(NAME,
       team_policy (NNNK, Kokkos::AUTO,KOKKOS_VECTOR_LENGTH),
       KOKKOS_LAMBDA (member_type team_member) {
-        int n = team_member.league_rank() / NK + NB;
-        int k = team_member.league_rank() % NK + KB;
+        int64_t n = team_member.league_rank() / NK + NB;
+        int64_t k = team_member.league_rank() % NK + KB;
         Kokkos::parallel_for(
           Kokkos::TeamThreadRange<>(team_member,JB,JE),
-          [&] (const int j) {
+          [&] (const int64_t j) {
             Kokkos::parallel_for(
               Kokkos::ThreadVectorRange<>(team_member,IB,IE),
-              [&] (const int i) {
+              [&] (const int64_t i) {
                 function(n,k,j,i);
               });
           });

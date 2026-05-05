@@ -34,7 +34,7 @@ void TimeVarEnergy::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
       real energy = 0.0;
       auto view = fieldReal[var];
       astra_reduce("timevar_energy_compute_"+var, fieldReal,
-        KOKKOS_LAMBDA(int i,int j,int k, real& local_sum) {
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k, real& local_sum) {
           local_sum += 0.5 * view(i,j,k) * view(i,j,k);
       }, Kokkos::Sum<real>(energy));
       energy_total += energy;

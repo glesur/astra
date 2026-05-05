@@ -28,7 +28,7 @@ void TimeVarStress::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
     auto view1 = fieldReal[var1];
     auto view2 = fieldReal[var2];
     astra_reduce("timevar_stress_compute_"+name, fieldReal,
-        KOKKOS_LAMBDA(int i,int j,int k, real& local_sum) {
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k, real& local_sum) {
           local_sum += view1(i,j,k) * view2(i,j,k);
       }, Kokkos::Sum<real>(stress));
 

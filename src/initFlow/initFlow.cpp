@@ -71,10 +71,10 @@ void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
   realField.Reset();
   complexField.Reset();
 
-  for(int i = 0 ; i < grid->npr[IDIR] ; i++) {
-    for(int j = 0 ; j < grid->npr[JDIR] ; j++) {
+  for(int64_t i = 0 ; i < grid->npr[IDIR] ; i++) {
+    for(int64_t j = 0 ; j < grid->npr[JDIR] ; j++) {
       real y = x2(j);
-      for(int k = 0 ; k < grid->npr[KDIR] ; k++) {
+      for(int64_t k = 0 ; k < grid->npr[KDIR] ; k++) {
         if(std::fabs(y) < y0) {
           realField["vx1"](i,j,k) = -v0;
         } else {
@@ -91,9 +91,9 @@ void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
   for(auto it : hfieldOut) {
     auto viewOut = it.second;
     auto viewIn = complexField[it.first];
-    for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
-      for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
-        for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int64_t i = 0 ; i < grid->npf[IDIR] ; i++) {
+      for(int64_t j = 0 ; j < grid->npf[JDIR] ; j++) {
+        for(int64_t k = 0 ; k < grid->npf[KDIR] ; k++) {
           viewOut(i,j,k) += viewIn(i,j,k);
         }
       }
@@ -134,9 +134,9 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
 
   // Count the number of modes excited
   real nmodes = 0;
-  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
-    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
-      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+  for(int64_t k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int64_t j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int64_t i = 0 ; i < grid->npf[IDIR] ; i++) {
         real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
                               kx[JDIR](j)*kx[JDIR](j)+
                               kx[KDIR](k)*kx[KDIR](k))
@@ -151,9 +151,9 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
     MPI_Allreduce(MPI_IN_PLACE, &nmodes, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   #endif
   real fact = pow(nmodes, 0.5);
-  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
-    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
-      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+  for(int64_t k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int64_t j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int64_t i = 0 ; i < grid->npf[IDIR] ; i++) {
         real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
                               kx[JDIR](j)*kx[JDIR](j)+
                               kx[KDIR](k)*kx[KDIR](k))
@@ -184,9 +184,9 @@ void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
   // Number of modes that are excited (approx)
   real nmodes = lx*ly/(noiseCutLength*noiseCutLength);
 
-  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
-    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
-      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+  for(int64_t k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int64_t j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int64_t i = 0 ; i < grid->npf[IDIR] ; i++) {
         real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
                               kx[JDIR](j)*kx[JDIR](j))
                                 /(2.0*M_PI);
@@ -215,9 +215,9 @@ void InitFlow::LargeScale1DNoise(Field<ArrayHost3D<complex>>& field) {
   // Number of modes that are excited (approx)
   real nmodes = lx/(noiseCutLength);
 
-  for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
-    for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
-      for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+  for(int64_t k = 0 ; k < grid->npf[KDIR] ; k++) {
+    for(int64_t j = 0 ; j < grid->npf[JDIR] ; j++) {
+      for(int64_t i = 0 ; i < grid->npf[IDIR] ; i++) {
         real ktot = std::sqrt(kx[IDIR](i)*kx[IDIR](i)+
                               kx[JDIR](j)*kx[JDIR](j))
                                 /(2.0*M_PI);
@@ -265,9 +265,9 @@ void InitFlow::Projector(Field<ArrayHost3D<complex>>& fldin) {
     auto vx3 = fldin["vx3"];
 
     // Project the velocity field to be divergence free
-    for(int k = 0 ; k < grid->npf[KDIR] ; k++) {
-      for(int j = 0 ; j < grid->npf[JDIR] ; j++) {
-        for(int i = 0 ; i < grid->npf[IDIR] ; i++) {
+    for(int64_t k = 0 ; k < grid->npf[KDIR] ; k++) {
+      for(int64_t j = 0 ; j < grid->npf[JDIR] ; j++) {
+        for(int64_t i = 0 ; i < grid->npf[IDIR] ; i++) {
         real k2 = kx1(i)*kx1(i)+kx2(j)*kx2(j)+kx3(k)*kx3(k);
         if(k2 > 0.0) {
           complex kv_dot_v = kx1(i)*vx1(i,j,k)+kx2(j)*vx2(i,j,k)+kx3(k)*vx3(i,j,k);

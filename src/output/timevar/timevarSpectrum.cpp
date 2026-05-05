@@ -100,7 +100,7 @@ void TimeVarSpectrum::Write(const real t, Field<Array3D<complex>>& field, Field<
 
     real npoints = static_cast<real>(grid->npr_glob[IDIR] * grid->npr_glob[JDIR] * grid->npr_glob[KDIR]);
     astra_for("timevar_spectrum_compute_"+name, field,
-        KOKKOS_LAMBDA(int i,int j,int k) {
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
           real kxt,kyt,kzt;
           real fact= 2.0;
           if(kx3(k) == 0) fact = 1.0; // account for Hermitian symmetry

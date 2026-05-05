@@ -55,7 +55,7 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
         auto dview = dfld[it.first];
         real dt = this->dt;
         astra_for("rk2_update1_"+it.first,fld,
-          KOKKOS_LAMBDA(int i,int j,int k) {
+          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
             view(i,j,k) += dt * dview(i,j,k);
         }); 
       }
@@ -81,7 +81,7 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
         auto dview = dfld[it.first];
         real dt = this->dt;
         astra_for("rk2_update2_"+it.first,fld,
-          KOKKOS_LAMBDA(int i,int j,int k) {
+          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
             view(i,j,k) += dt *  dview(i,j,k);
         }); 
       }
@@ -100,7 +100,7 @@ class RK2TimeIntegrator : public TimeIntegrator<T> {
         auto view0 = fld0[it.first];
         real dt = this->dt;
         astra_for("rk2_update2_"+it.first,fld,
-          KOKKOS_LAMBDA(int i,int j,int k) {
+          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
             view(i,j,k) = 0.5 * (view0(i,j,k) + view(i,j,k));
         });
       }
