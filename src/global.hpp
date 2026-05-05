@@ -9,10 +9,12 @@
 #define GLOBAL_HPP_
 #include <iostream>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include "arrays.hpp"
 #include "npy.hpp"
 #include "reduce.hpp"
+#include "field.hpp"
 
 namespace astra {
 int initialize();   // Initialisation routine for idefix
@@ -49,7 +51,7 @@ void DumpArray(std::string filename, ArrayType array) {
   npy::SaveArrayAsNumpy(filename, fortran_order, ArrayType::rank, shape.data(), hArray.data());
 }
 
-template<typename ArrayType>
+template<typename ArrayType, typename = std::enable_if_t<Kokkos::is_view<ArrayType>::value>>
 void CheckNan(ArrayType array) {
   int nNan = 0;
   if constexpr(ArrayType::rank == 1) {
@@ -87,6 +89,17 @@ void CheckNan(ArrayType array) {
 
   if (nNan > 0) {
     throw std::runtime_error("checkNan: NaN values found in array "+array.label()+" (Count: " + std::to_string(nNan) + ")");
+  }
+}
+
+template<typename T>
+void CheckNan(Field<T>& field) {
+  try{
+     for(auto it : field) {
+        CheckNan(it.second);  
+      }
+  } catch(const std::runtime_error& e) {
+    throw std::runtime_error("NaN values found in Field \"" + field.GetName() + "\": " + e.what());
   }
 }
 } // namespace astra

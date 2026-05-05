@@ -55,10 +55,7 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
   Projector(hfield);
   // Copy back to device
   field.CopyFrom(hfield);
-  for(auto it : field) {
-    auto view = it.second;
-    astra::CheckNan(view);
-  }
+  astra::CheckNan(field);
 }
 
 void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {

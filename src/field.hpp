@@ -87,6 +87,7 @@ class Field {
 
     static constexpr int rank{T::rank};
     std::array<int,T::rank> GetDimensions() {return np;};
+    std::string GetName() {return name;};
   private:
     std::string name;
     std::map<std::string,T> map;
