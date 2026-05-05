@@ -19,10 +19,10 @@ void CheckNan(ArrayType array) {
   astra::pushRegion("CheckNan(Array)");
 
   using value_type = typename ArrayType::value_type;
-  constexpr bool is_complex = std::is_same<value_type, complex>::value;
+  constexpr bool isComplex = std::is_same<value_type, complex>::value;
 
   auto isNanValue = KOKKOS_LAMBDA(const value_type& v) -> bool {
-    if constexpr (is_complex) {
+    if constexpr (isComplex) {
       return std::isnan(v.real()) || std::isnan(v.imag());
     } else {
       return std::isnan(v);
