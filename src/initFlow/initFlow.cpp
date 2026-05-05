@@ -105,17 +105,21 @@ void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
 void InitFlow::MeanFlow(Field<ArrayHost3D<complex>>& hfield) {
   // Implementation of mean flow initialization
   int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
-  hfield["vx1"](0,0,0) = input->Get<real>("InitFlow","mean_flow",0)*ntot;
-  hfield["vx2"](0,0,0) = input->Get<real>("InitFlow","mean_flow",1)*ntot;
-  hfield["vx3"](0,0,0) = input->Get<real>("InitFlow","mean_flow",2)*ntot;
+  if(astra::prank==0) {
+    hfield["vx1"](0,0,0) = input->Get<real>("InitFlow","mean_flow",0)*ntot;
+    hfield["vx2"](0,0,0) = input->Get<real>("InitFlow","mean_flow",1)*ntot;
+    hfield["vx3"](0,0,0) = input->Get<real>("InitFlow","mean_flow",2)*ntot;
+  }
 }
 
 void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
   // Implementation of mean field initialization
   int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
-  hfield["bx1"](0,0,0) = input->Get<real>("InitFlow","mean_field",0)*ntot;
-  hfield["bx2"](0,0,0) = input->Get<real>("InitFlow","mean_field",1)*ntot;
-  hfield["bx3"](0,0,0) = input->Get<real>("InitFlow","mean_field",2)*ntot;
+  if(astra::prank==0) {
+    hfield["bx1"](0,0,0) = input->Get<real>("InitFlow","mean_field",0)*ntot;
+    hfield["bx2"](0,0,0) = input->Get<real>("InitFlow","mean_field",1)*ntot;
+    hfield["bx3"](0,0,0) = input->Get<real>("InitFlow","mean_field",2)*ntot;
+  }
 }
 
 
