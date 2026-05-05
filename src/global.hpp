@@ -13,8 +13,6 @@
 #include <vector>
 #include "arrays.hpp"
 #include "npy.hpp"
-#include "reduce.hpp"
-#include "field.hpp"
 
 namespace astra {
 int initialize();   // Initialisation routine for idefix
