@@ -407,11 +407,12 @@ void Dump::ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &di
     if(isRoot) {
       MPI_File_read(fileHdl, &ndim, 1, MPI_INT, &status);
     }
+    offset=offset+sizeof(int);
+    MPI_Bcast(&ndim, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
     if(ndim < 1 || ndim > 10) {
       throw std::runtime_error("Dump::ReadNextFieldProperties: invalid number of dimensions read from dump file, likely due to file corruption.");
     }
-    offset=offset+sizeof(int);
-    MPI_Bcast(&ndim, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     MPI_File_set_view(fileHdl, this->offset, MPI_BYTE,
                                     MPI_CHAR, "native", MPI_INFO_NULL );
