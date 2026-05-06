@@ -63,7 +63,10 @@ void TimeVarEnstrophy::Write(const real t, Field<Array3D<complex>>& field, Field
                              + wr3(i,j,k) * wr3(i,j,k) );
       }, Kokkos::Sum<real>(enstrophy));
       
-    enstrophy *= grid->dx[IDIR]*grid->dx[JDIR]*grid->dx[KDIR];
+    int64_t ntot = grid->npr_glob[IDIR];
+    ntot *= grid->npr_glob[JDIR];
+    ntot *= grid->npr_glob[KDIR];
+    enstrophy /= ntot;
     #ifdef WITH_MPI
       // Reduce across all processes
       real q0;

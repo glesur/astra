@@ -97,8 +97,10 @@ void TimeVarSpectrum::Write(const real t, Field<Array3D<complex>>& field, Field<
       shear = *(this->linearShear.get());
       shear.SetTinit(t);
     }
-
-    real npoints = static_cast<real>(grid->npr_glob[IDIR] * grid->npr_glob[JDIR] * grid->npr_glob[KDIR]);
+    int64_t ntot = grid->npr_glob[IDIR];
+    ntot *= grid->npr_glob[JDIR];
+    ntot *= grid->npr_glob[KDIR];
+    real npoints = static_cast<real>(ntot);
     astra_for("timevar_spectrum_compute_"+name, field,
         KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
           real kxt,kyt,kzt;

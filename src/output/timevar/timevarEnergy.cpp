@@ -40,7 +40,10 @@ void TimeVarEnergy::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
       energy_total += energy;
     }
     // divide by total number of points to get mean energy per point
-    energy_total /= grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+    int64_t ntot = grid->npr_glob[IDIR];
+    ntot *= grid->npr_glob[JDIR];
+    ntot *= grid->npr_glob[KDIR];
+    energy_total /= ntot;
     #ifdef WITH_MPI
       // Reduce across all processes
       real q0;

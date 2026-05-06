@@ -31,8 +31,11 @@ void TimeVarStress::Write(const real t, Field<Array3D<complex>>& field, Field<Ar
         KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k, real& local_sum) {
           local_sum += view1(i,j,k) * view2(i,j,k);
       }, Kokkos::Sum<real>(stress));
-
-    stress /= grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+    // divide by total number of points to get mean stress per point
+    int64_t ntot = grid->npr_glob[IDIR];
+    ntot *= grid->npr_glob[JDIR];
+    ntot *= grid->npr_glob[KDIR];
+    stress /= ntot;
     #ifdef WITH_MPI
       // Reduce across all processes
       real q0;
