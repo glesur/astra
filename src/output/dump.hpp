@@ -130,7 +130,9 @@ void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
 
   std::vector<int> dims = {1};
   if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
-    ntot = data.extent(0)*data.extent(1)*data.extent(2);
+    ntot = data.extent(0);
+    ntot *= data.extent(1);
+    ntot *= data.extent(2);
     ndim = 3;
     type = static_cast<int>(TypeToInt<complex>());
     size = sizeof(complex);
@@ -229,7 +231,9 @@ void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
   astra::pushRegion("Dump::ReadData");
   size_t ntot,size,nglob;
   if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
-    ntot = data.extent(0)*data.extent(1)*data.extent(2);
+    ntot = data.extent(0);
+    ntot *= data.extent(1);
+    ntot *= data.extent(2);
     size = sizeof(complex);
     nglob = static_cast<size_t>(npf_glob[0])*
             static_cast<size_t>(npf_glob[1])*
