@@ -104,7 +104,9 @@ void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
 
 void InitFlow::MeanFlow(Field<ArrayHost3D<complex>>& hfield) {
   // Implementation of mean flow initialization
-  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  int64_t ntot = grid->npr_glob[IDIR];
+  ntot *= grid->npr_glob[JDIR];
+  ntot *= grid->npr_glob[KDIR];
   if(astra::prank==0) {
     hfield["vx1"](0,0,0) = input->Get<real>("InitFlow","mean_flow",0)*ntot;
     hfield["vx2"](0,0,0) = input->Get<real>("InitFlow","mean_flow",1)*ntot;
@@ -114,7 +116,9 @@ void InitFlow::MeanFlow(Field<ArrayHost3D<complex>>& hfield) {
 
 void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
   // Implementation of mean field initialization
-  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  int64_t ntot = grid->npr_glob[IDIR];
+  ntot *= grid->npr_glob[JDIR];
+  ntot *= grid->npr_glob[KDIR];
   if(astra::prank==0) {
     hfield["bx1"](0,0,0) = input->Get<real>("InitFlow","mean_field",0)*ntot;
     hfield["bx2"](0,0,0) = input->Get<real>("InitFlow","mean_field",1)*ntot;
@@ -127,7 +131,9 @@ void InitFlow::MeanField(Field<ArrayHost3D<complex>>& hfield) {
 void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
   astra::cout << "Adding large scale 3D noise to the flow" << std::endl;
   // Implementation of large scale noise initialization
-  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  int64_t ntot = grid->npr_glob[IDIR];
+  ntot *= grid->npr_glob[JDIR];
+  ntot *= grid->npr_glob[KDIR];
   real noiseAmplitude = input->Get<real>("InitFlow","large_scale_3d_noise",0);
   real noiseCutLength = input->Get<real>("InitFlow","large_scale_3d_noise",1);
 
@@ -179,7 +185,9 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
 
 void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
   // Implementation of large scale noise initialization
-  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  int64_t ntot = grid->npr_glob[IDIR];
+  ntot *= grid->npr_glob[JDIR];
+  ntot *= grid->npr_glob[KDIR];
   real noiseAmplitude = input->Get<real>("InitFlow","large_scale_2d_noise",0);
   real noiseCutLength = input->Get<real>("InitFlow","large_scale_2d_noise",1);
 
@@ -211,7 +219,9 @@ void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
 
 void InitFlow::LargeScale1DNoise(Field<ArrayHost3D<complex>>& field) {
   // Implementation of large scale noise initialization
-  int64_t ntot = grid->npr_glob[IDIR]*grid->npr_glob[JDIR]*grid->npr_glob[KDIR];
+  int64_t ntot = grid->npr_glob[IDIR];
+  ntot *= grid->npr_glob[JDIR];
+  ntot *= grid->npr_glob[KDIR];
   real noiseAmplitude = input->Get<real>("InitFlow","large_scale_1d_noise",0);
   real noiseCutLength = input->Get<real>("InitFlow","large_scale_1d_noise",1);
 
