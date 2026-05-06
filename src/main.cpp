@@ -291,7 +291,6 @@ int main( int argc, char* argv[] ) {
     real tstop = input.Get<real>("TimeIntegrator","tstop",0);
     Kokkos::Timer timer;
     while(timeIntegrator->GetTime() < tstop) {
-      astra::CheckNan(state);
       timeIntegrator->SetDtMax(tstop - timeIntegrator->GetTime());
       timeIntegrator->Cycle(state);
 
