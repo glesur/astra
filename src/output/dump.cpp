@@ -178,7 +178,6 @@ void Dump::Read() {
     DataType type;
     std::string name;
     ReadNextFieldProperties(fileHdl, dim, type, name);
-    astra::cout << "Reading variable " << name <<  " and dimensions ";    
     for(size_t i = 0 ; i < dim.size() ; i++) {
       astra::cout << dim[i] << " ";
     }
