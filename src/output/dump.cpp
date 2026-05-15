@@ -178,10 +178,6 @@ void Dump::Read() {
     DataType type;
     std::string name;
     ReadNextFieldProperties(fileHdl, dim, type, name);
-    for(size_t i = 0 ; i < dim.size() ; i++) {
-      astra::cout << dim[i] << " ";
-    }
-    astra::cout << "..." << std::flush;
     if(name.compare("EOF") == 0) {
       break;
     }

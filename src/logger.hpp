@@ -40,6 +40,7 @@ class Logger {
     bool isSilent{false};
     Grid *grid{nullptr};
     Input *input{nullptr};
+    bool firstCall{true};
 };
 
 #include "timeIntegrator.hpp"
@@ -62,6 +63,10 @@ void Logger<T>::Start() {
 template <typename T>
 void Logger<T>::Show(int ncycles) {
   if(isSilent) return;
+  if(firstCall) {
+    Start();
+    firstCall = false;
+  }
   if(ncycles % cyclePeriod != 0 && ncycles != 0) return;
 
   double rawperf = (timer.seconds()-lastLog)/grid->npr[IDIR]/grid->npr[JDIR]

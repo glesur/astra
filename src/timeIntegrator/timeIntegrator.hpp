@@ -16,6 +16,7 @@
 #include "grid.hpp"
 #include "logger.hpp"
 #include "rightHandSide.hpp"
+#include "dumpVariables.hpp"
 #include <limits>
 
 #ifdef WITH_MPI
@@ -26,13 +27,13 @@ template <typename T>
 class TimeIntegrator {
   public:
     TimeIntegrator(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector)  : grid(grid), logger(input, grid, this) {
-      logger.Start();
       timer.reset();
       cfl = input.Get<real>("TimeIntegrator","cfl",0);
       maxRuntime = 3600*input.GetOrSet<double>("TimeIntegrator","max_runtime",0.0,-1.0);
       for (auto& rhs : rhsVector) {
         this->rhsVector.push_back(rhs.get());
       }
+      DumpVariables::Register("time", t);
     }
     virtual ~TimeIntegrator() {}
 
