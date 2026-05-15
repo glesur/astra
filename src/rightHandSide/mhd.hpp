@@ -416,7 +416,6 @@ template <typename Shear>
 void Mhd<Shear>::PostStage(Field<Array3D<complex>>& fldin, real t) {
   if constexpr(Shear::isEnabled) {
     if(this->shear.NeedRemap(t)) {
-      astra::cout << "Mhd rhs: remapping fields at t=" << t << std::endl;
       this->shear.Remap(t, fldin["vx1"]);
       this->shear.Remap(t, fldin["vx2"]);
       this->shear.Remap(t, fldin["vx3"]);

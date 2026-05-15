@@ -26,6 +26,11 @@ class Logger {
       timer.reset();
       lastLog = timer.seconds();
       cyclePeriod = input.GetOrSet<int>("Output","log",0,10);
+      if(cyclePeriod<=0) {
+        std::stringstream msg;
+        msg << "Invalid logging cycle period " << cyclePeriod << ". Please provide an integer value >0 for Output:log in the input file.";
+        throw std::runtime_error(msg.str());
+      }
       //isSilent = input.GetOrSet<bool>("Logger","silent",0,false);
     }
     void Show(int);

@@ -13,6 +13,7 @@
 #include "grid.hpp"
 #include "input.hpp"
 #include "field.hpp"
+#include "linearshear.hpp"
 
 class TimeVarOutput;
 
@@ -22,9 +23,16 @@ class Output {
     ~Output(); // needed by the incomplete type TimeVarOutput used in a unique_ptr. 
     void CheckForOutput(Input &input, Field<Array3D<complex>> state, real time);
     void ForceDump(real time);
+    void RestartFromDump(Input &input);
+
+    // This function is technically private, but needs to be public for Cuda lambda captures.
+    void ComputeCurl(std::array<Array3D<complex>, 3> out , std::array<Array3D<complex>, 3> in, real time);
+    
   private:
     int GetLastDumpInDirectory(std::string directory_str);  
     std::string CreateDumpFileName(int n);
+    void ComputeAdditionalVariables(Field<Array3D<complex>> state, real time);  // Compute any additional variables that we want to output but are not part of the state vector
+
     std::unique_ptr<TimeVarOutput> timeVarOutput;
     // Helper function to convert filesystem::file_time into std::time_t
     // see https://stackoverflow.com/questions/56788745/
@@ -39,11 +47,15 @@ class Output {
     }
 
     Grid *grid;
+    bool haveShear{false};
+    std::unique_ptr<LinearShear> linearShear;
 
     // Vtk output
     real lastVtkOutput{0.0};
     real outputVtkStep{0.1};
     std::string outputVtkDirectory{"./"};
+    std::vector<std::string> vtkAdditionalVariableNames;
+    Field<Array3D<complex>> vtkAdditionalVariables;  // Additional variables to output in vtk files
     int nvtk{0};
 
     // Dump output

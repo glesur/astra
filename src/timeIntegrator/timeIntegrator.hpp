@@ -44,14 +44,18 @@ class TimeIntegrator {
       logger.Show(ncycles);
       astra::popRegion();
     };
-    real GetTime() { return t; }
-    real GetTimeStep() { return dt; }
-    void SetTime(real time) { 
-      t = time; 
+    void Reset() { // Reset internal time proxies for the rhs (needed for remaps and restarts)
       for(auto &rhs : rhsVector) {
         rhs->SetTinit(t);
       }
     }
+    real GetTime() { return t; }
+    real GetTimeStep() { return dt; }
+    void SetTime(real time) { 
+      t = time; 
+      Reset();
+    }
+    
     int GetCycle() { return ncycles; }
     void SetDtMax(real dtmax) { dtMax = dtmax; }
 

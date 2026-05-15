@@ -87,11 +87,21 @@ int main( int argc, char* argv[] ) {
     // Init the time integrator
     auto timeIntegrator = TimeIntegratorFactory<Array3D<complex>>::Create(input, &grid, rhsVector);
 
-    // Declare the state for outputs
+    // Declare the state for I/O routines
     DumpVariables::Register("state", state);
     
+    // Init the output.
     Output output(input, grid);
-    if(!input.restartRequested) {
+
+    /*********************************************************************************** */
+    // From this point the basic logic is initialized. We needd to fill the state array
+    // either from initial conditions or from a dump file, and then we can start 
+    // the time integration loop.
+
+    if(input.restartRequested) {
+      output.RestartFromDump(input);
+      timeIntegrator->Reset();  // Reset time proxies in the rhs after restart
+    } else {
       ///////////////////////////////
       // Initial condition generation
       //////////////////////////////
@@ -106,6 +116,10 @@ int main( int argc, char* argv[] ) {
     
     real tstop = input.Get<real>("TimeIntegrator","tstop",0);
     Kokkos::Timer timer;
+
+    /*************************************************************************** */
+    // MAIN LOOP STARTS HERE
+    /*************************************************************************** */
     while(timeIntegrator->GetTime() < tstop) {
       timeIntegrator->SetDtMax(tstop - timeIntegrator->GetTime());
       timeIntegrator->Cycle(state);
@@ -132,6 +146,7 @@ int main( int argc, char* argv[] ) {
         break;
       }
     }
+
 
     LogFinished(grid, input, timer, timeIntegrator.get());
     // Show profiler output
