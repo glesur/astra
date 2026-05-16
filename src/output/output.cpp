@@ -31,13 +31,14 @@ Output::Output(Input &input, Grid &grid) {
   }
   nvtk = 0;
 
-  int nAdditionalVariables = input.CheckEntry("Output","vtk_additional_variables");
-  if(nAdditionalVariables>=0) {
+  int nAdditionalVariables = input.CheckEntry("Output","vtk_addvar");
+  if(nAdditionalVariables>0) {
     // We have additional variables to output in vtk files, read them
     vtkAdditionalVariables = Field<Array3D<complex>>("vtk_additional_variables", grid.npf);
     for(int i=0; i<nAdditionalVariables; i++) {
-      std::string varName = input.Get<std::string>("Output","vtk_additional_variables",i);
+      std::string varName = input.Get<std::string>("Output","vtk_addvar",i);
       vtkAdditionalVariableNames.push_back(varName);
+      astra::cout << "Output: Additional variable \"" << varName << "\" in vtk output." << std::endl;
       if(varName.compare("j")==0) {
         vtkAdditionalVariables.Add("jx1");
         vtkAdditionalVariables.Add("jx2");
@@ -124,6 +125,7 @@ void Output::CheckForOutput(Input &input, Field<Array3D<complex>> state, real ti
     vtk.Write(state, time);
     if(!vtkAdditionalVariableNames.empty()) {
       ComputeAdditionalVariables(state, time);
+      vtk.Write(vtkAdditionalVariables, time);
     }
     nvtk++;
     lastVtkOutput += outputVtkStep;
