@@ -140,9 +140,9 @@ void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
             static_cast<size_t>(npf_glob[1])*
             static_cast<size_t>(npf_glob[2]);
     // Overwrite dims
-    dims = {static_cast<int>(data.extent(0)),
-            static_cast<int>(data.extent(1)),
-            static_cast<int>(data.extent(2))};
+    dims = {static_cast<int>(npf_glob[0]),
+            static_cast<int>(npf_glob[1]),
+            static_cast<int>(npf_glob[2])};
   } else {
     ntot = 1;   // Number of elements to be written
     nglob = 1;

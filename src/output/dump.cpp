@@ -183,6 +183,8 @@ void Dump::Read() {
     }
     try {
       if(type == ComplexDoubleType && dim.size() == 3) {
+        // Assumpe domain decomposition in x.
+        dim[0] = dim[0]/astra::psize;
         std::string fieldName = name.substr(0,name.find("\\"));
         std::string arrayName = name.substr(name.find("\\")+1);
         ArrayHost3D<complex> arrHost("temp", dim[0], dim[1], dim[2]);
@@ -419,6 +421,7 @@ void Dump::ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &di
     MPI_Bcast(dimArray, ndim, MPI_INT, 0, MPI_COMM_WORLD);
     dim.assign(dimArray, dimArray+ndim);
     delete[] dimArray;
+    
 
   #else
     size_t numRead;
