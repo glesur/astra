@@ -47,7 +47,7 @@ class Vtk {
 
  public:
   Vtk(Grid *grid, Input &input, real time, std::string filename = "data", std::string outputDirectory = "./");   // init VTK object
-  void Write(Field<Array3D<complex>> field, real time);     // Write content of a field class
+  template<typename T> void Write(Field<Array3D<T>> field, real time);     // Write content of a field class
   ~Vtk();  // Destructor
 
  private:
@@ -85,4 +85,41 @@ class Vtk {
 };
 
 
+#include "fft.hpp"
+#include "linearshear.hpp"
+template<typename T>
+void Vtk::Write(Field<Array3D<T>> field, real time) {
+  astra::pushRegion("Vtk::Write");
+  ArrayHost3D<real> realHostView("VTK_rfft_host_view",nx1loc,nx2loc,nx3loc);
+  Array3D<real> realView;
+  // Write field one by one
+  for(auto const& [name, view] : field) {
+    if constexpr (std::is_same<T, complex>::value) {
+      // Fourier transform the view
+      realView = Array3D<real>("VTK_rfft_view",nx1loc,nx2loc,nx3loc);
+      grid->fft->C2R(view, realView);
+      Kokkos::fence();
+      // unshear if needed
+      if(haveShear) {
+        this->linearShear->SetTinit(time);
+        this->linearShear->UnshearFrame(realView);
+      }
+    } else {
+      // shallow copy the view that is already real (and assumed unsheared)
+      realView = view;
+    }
+    // Copy data to host
+    Kokkos::deep_copy(realHostView, realView);
+    for(int k = 0; k < nx3loc ; k++ ) {
+      for(int j = 0; j < nx2loc ; j++ ) {
+        for(int i = 0; i < nx1loc ; i++ ) {
+          vect3D[i + j*nx1loc + k*nx1loc*nx2loc]
+              = bigEndian(static_cast<float>(realHostView(i,j,k)));
+        }
+      }
+    }
+    WriteScalar(fileHdl, vect3D, name);
+  }
+  astra::popRegion();
+}
 #endif // OUTPUT_VTK_HPP_

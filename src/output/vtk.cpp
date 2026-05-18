@@ -21,7 +21,7 @@
 #include "global.hpp"
 #include "arrays.hpp"
 #include "bigEndian.hpp"
-#include "fft.hpp"
+
 #include "shear.hpp"
 #include "input.hpp"
 
@@ -243,34 +243,7 @@ void Vtk::WriteHeaderString(const char* header, VtkFileHandler fvtk) {
   #endif
   }
 
-void Vtk::Write(Field<Array3D<complex>> field, real time) {
-  astra::pushRegion("Vtk::Write");
 
-  Array3D<real> realView("VTK_rfft_view",nx1loc,nx2loc,nx3loc);
-  ArrayHost3D<real> realHostView("VTK_rfft_host_view",nx1loc,nx2loc,nx3loc);
-   // Write field one by one
-  for(auto const& [name, view] : field) {
-    grid->fft->C2R(view, realView);
-    Kokkos::fence();
-    // Check if we have linear shear
-    if(haveShear) {
-      this->linearShear->SetTinit(time);
-      this->linearShear->UnshearFrame(realView);
-    }
-    // Copy data to host
-    Kokkos::deep_copy(realHostView, realView);
-    for(int k = 0; k < nx3loc ; k++ ) {
-      for(int j = 0; j < nx2loc ; j++ ) {
-        for(int i = 0; i < nx1loc ; i++ ) {
-          vect3D[i + j*nx1loc + k*nx1loc*nx2loc]
-              = bigEndian(static_cast<float>(realHostView(i,j,k)));
-        }
-      }
-    }
-    WriteScalar(fileHdl, vect3D, name);
-  }
-  astra::popRegion();
-}
 
 Vtk::~Vtk() {
   
