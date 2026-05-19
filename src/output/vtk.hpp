@@ -47,7 +47,9 @@ class Vtk {
 
  public:
   Vtk(Grid *grid, Input &input, real time, std::string filename = "data", std::string outputDirectory = "./");   // init VTK object
+  template<typename T> void Write(T array, real time, std::string name);     // Write content of an array class
   template<typename T> void Write(Field<Array3D<T>> field, real time);     // Write content of a field class
+  
   ~Vtk();  // Destructor
 
  private:
@@ -87,6 +89,42 @@ class Vtk {
 
 #include "fft.hpp"
 #include "linearshear.hpp"
+
+template<typename T>
+void Vtk::Write(T array, real time, std::string name) {
+  astra::pushRegion("Vtk::Write");
+  auto realHostView = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), array);
+  constexpr int rank = decltype(array)::rank();
+  // Compute total number of elements in the array
+  int64_t nelem = 1;
+  for(int i = 0; i < rank; i++) {
+    nelem *= array.extent(i);
+  }
+
+  for(int64_t idx = 0; idx < nelem; idx++) {
+    real q0;
+    if constexpr(rank==1) {
+      q0 = realHostView(idx);
+    } else if constexpr(rank==2) {
+      int i = idx % array.extent(0);
+      int j = idx / array.extent(0);
+      q0 = realHostView(i,j);
+    } else if constexpr(rank==3) {
+      int i = idx % array.extent(0);
+      int j = (idx / array.extent(0)) % array.extent(1);
+      int k = idx / (array.extent(0)*array.extent(1));
+      q0 = realHostView(i,j,k);
+    } else {
+      static_assert(rank <= 3, "Unsupported rank for VTK output");
+    }
+    vect3D[idx] = bigEndian(static_cast<float>(q0));
+  }
+
+  WriteScalar(fileHdl, vect3D, name);
+  astra::popRegion();
+}
+
+
 template<typename T>
 void Vtk::Write(Field<Array3D<T>> field, real time) {
   astra::pushRegion("Vtk::Write");

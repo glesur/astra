@@ -15,6 +15,7 @@
 #include "arrays.hpp"
 #include "grid.hpp"
 #include "loop.hpp"
+#include "global.hpp"
 #ifdef WITH_MPI
 #include "transpose.hpp"
 #endif

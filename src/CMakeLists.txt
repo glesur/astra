@@ -21,6 +21,8 @@ target_sources(astra
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/loop.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/profiler.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/profiler.cpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/subgrid.hpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/subgrid.cpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/transpose.hpp
 
   )

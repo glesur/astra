@@ -17,7 +17,8 @@
 #include "fft.hpp"
 
 
-
+Grid::Grid() = default;
+Grid::~Grid() = default;
 
 Grid::Grid(Input &input) {
   astra::pushRegion("Grid::Grid(Input)");
@@ -66,10 +67,13 @@ Grid::Grid(Input &input) {
     // Compute transposed sizes
     npr_t[IDIR] = npr_glob[JDIR]/astra::psize;
     npr_t[JDIR] = npr_glob[IDIR];
+    // communicator for the grid
+    comm = MPI_COMM_WORLD;
+    MPI_Comm_rank(comm, &prank);
   #endif
 
   this->InitGrid();
-   astra::popRegion();
+  astra::popRegion();
 }
 
 // To allow for capture in Lambda functions, astra_for can't be used in class constructors

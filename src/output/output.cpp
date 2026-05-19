@@ -16,6 +16,7 @@
 #include "field.hpp"
 #include "loop.hpp"
 #include "linearshear.hpp"
+#include "slice.hpp"
 
 Output::~Output() = default;    // Destructor needed for unique_ptr of timeVarOutput
 
@@ -30,6 +31,17 @@ Output::Output(Input &input, Grid &grid) {
     outputVtkDirectory = input.Get<std::string>("Output","vtk_dir",0);
   }
   nvtk = 0;
+
+  // Look for slice outputs (in the form of VTK files)
+  if(input.CheckEntry("Output","vtk_slice1")>0) {
+    haveSlices = true;
+    int n = 1;
+    while(input.CheckEntry("Output","vtk_slice"+std::to_string(n))>0) {
+      slices.emplace_back(std::make_unique<Slice>(input, &grid, n));
+      // Next iteration
+      n++;
+    }
+  }
 
   int nAdditionalVariables = input.CheckEntry("Output","vtk_addvar");
   if(nAdditionalVariables>0) {
@@ -129,6 +141,11 @@ void Output::CheckForOutput(Input &input, Field<Array3D<complex>> state, real ti
     }
     nvtk++;
     lastVtkOutput += outputVtkStep;
+  }
+  if(haveSlices) {
+    for(auto & slice : slices) {
+      slice->CheckForWrite(state, time, this);
+    }
   }
   if(timevarStep>0.0 && time-lastTimevar>=timevarStep) {
     if(time==0.0) {

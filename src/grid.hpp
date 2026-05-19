@@ -9,6 +9,9 @@
 #define GRID_HPP_
 #include <vector>
 #include <memory>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 #include "arrays.hpp"
 #include "input.hpp"
@@ -51,9 +54,15 @@ class Grid {
   explicit Grid(Input &);
   void ShowConfig();
   void InitGrid();
-  Grid() = default;
+  Grid();
+  ~Grid();
 
   std::unique_ptr<FFT> fft;  ///< FFT wrapper
+
+#ifdef WITH_MPI
+  MPI_Comm comm; ///< MPI communicator for the subgrid 
+#endif
+  int prank{0}; ///< MPI rank in the subgrid communicator
  private:
 
 };

@@ -16,8 +16,9 @@
 #include "linearshear.hpp"
 
 class TimeVarOutput;
-
+class Slice;
 class Output {
+  friend class Slice;
   public:
     Output(Input &input, Grid &grid);
     ~Output(); // needed by the incomplete type TimeVarOutput used in a unique_ptr. 
@@ -57,6 +58,10 @@ class Output {
     std::vector<std::string> vtkAdditionalVariableNames;
     Field<Array3D<complex>> vtkAdditionalVariables;  // Additional variables to output in vtk files
     int nvtk{0};
+
+    // Slices outputs
+    bool haveSlices{false};
+    std::vector<std::unique_ptr<Slice>> slices;
 
     // Dump output
     real lastDmpOutput{0.0};

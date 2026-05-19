@@ -30,7 +30,7 @@
 Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string directory) {
 
   // Initialise the root tag (used for MPI non-collective I/Os)
-  this->isRoot = astra::prank == 0;
+  this->isRoot = grid->prank == 0;
   this->grid = grid;
 
   /* Note that there are two kinds of dimensions:
@@ -63,7 +63,7 @@ Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string 
       subsize[2-dir] = grid->npr[dir];
     }
     // Fix starting point along x
-    start[2] = grid->npr[0]*astra::prank;
+    start[2] = grid->npr[0]*grid->prank;
     
     MPI_Type_create_subarray(3, size, subsize, start, MPI_ORDER_C, MPI_FLOAT, &this->view);
     MPI_Type_commit(&this->view);
@@ -115,7 +115,7 @@ Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string 
 
   // Open file and write header
   #ifdef WITH_MPI
-    this->comm = MPI_COMM_WORLD;
+    this->comm = grid->comm;
     MPI_Barrier(this->comm);
     // Open file for creating, return error if file already exists.
     MPI_File_open(this->comm, filename.c_str(),

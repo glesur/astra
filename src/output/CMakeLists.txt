@@ -9,4 +9,6 @@ target_sources(astra
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/dumpVariables.cpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/output.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/output.cpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/slice.hpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/slice.cpp
   )
