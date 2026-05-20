@@ -140,6 +140,8 @@ void Slice::CheckForWrite(Field<Array3D<complex>> state, real time, Output *outp
       delete vtk; // Clean up the VTK object
     }
     nvtk++;
-    sliceLast += slicePeriod;
+    while(time-sliceLast>=slicePeriod) {
+      sliceLast += slicePeriod;
+    }
   }
 }
