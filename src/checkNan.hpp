@@ -25,7 +25,7 @@ KOKKOS_INLINE_FUNCTION bool isNanValue(const complex& v) {
 template<typename ArrayType>
 int CheckNan1D(ArrayType array) {
   int nNan = 0;
-  astra_reduce("checkNan", int64_t{0}, int64_t{array.extent(0)},
+  astra_reduce("checkNan", 0, array.extent(0),
     KOKKOS_LAMBDA (const int64_t i, int& localCount) {
       if (isNanValue(array(i))) localCount++;
     }, Kokkos::Sum<int>(nNan));
@@ -35,8 +35,8 @@ int CheckNan1D(ArrayType array) {
 template<typename ArrayType>
 int CheckNan2D(ArrayType array) {
   int nNan = 0;
-  astra_reduce("checkNan", int64_t{0}, int64_t{array.extent(0)},
-               int64_t{0}, int64_t{array.extent(1)},
+  astra_reduce("checkNan", 0, array.extent(0),
+               0, array.extent(1),
     KOKKOS_LAMBDA (const int64_t i, const int64_t j, int& localCount) {
       if (isNanValue(array(i,j))) localCount++;
     }, Kokkos::Sum<int>(nNan));
@@ -46,9 +46,9 @@ int CheckNan2D(ArrayType array) {
 template<typename ArrayType>
 int CheckNan3D(ArrayType array) {
   int nNan = 0;
-  astra_reduce("checkNan", int64_t{0}, int64_t{array.extent(0)},
-               int64_t{0}, int64_t{array.extent(1)},
-               int64_t{0}, int64_t{array.extent(2)},
+  astra_reduce("checkNan", 0, array.extent(0),
+               0, array.extent(1),
+               0, array.extent(2),
     KOKKOS_LAMBDA (const int64_t i, const int64_t j, const int64_t k, int& localCount) {
       if (isNanValue(array(i,j,k))) localCount++;
     }, Kokkos::Sum<int>(nNan));
