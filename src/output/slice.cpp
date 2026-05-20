@@ -76,22 +76,29 @@ Slice::Slice(Input &input, Grid *grid, int nSlice) {
   #endif
 }
 
+// A workaround to ensure that 2D views are kokkos::deep_copyable, as subviews of 3D views are not directly copyable to the host
+// i.e. error "There is no common execution space that can access both source's space"
+Array2D<real> Slice::Subview(Array3D<real> array, int direction, int idx) {
+  Array2D<real> subview;
+  if(direction == IDIR) {
+    subview = Kokkos::subview(array, idx, Kokkos::ALL(), Kokkos::ALL());
+  } else if(direction == JDIR) {
+    subview = Kokkos::subview(array, Kokkos::ALL(), idx, Kokkos::ALL());
+  } else if(direction == KDIR) {
+    subview = Kokkos::subview(array, Kokkos::ALL(), Kokkos::ALL(), idx);
+  }
+
+  // Make an equivalent contiguous 2D view
+  Array2D<real> slice("slice", subview.extent(0), subview.extent(1));
+  Kokkos::deep_copy(slice, subview);
+  return slice;
+}
 void Slice::WriteSlice(Array3D<real> slice, Vtk *vtk, real time, std::string name) {
   if(this->type == SliceType::Cut && containsX0) {
-      // index of element in current datablock
+      // index of element in current subgrid corresponding to the slice position
       const int idx = subGrid->index;
-
-      if(direction == IDIR) {
-        auto myslice = Kokkos::subview(slice, idx, Kokkos::ALL(), Kokkos::ALL());
-        vtk->Write(myslice, time, name);
-      } else if(direction == JDIR) {
-        auto myslice = Kokkos::subview(slice, Kokkos::ALL(), idx, Kokkos::ALL());
-        vtk->Write(myslice, time, name);
-      } else if(direction == KDIR) {
-        auto myslice = Kokkos::subview(slice, Kokkos::ALL(), Kokkos::ALL(), idx);
-        vtk->Write(myslice, time, name);  
-      }
-
+      auto myslice = this->Subview(slice, direction, idx);
+      vtk->Write(myslice, time, name);
     }
     if(this->type == SliceType::Average) {
       // TO BE DONE

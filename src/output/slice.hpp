@@ -51,6 +51,8 @@ class Slice {
   bool haveShear{false};
   std::unique_ptr<LinearShear> linearShear;
 
+  Array2D<real> Subview(Array3D<real> slice, int direction, int idx);
+
 };
 
 #endif // OUTPUT_SLICE_HPP_

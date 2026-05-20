@@ -14,54 +14,56 @@
 
 namespace astra {
 
+KOKKOS_INLINE_FUNCTION bool isNanValue(double v) {
+  return std::isnan(v);
+}
+// Specialization for complex numbers
+KOKKOS_INLINE_FUNCTION bool isNanValue(const complex& v) {
+  return std::isnan(v.real()) || std::isnan(v.imag());
+}
+
+template<typename ArrayType>
+int CheckNan1D(ArrayType array) {
+  int nNan = 0;
+  astra_reduce("checkNan", int64_t{0}, int64_t{array.extent(0)},
+    KOKKOS_LAMBDA (const int64_t i, int& localCount) {
+      if (isNanValue(array(i))) localCount++;
+    }, Kokkos::Sum<int>(nNan));
+  return nNan;
+}
+
+template<typename ArrayType>
+int CheckNan2D(ArrayType array) {
+  int nNan = 0;
+  astra_reduce("checkNan", int64_t{0}, int64_t{array.extent(0)},
+               int64_t{0}, int64_t{array.extent(1)},
+    KOKKOS_LAMBDA (const int64_t i, const int64_t j, int& localCount) {
+      if (isNanValue(array(i,j))) localCount++;
+    }, Kokkos::Sum<int>(nNan));
+  return nNan;
+}
+
+template<typename ArrayType>
+int CheckNan3D(ArrayType array) {
+  int nNan = 0;
+  astra_reduce("checkNan", int64_t{0}, int64_t{array.extent(0)},
+               int64_t{0}, int64_t{array.extent(1)},
+               int64_t{0}, int64_t{array.extent(2)},
+    KOKKOS_LAMBDA (const int64_t i, const int64_t j, const int64_t k, int& localCount) {
+      if (isNanValue(array(i,j,k))) localCount++;
+    }, Kokkos::Sum<int>(nNan));
+  
+  return nNan;
+}
+
 template<typename ArrayType, typename = std::enable_if_t<Kokkos::is_view<ArrayType>::value>>
 void CheckNan(ArrayType array) {
   astra::pushRegion("CheckNan(Array)");
-
-  using value_type = typename ArrayType::value_type;
-  constexpr bool isComplex = std::is_same<value_type, complex>::value;
-
-  auto isNanValue = KOKKOS_LAMBDA(const value_type& v) -> bool {
-    if constexpr (isComplex) {
-      return std::isnan(v.real()) || std::isnan(v.imag());
-    } else {
-      return std::isnan(v);
-    }
-  };
-
   int nNan = 0;
-  if constexpr(ArrayType::rank == 1) {
-    astra_reduce("checkNan", 0, array.extent(0),
-      KOKKOS_LAMBDA (const int64_t i, int& localCount) {
-        if (isNanValue(array(i))) {
-          localCount++;
-        }
-      }, Kokkos::Sum<int>(nNan));
-    }
-    else if constexpr(ArrayType::rank == 2) {
-      astra_reduce("checkNan", 0, array.extent(0), 0, array.extent(1),
-        KOKKOS_LAMBDA (const int64_t i, const int64_t j, int& localCount) {
-          if (isNanValue(array(i,j))) {
-            localCount++;
-          }
-        }, Kokkos::Sum<int>(nNan));
-    } else if constexpr(ArrayType::rank == 3) {
-      astra_reduce("checkNan", 0, array.extent(0), 0, array.extent(1), 0, array.extent(2),
-        KOKKOS_LAMBDA (const int64_t i, const int64_t j, const int64_t k, int& localCount) {
-          if (isNanValue(array(i,j,k))) {
-            localCount++;
-          }
-        }, Kokkos::Sum<int>(nNan));
-    } else if constexpr(ArrayType::rank == 4) {
-      astra_reduce("checkNan", 0, array.extent(0), 0, array.extent(1), 0, array.extent(2), 0, array.extent(3),
-        KOKKOS_LAMBDA (const int64_t i, const int64_t j, const int64_t k, const int64_t l, int& localCount) {
-          if (isNanValue(array(i,j,k,l))) {
-            localCount++;
-          }
-        }, Kokkos::Sum<int>(nNan));
-    } else {
-      throw std::runtime_error("checkNan: Unsupported array rank");
-    }
+  if constexpr(ArrayType::rank == 1)      nNan = CheckNan1D(array);
+  else if constexpr(ArrayType::rank == 2) nNan = CheckNan2D(array);
+  else if constexpr(ArrayType::rank == 3) nNan = CheckNan3D(array);
+  else static_assert(ArrayType::rank > 3, "CheckNan: unsupported rank");
 
   if (nNan > 0) {
     throw std::runtime_error("checkNan: NaN values found in array \""+array.label()+"\" (nan count: " + std::to_string(nNan) + ")");
