@@ -224,15 +224,28 @@ void Dump::Read() {
 }
 
 void Dump::Fetch(std::string name, Field<Array3D<complex>> &field) {
-  field.CopyFrom(this->fields.at(name));
+  try {
+    field.CopyFrom(this->fields.at(name));
+  } catch(const std::out_of_range& e) {
+    astra::cout << "Dump: Warning: field \"" << name << "\" not found in dump file." << std::endl;
+  }
+  
 }
 
 void Dump::Fetch(std::string name, real &value) {
-  value = this->reals.at(name);
+  try {
+    value = this->reals.at(name);
+  } catch(const std::out_of_range& e) {
+    astra::cout << "Dump: Warning: real variable \"" << name << "\" not found in dump file." << std::endl;
+  }
 }
 
 void Dump::Fetch(std::string name, int &value) {
-  value = this->ints.at(name);
+  try {
+    value = this->ints.at(name);
+  } catch(const std::out_of_range& e) {
+    astra::cout << "Dump: Warning: integer variable \"" << name << "\" not found in dump file." << std::endl;
+  }
 }
 
 void Dump::ReadSnoopy() {
