@@ -52,6 +52,13 @@ Slice::Slice(Input &input, Grid *grid, int nSlice) {
   DumpVariables::Register(std::string("slcNvtk-")+std::to_string(nSlice), nvtk);  
 
   // Initialize the subGrid
+  try{
+    this->subGrid = std::make_unique<SubGrid>(grid, type, direction, x0);
+  } catch(const std::exception& e) {
+    std::stringstream msg;
+    msg << "Slice: Error while initializing vtk slice " << nSlice << ": " << e.what() << std::endl;
+    throw std::runtime_error(msg.str());
+  }
   this->subGrid = std::make_unique<SubGrid>(grid, type, direction, x0);
   this->containsX0 = subGrid->containsX0;
 
