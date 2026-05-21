@@ -79,18 +79,21 @@ Slice::Slice(Input &input, Grid *grid, int nSlice) {
 // A workaround to ensure that 2D views are kokkos::deep_copyable, as subviews of 3D views are not directly copyable to the host
 // i.e. error "There is no common execution space that can access both source's space"
 Array2D<real> Slice::Subview(Array3D<real> array, int direction, int idx) {
-  Array2D<real> subview;
+  Array2D<real> slice;
   if(direction == IDIR) {
-    subview = Kokkos::subview(array, idx, Kokkos::ALL(), Kokkos::ALL());
+    auto subview = Kokkos::subview(array, idx, Kokkos::ALL(), Kokkos::ALL());
+    slice = Array2D<real>("slice", subview.extent(0), subview.extent(1));
+    Kokkos::deep_copy(slice, subview);
   } else if(direction == JDIR) {
-    subview = Kokkos::subview(array, Kokkos::ALL(), idx, Kokkos::ALL());
+    auto subview = Kokkos::subview(array, Kokkos::ALL(), idx, Kokkos::ALL());
+    slice = Array2D<real>("slice", subview.extent(0), subview.extent(1));
+    Kokkos::deep_copy(slice, subview);
   } else if(direction == KDIR) {
-    subview = Kokkos::subview(array, Kokkos::ALL(), Kokkos::ALL(), idx);
+    auto subview = Kokkos::subview(array, Kokkos::ALL(), Kokkos::ALL(), idx);
+    slice = Array2D<real>("slice", subview.extent(0), subview.extent(1));
+    Kokkos::deep_copy(slice, subview);
   }
 
-  // Make an equivalent contiguous 2D view
-  Array2D<real> slice("slice", subview.extent(0), subview.extent(1));
-  Kokkos::deep_copy(slice, subview);
   return slice;
 }
 void Slice::WriteSlice(Array3D<real> slice, Vtk *vtk, real time, std::string name) {
