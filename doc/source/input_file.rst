@@ -1,7 +1,7 @@
 Problem input file
 =================================
 
-The problem input file uses the extension `.ini`. By default, *Astra* uses `astra.ini` in the current directory. It is possible to start astra with an other 
+The problem input file uses the extension `.ini`. By default, *Astra* uses `astra.ini` in the current directory. It is possible to start astra with an other
 input file using the `-i` command line option specifying the full path to the input file.
 
 The problem input file is read when *Astra* starts. It is split into several sections, each section name corresponding to a C++ class in *Astra   * structure. Inside each section, each line defines an entry, which can have as many parameters as one wishes
@@ -43,7 +43,7 @@ In the example below, we define in ``X1`` direction a grid of 64 points starting
 
 ``Physics`` section
 --------------------
-The physics section defines the physics solved by *Astra* and the associated parameters. 
+The physics section defines the physics solved by *Astra* and the associated parameters.
 The physics section should at least contain the entry ``rhs`` which define the right-hand side of the equations solved by *Astra*.
 Depending on the choice of the right-hand side, other entries may be required.
 
@@ -65,7 +65,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 +================+====================+===========================================================================================================+
 | direction      | integer            | direction of the flow (0=x1, 1=x2, 2=x3)                                                                  |
 +----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| velocity       | float              | flow velocity (constant in space and time)                                                                | 
+| velocity       | float              | flow velocity (constant in space and time)                                                                |
 +----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 
 ``hydro`` right hand side
@@ -78,7 +78,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    | 
+| viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 
 

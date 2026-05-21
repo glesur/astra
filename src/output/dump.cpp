@@ -6,10 +6,9 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-#include "dump.hpp"
-#include "grid.hpp"
-#include "global.hpp"
-#include "version.hpp"
+#include <vector>
+#include <string>
+#include <cstdio>
 #if __has_include(<filesystem>)
   #include <filesystem> // NOLINT [build/c++17]
   namespace fs = std::filesystem;
@@ -19,6 +18,12 @@
 #else
   error "Missing the <filesystem> header."
 #endif
+
+#include "dump.hpp"
+#include "grid.hpp"
+#include "global.hpp"
+#include "version.hpp"
+
 
 Dump::Dump(Grid *grid, std::string filename) {
   // Initialise the root tag (used for MPI non-collective I/Os)
@@ -43,7 +48,7 @@ Dump::Dump(Grid *grid, std::string filename) {
     }
     // Fix starting point along x
     start[0] = grid->npf[0]*astra::prank;
-    
+
     MPI_Type_create_subarray(3, size, subsize, start, MPI_ORDER_C, MPI_C_DOUBLE_COMPLEX, &this->view);
     MPI_Type_commit(&this->view);
   #endif // WITH_MPI
@@ -122,7 +127,7 @@ void Dump::Write() {
   WriteString(fileHdl, "ASTRA "+std::string(ASTRA_VERSION)+ " Dump file");
 
   for(auto& field : fields) {
-    for(auto& array: field.second) {
+    for(auto& array : field.second) {
       ArrayHost3D<complex> arrHost = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), array.second);
       WriteData(fileHdl, field.first+"\\"+array.first, arrHost);
     }
@@ -167,7 +172,7 @@ void Dump::Read() {
       throw std::runtime_error(msg.str());
     }
   #endif
-  
+
   // Read and check header
   std::string header = ReadString(fileHdl);
   if(header.substr(0,6)!="ASTRA ") {
@@ -230,7 +235,6 @@ void Dump::Fetch(std::string name, Field<Array3D<complex>> &field) {
   } catch(const std::out_of_range& e) {
     astra::cout << "Dump: Warning: field \"" << name << "\" not found in dump file." << std::endl;
   }
-  
 }
 
 void Dump::Fetch(std::string name, real &value) {
@@ -284,10 +288,10 @@ astra::pushRegion("Dump::ReadSnoopy");
   ReadSnoopyScalar(fileHdl, nx3);
   int included_fields;
   ReadSnoopyScalar(fileHdl, included_fields);
-  
+
   // Check that grid size matches
   if(nx1 != npr_glob[0] || nx2 != npr_glob[1] || nx3 != npr_glob[2]) {
-    throw std::runtime_error("Error: grid size in dump file (" 
+    throw std::runtime_error("Error: grid size in dump file ("
           + std::to_string(nx1) + ", " + std::to_string(nx2) + ", " + std::to_string(nx3) +
            ") does not match simulation grid size.");
   }
@@ -435,7 +439,7 @@ void Dump::ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &di
     MPI_Bcast(dimArray, ndim, MPI_INT, 0, MPI_COMM_WORLD);
     dim.assign(dimArray, dimArray+ndim);
     delete[] dimArray;
-    
+
 
   #else
     size_t numRead;
@@ -445,7 +449,7 @@ void Dump::ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &di
     if(numRead<1) {
       throw std::runtime_error("Error: unexpected end of dump file");
     }
-    
+
     int ndim;
     // read dimensions
     numRead = fread(&ndim, sizeof(int), 1, fileHdl);
@@ -471,7 +475,7 @@ void Dump::ReadSnoopyArray(DumpFileHandler fileHdl, std::string name, Field<Arra
   ntot = data.GetDimensions()[0]*data.GetDimensions()[1]*data.GetDimensions()[2];
   size = sizeof(complex);
   nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
-  
+
   ArrayHost3D<complex> temp("temp", data.GetDimensions()[0], data.GetDimensions()[1], data.GetDimensions()[2]);
   #ifdef WITH_MPI
     MPI_Status status;

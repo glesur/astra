@@ -9,43 +9,42 @@
 #ifndef LOGGER_HPP_
 #define LOGGER_HPP_
 
-#include <Kokkos_Core.hpp>
-#include <Kokkos_Timer.hpp>
 #include <string>
 #include <iomanip>
-
+#include <Kokkos_Core.hpp>
+#include <Kokkos_Timer.hpp>
 #include "grid.hpp"
 #include "input.hpp"
+
+
 template<typename T> class TimeIntegrator;
-
-
 template <typename T>
 class Logger {
-  public:
-    Logger(Input &input, Grid *grid, TimeIntegrator<T> *timeIntegrator) : grid(grid), timeIntegrator(timeIntegrator) {
-      timer.reset();
-      lastLog = timer.seconds();
-      cyclePeriod = input.GetOrSet<int>("Output","log",0,10);
-      if(cyclePeriod<=0) {
-        std::stringstream msg;
-        msg << "Invalid logging cycle period " << cyclePeriod << ". Please provide an integer value >0 for Output:log in the input file.";
-        throw std::runtime_error(msg.str());
-      }
-      //isSilent = input.GetOrSet<bool>("Logger","silent",0,false);
+ public:
+  Logger(Input &input, Grid *grid, TimeIntegrator<T> *timeIntegrator) : grid(grid), timeIntegrator(timeIntegrator) {
+    timer.reset();
+    lastLog = timer.seconds();
+    cyclePeriod = input.GetOrSet<int>("Output","log",0,10);
+    if(cyclePeriod<=0) {
+      std::stringstream msg;
+      msg << "Invalid logging cycle period " << cyclePeriod << ". Please provide an integer value >0 for Output:log in the input file.";
+      throw std::runtime_error(msg.str());
     }
-    void Show(int);
-    void Start();
+    //isSilent = input.GetOrSet<bool>("Logger","silent",0,false);
+  }
+  void Show(int);
+  void Start();
 
-  private:
-    TimeIntegrator<T> *timeIntegrator{nullptr};
-    const int col_width{16};
-    Kokkos::Timer timer;
-    double lastLog{0.0};
-    int cyclePeriod{10};
-    bool isSilent{false};
-    Grid *grid{nullptr};
-    Input *input{nullptr};
-    bool firstCall{true};
+ private:
+  TimeIntegrator<T> *timeIntegrator{nullptr};
+  const int col_width{16};
+  Kokkos::Timer timer;
+  double lastLog{0.0};
+  int cyclePeriod{10};
+  bool isSilent{false};
+  Grid *grid{nullptr};
+  Input *input{nullptr};
+  bool firstCall{true};
 };
 
 #include "timeIntegrator.hpp"
@@ -94,7 +93,7 @@ void Logger<T>::Show(int ncycles) {
   } else {
     astra::cout << " | " << std::setw(col_width) << "N/A";
 #ifdef WITH_MPI
-   // astra::cout << " | " << std::setw(col_width) << "N/A";
+    // astra::cout << " | " << std::setw(col_width) << "N/A";
 #endif
   }
   astra::cout << std::endl;

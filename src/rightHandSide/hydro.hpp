@@ -6,9 +6,11 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-#ifndef HYDRO_HPP_
-#define HYDRO_HPP_
+#ifndef RIGHTHANDSIDE_HYDRO_HPP_
+#define RIGHTHANDSIDE_HYDRO_HPP_
 
+#include <vector>
+#include <string>
 #include "rightHandSide.hpp"
 #include "input.hpp"
 #include "arrays.hpp"
@@ -19,7 +21,7 @@ class Grid;
 // A class for the hydrodynamics right hand side
 template <typename Shear>
 class Hydro : public RightHandSide<Array3D<complex>, Shear> {
-public:
+ public:
   Hydro(Input &input, Grid *grid);
   ~Hydro();
 
@@ -31,7 +33,7 @@ public:
   real GetInvDt() override;
   std::vector<std::string> GetVariables() override;
 
-private:
+ private:
   real nu;
   int viscosityOrder{1};
   bool haveSourceTerm{false};
@@ -131,7 +133,7 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
   this->grid->fft->R2C(wr22, wf22, false);
   this->grid->fft->R2C(wr23, wf23, false);
   this->grid->fft->R2C(wr33, wf33, false);
-  
+
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];
   auto kx3 = this->grid->kx[KDIR];
@@ -153,8 +155,8 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
   astra_for("hydro_nonlinear", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       // 2/3 de-aliasing rule
-      complex mask = (std::fabs(kx1(i))< 2./3*kx1max 
-                   && std::fabs(kx2(j))< 2./3*kx2max 
+      complex mask = (std::fabs(kx1(i))< 2./3*kx1max
+                   && std::fabs(kx2(j))< 2./3*kx2max
                    && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
@@ -175,7 +177,7 @@ void Hydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<co
     });
   }
   // Pressure term
-  
+
   astra_for("hydro_pressure", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
@@ -283,7 +285,6 @@ real Hydro<Shear>::GetInvDt() {
       gamma_v += Omega; // rotation source term
       gamma_v += S; // shear source term
       dtmax = std::fmax(dtmax, gamma_v);
-
         },
     Kokkos::Max<real>(invdt));
 
@@ -314,4 +315,4 @@ void Hydro<Shear>::PostStage(Field<Array3D<complex>>& fldin, real t) {
   }
 }
 
-#endif // HYDRO_HPP_
+#endif // RIGHTHANDSIDE_HYDRO_HPP_

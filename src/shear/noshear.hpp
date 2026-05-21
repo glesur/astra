@@ -24,7 +24,7 @@ class NoShear {
     kx1max = grid->kmax[IDIR];
     kx2max = grid->kmax[JDIR];
     kx3max = grid->kmax[KDIR];
-  };
+  }
 
   void Refresh(real time) {
     // Nothing to do
@@ -62,8 +62,9 @@ class NoShear {
   real kx3tmax() const {
     return kx3max;
   }
-  protected:
+
+ protected:
     real kx1max, kx2max, kx3max;
-};
+}
 
 #endif // SHEAR_NOSHEAR_HPP_

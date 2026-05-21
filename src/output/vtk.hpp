@@ -12,6 +12,7 @@
 
 #include <string>
 #include <cstdio>
+#include <memory>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Timer.hpp>
 #if __has_include(<filesystem>)
@@ -23,15 +24,15 @@
 #else
   error "Missing the <filesystem> header."
 #endif
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 #include "input.hpp"
 #include "arrays.hpp"
 #include "field.hpp"
 #include "bigEndian.hpp"
-#include "input.hpp"
 
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
+
 
 
 // File handler depends on the type of I/O we use
@@ -45,16 +46,14 @@ class Grid;
 class LinearShear;
 
 class Vtk {
-
  public:
   Vtk(Grid *grid, Input &input, real time, std::string filename = "data", std::string outputDirectory = "./");   // init VTK object
   template<typename T> void Write(T array, real time, std::string name);     // Write content of an array class
   template<typename T> void Write(Field<Array3D<T>> field, real time);     // Write content of a field class
-  
+
   ~Vtk();  // Destructor
 
  private:
-
     // Timer
   Kokkos::Timer timer;
 
@@ -83,10 +82,8 @@ class Vtk {
   void WriteHeader(VtkFileHandler, real);
   void WriteScalar(VtkFileHandler, float*,  const std::string &);
   void WriteHeaderString(const char* header, VtkFileHandler fvtk);
-  void WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk); 
-
+  void WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk);
 };
-
 
 #include "fft.hpp"
 #include "linearshear.hpp"

@@ -6,30 +6,29 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include "vtk.hpp"
+
 #include <map>
 #include <vector>
-#include <Kokkos_Core.hpp>
-#include <KokkosFFT.hpp>
-#include <limits.h>
+#include <limits>
 #include <string>
 #include <cstdio>
+#include <memory>
 #include <sstream>
 #include <iomanip>
-
-#include "vtk.hpp"
+#include <Kokkos_Core.hpp>
+#include <KokkosFFT.hpp>
 #include "version.hpp"
 #include "grid.hpp"
 #include "global.hpp"
 #include "arrays.hpp"
 #include "bigEndian.hpp"
-
 #include "shear.hpp"
 #include "input.hpp"
 
 
 /*init the object */
 Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string directory) {
-
   // Initialise the root tag (used for MPI non-collective I/Os)
   this->isRoot = grid->prank == 0;
   this->grid = grid;
@@ -65,7 +64,7 @@ Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string 
     }
     // Fix starting point along x
     start[2] = grid->npr[0]*grid->prank;
-    
+
     MPI_Type_create_subarray(3, size, subsize, start, MPI_ORDER_C, MPI_FLOAT, &this->view);
     MPI_Type_commit(&this->view);
   #endif // WITH_MPI
@@ -135,7 +134,7 @@ Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string 
     }
   #endif
 
-  
+
 
   // Write the header
   std::string header;
@@ -185,15 +184,15 @@ Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string 
   // Done, add cariage return for next ascii write
   ssheader << std::endl;
 
-  ssheader << "DIMENSIONS " << nx1 << " " << nx2 << " " << nx3 
+  ssheader << "DIMENSIONS " << nx1 << " " << nx2 << " " << nx3
            << std::endl;
-  ssheader << "ORIGIN " << grid->xbeg_glob[IDIR] << " " 
-                        << grid->xbeg_glob[JDIR] << " " 
-                        << grid->xbeg_glob[KDIR] 
+  ssheader << "ORIGIN " << grid->xbeg_glob[IDIR] << " "
+                        << grid->xbeg_glob[JDIR] << " "
+                        << grid->xbeg_glob[KDIR]
                         << std::endl;
-  ssheader << "SPACING " << grid->dx[IDIR] << " " 
-                         << grid->dx[JDIR] << " " 
-                         << grid->dx[KDIR] 
+  ssheader << "SPACING " << grid->dx[IDIR] << " "
+                         << grid->dx[JDIR] << " "
+                         << grid->dx[KDIR]
                          << std::endl;
 
   header = ssheader.str();
@@ -212,14 +211,14 @@ Vtk::Vtk(Grid *grid, Input &input, real time, std::string filebase, std::string 
 
 void Vtk::WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk) {
   #ifdef WITH_MPI
-  
+
     MPI_Status status;
     MPI_File_set_view(fvtk, this->offset, MPI_BYTE, MPI_CHAR, "native", MPI_INFO_NULL );
     if(this->isRoot) {
       MPI_File_write(fvtk, buffer, nelem*sizeof(float), MPI_BYTE, &status);
     }
     offset=offset+nelem*sizeof(float);
-    
+
   #else
     if(fwrite(buffer, sizeof(float), nelem, fvtk) != nelem) {
       throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");
@@ -229,7 +228,7 @@ void Vtk::WriteHeaderBinary(float *buffer, int64_t nelem, VtkFileHandler fvtk) {
 
 void Vtk::WriteHeaderString(const char* header, VtkFileHandler fvtk) {
   #ifdef WITH_MPI
-  
+
     MPI_Status status;
     MPI_File_set_view(fvtk, this->offset, MPI_BYTE, MPI_CHAR, "native", MPI_INFO_NULL );
     if(this->isRoot) {
@@ -247,7 +246,6 @@ void Vtk::WriteHeaderString(const char* header, VtkFileHandler fvtk) {
 
 
 Vtk::~Vtk() {
-  
 #ifdef WITH_MPI
   MPI_Type_free(&this->view);
   MPI_File_close(&fileHdl);
@@ -284,7 +282,7 @@ void Vtk::WriteScalar(VtkFileHandler fvtk, float* Vin,  const std::string &var_n
   MPI_File_write_all(fvtk, Vin, nwrite, MPI_FLOAT, MPI_STATUS_IGNORE);
 
   this->offset = this->offset + sizeof(float)*nx1*nx2*nx3;
-  
+
 #else
   if(fwrite(Vin,sizeof(float),nx1loc*nx2loc*nx3loc,fvtk) != nx1loc*nx2loc*nx3loc) {
     throw std::runtime_error("Unable to write to file. Check your filesystem permissions and disk quota.");

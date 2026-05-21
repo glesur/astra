@@ -6,11 +6,14 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-#ifndef MHD_HPP_
-#define MHD_HPP_
+#ifndef RIGHTHANDSIDE_MHD_HPP_
+#define RIGHTHANDSIDE_MHD_HPP_
 
-#include "rightHandSide.hpp"
+#include <string>
+#include <vector>
+#include "field.hpp"
 #include "input.hpp"
+#include "rightHandSide.hpp"
 #include "arrays.hpp"
 #include "shear.hpp"
 
@@ -19,7 +22,7 @@ class Grid;
 // A class for the hydrodynamics right hand side
 template <typename Shear>
 class Mhd : public RightHandSide<Array3D<complex>, Shear> {
-public:
+ public:
   Mhd(Input &input, Grid *grid);
   ~Mhd();
 
@@ -31,7 +34,7 @@ public:
   real GetInvDt() override;
   std::vector<std::string> GetVariables() override;
 
-private:
+ private:
   real nu;
   real eta;
   int viscosityOrder{1};
@@ -152,7 +155,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   this->grid->fft->R2C(wr22, wf22, false);
   this->grid->fft->R2C(wr23, wf23, false);
   this->grid->fft->R2C(wr33, wf33, false);
-  
+
   auto kx1 = this->grid->kx[IDIR];
   auto kx2 = this->grid->kx[JDIR];
   auto kx3 = this->grid->kx[KDIR];
@@ -174,8 +177,8 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   astra_for("hydro_nonlinear", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       // 2/3 de-aliasing rule
-      complex mask = (std::fabs(kx1(i))< 2./3*kx1max 
-                   && std::fabs(kx2(j))< 2./3*kx2max 
+      complex mask = (std::fabs(kx1(i))< 2./3*kx1max
+                   && std::fabs(kx2(j))< 2./3*kx2max
                    && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
@@ -212,7 +215,7 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   });
 
   // Magnetic field induction
-  // vxB in real space 
+  // vxB in real space
   astra_for("mhd_emf", 0,npr[IDIR],0,npr[JDIR],0,npr[KDIR],
     KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       real v1 = vr1(i, j, k);
@@ -238,8 +241,8 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
   astra_for("mhd_induction", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
     KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       // 2/3 de-aliasing rule
-      complex mask = (std::fabs(kx1(i))< 2./3*kx1max 
-                   && std::fabs(kx2(j))< 2./3*kx2max 
+      complex mask = (std::fabs(kx1(i))< 2./3*kx1max
+                   && std::fabs(kx2(j))< 2./3*kx2max
                    && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
       const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
       const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
@@ -429,4 +432,4 @@ void Mhd<Shear>::PostStage(Field<Array3D<complex>>& fldin, real t) {
   this->Projector(fldin, t);
 }
 
-#endif // MHD_HPP_
+#endif // RIGHTHANDSIDE_MHD_HPP_

@@ -7,118 +7,121 @@
 // ***********************************************************************************
 
 // RK2 time integrator
-#ifndef RK2_HPP_
-#define RK2_HPP_
+#ifndef TIMEINTEGRATOR_RK2_HPP_
+#define TIMEINTEGRATOR_RK2_HPP_
 
+#include <algorithm>
+#include <vector>
 #include "timeIntegrator.hpp"
 
 // Implementation of IDEFIX second order TVD time integrator
 template <typename T>
 class RK2TimeIntegrator : public TimeIntegrator<T> {
-  public:
-    RK2TimeIntegrator(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector) : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK2 dfld",grid->npf), fld0("RK2 fld0",grid->npf) {
-      // Init dfld vector for the rhs
-      for(auto &rhs : rhsVector) {
-        for(auto var : rhs->GetVariables()) {
-          dfld.Add(var);
-          fld0.Add(var);
-        }
+ public:
+  RK2TimeIntegrator(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector)
+    : TimeIntegrator<T>(input,grid,rhsVector), dfld("RK2 dfld",grid->npf), fld0("RK2 fld0",grid->npf) {
+
+    // Init dfld vector for the rhs
+    for(auto &rhs : rhsVector) {
+      for(auto var : rhs->GetVariables()) {
+        dfld.Add(var);
+        fld0.Add(var);
       }
     }
+  }
 
-    ~RK2TimeIntegrator() {}
+  ~RK2TimeIntegrator() {}
 
-    void Cycle(Field<T>& fld) override {
-      astra::pushRegion("RK2TimeIntegrator::Cycle");
-      // Implement the RK2 time integration step here
+  void Cycle(Field<T>& fld) override {
+    astra::pushRegion("RK2TimeIntegrator::Cycle");
+    // Implement the RK2 time integration step here
 
-      // Explicit part
-      this->dt = 0.0;
+    // Explicit part
+    this->dt = 0.0;
 
-      // Save the initial field
-      fld0.CopyFrom(fld);
-      ///////////////////////////////////////:
-      // First Stage
-      ///////////////////////////////////////
+    // Save the initial field
+    fld0.CopyFrom(fld);
+    ///////////////////////////////////////:
+    // First Stage
+    ///////////////////////////////////////
 
-      dfld.Reset();
-      for(auto rhs : this->rhsVector) {
-        rhs->ExplicitStep(fld, dfld, this->t);
-        this->dt += rhs->GetInvDt();
-      }
-      // Get the timestep
-      this->dt = std::min(this->cfl/this->dt, this->dtMax);
+    dfld.Reset();
+    for(auto rhs : this->rhsVector) {
+      rhs->ExplicitStep(fld, dfld, this->t);
+      this->dt += rhs->GetInvDt();
+    }
+    // Get the timestep
+    this->dt = std::min(this->cfl/this->dt, this->dtMax);
 
-      // Update the field
-      for(auto& it : fld) {
-        auto view = it.second;
-        auto dview = dfld[it.first];
-        real dt = this->dt;
-        astra_for("rk2_update1_"+it.first,fld,
-          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
-            view(i,j,k) += dt * dview(i,j,k);
-        }); 
-      }
-
-      // Implicit part
-      for(auto rhs : this->rhsVector) {
-        rhs->ImplicitStep(fld, this->t, this->dt);
-      }
-
-      ///////////////////////////////////////:
-      // Second Stage
-      ///////////////////////////////////////
-      dfld.Reset();
-      real stageTime = this->t + this->dt;
-
-      for(auto rhs : this->rhsVector) {
-        rhs->ExplicitStep(fld, dfld, stageTime);
-      }
-
-      // Update the field
-      for(auto& it : fld) {
-        auto view = it.second;
-        auto dview = dfld[it.first];
-        real dt = this->dt;
-        astra_for("rk2_update2_"+it.first,fld,
-          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
-            view(i,j,k) += dt *  dview(i,j,k);
-        }); 
-      }
-
-      // Implicit part
-      for(auto rhs : this->rhsVector) {
-        rhs->ImplicitStep(fld, stageTime, this->dt);
-      }
-
-      ///////////////////////////////////////:
-      // Final combination
-      ///////////////////////////////////////
-
-      for(auto& it : fld) {
-        auto view = it.second;
-        auto view0 = fld0[it.first];
-        real dt = this->dt;
-        astra_for("rk2_update2_"+it.first,fld,
-          KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
-            view(i,j,k) = 0.5 * (view0(i,j,k) + view(i,j,k));
-        });
-      }
-
-      // Call base class cycle to update time and cycle count
-      TimeIntegrator<T>::Cycle(fld);
-
-      // Post stage operations
-      for(auto rhs : this->rhsVector) {
-        rhs->PostStage(fld, this->t);
-      }
-      astra::popRegion();
+    // Update the field
+    for(auto& it : fld) {
+      auto view = it.second;
+      auto dview = dfld[it.first];
+      real dt = this->dt;
+      astra_for("rk2_update1_"+it.first,fld,
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
+          view(i,j,k) += dt * dview(i,j,k);
+      });
     }
 
-  private:
-    Field<T> dfld; // a temporary field to store the time derivative
-    Field<T> fld0; // a temporary field to store the original field
+    // Implicit part
+    for(auto rhs : this->rhsVector) {
+      rhs->ImplicitStep(fld, this->t, this->dt);
+    }
 
+    ///////////////////////////////////////:
+    // Second Stage
+    ///////////////////////////////////////
+    dfld.Reset();
+    real stageTime = this->t + this->dt;
+
+    for(auto rhs : this->rhsVector) {
+      rhs->ExplicitStep(fld, dfld, stageTime);
+    }
+
+    // Update the field
+    for(auto& it : fld) {
+      auto view = it.second;
+      auto dview = dfld[it.first];
+      real dt = this->dt;
+      astra_for("rk2_update2_"+it.first,fld,
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
+          view(i,j,k) += dt *  dview(i,j,k);
+      });
+    }
+
+    // Implicit part
+    for(auto rhs : this->rhsVector) {
+      rhs->ImplicitStep(fld, stageTime, this->dt);
+    }
+
+    ///////////////////////////////////////:
+    // Final combination
+    ///////////////////////////////////////
+
+    for(auto& it : fld) {
+      auto view = it.second;
+      auto view0 = fld0[it.first];
+      real dt = this->dt;
+      astra_for("rk2_update2_"+it.first,fld,
+        KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k) {
+          view(i,j,k) = 0.5 * (view0(i,j,k) + view(i,j,k));
+      });
+    }
+
+    // Call base class cycle to update time and cycle count
+    TimeIntegrator<T>::Cycle(fld);
+
+    // Post stage operations
+    for(auto rhs : this->rhsVector) {
+      rhs->PostStage(fld, this->t);
+    }
+    astra::popRegion();
+  }
+
+ private:
+  Field<T> dfld; // a temporary field to store the time derivative
+  Field<T> fld0; // a temporary field to store the original field
 };
 
-#endif // RK2_HPP_
+#endif // TIMEINTEGRATOR_RK2_HPP_

@@ -6,10 +6,10 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-#ifdef WITH_MPI
-
 #ifndef MPI_HPP_
 #define MPI_HPP_
+
+#ifdef WITH_MPI
 #include <mpi.h>
 
 //redefined MPI complex type to match Astra Complex type
@@ -17,5 +17,5 @@
 #define MPI_Astra_real  MPI_DOUBLE
 
 
-#endif // MPI_HPP_
 #endif // WITH_MPI
+#endif // MPI_HPP_

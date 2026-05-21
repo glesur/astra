@@ -1,4 +1,12 @@
 // ***********************************************************************************
+// ASTRA spectral code
+// Accelerated Spectral code for TuRbulent plasmA
+// Copyright(C) Geoffroy R. J. Lesur <geoffroy.lesur@univ-grenoble-alpes.fr>
+// and other code contributors
+// Licensed under CeCILL 2.1 License, see COPYING for more information
+// ***********************************************************************************
+
+// ***********************************************************************************
 // Astra MHD astrophysical code
 // Copyright(C) Geoffroy R. J. Lesur <geoffroy.lesur@univ-grenoble-alpes.fr>
 // and other code contributors
@@ -27,8 +35,6 @@ class SubGrid : public Grid {
   int index; ///< index in parent grid of the slice/average
   int index_glob; ///< global index in parent grid of the slice/average
   bool containsX0{false};
-
-
 };
 
 #endif// SUBGRID_HPP_

@@ -9,6 +9,7 @@
 #ifndef FFT_HPP_
 #define FFT_HPP_
 
+#include <memory>
 #include <KokkosFFT.hpp>
 #include "arrays.hpp"
 #include "astra.hpp"
@@ -27,7 +28,7 @@ using PlanR2CType2D = KokkosFFT::Plan<Kokkos::DefaultExecutionSpace, Array3D<rea
 using PlanC2RType2D = KokkosFFT::Plan<Kokkos::DefaultExecutionSpace, Array3D<complex>, Array3D<real>,2>;
 
 class FFT {
-public:
+ public:
   // Empty constructor
   FFT();
 
@@ -49,7 +50,8 @@ public:
   // Exchange last two dimensions of a 3D array
   template <typename T>
   void TransposeLocal(const Array3D<T>&in, Array3D<T>&out);
-private:
+
+ private:
   bool havePlan{false};
   std::unique_ptr<PlanR2CType> r2cPlan;
   std::unique_ptr<PlanC2RType> c2rPlan;
@@ -62,14 +64,14 @@ private:
   // Forward (R2C)
   std::unique_ptr<PlanR2CType2D> r2cMPIPlan_axis1t3;
   std::unique_ptr<PlanC2CType1D> c2cfMPIPlan_axis2;
-  
+
   // Temporary arrays for MPI FFTs
   Array3D<complex> tempComplex;
   Array3D<complex> tempTransposedComplex;
   Array3D<complex> tempTransposedComplex2;
   Array3D<complex> tempT2Complex;
   Array3D<complex> tempT2Complex2;
-  
+
   Array3D<real> tempTransposedReal;
   Array3D<real> tempReal;
 
@@ -92,7 +94,7 @@ void FFT::TransposeLocal(const Array3D<T>&in, Array3D<T>&out) {
                               0, in.extent(2),
     KOKKOS_LAMBDA(int i, int j, int k) {
       out(i,k,j) = in(i,j,k);
-    }); 
+    });
   astra::popRegion();
 }
 

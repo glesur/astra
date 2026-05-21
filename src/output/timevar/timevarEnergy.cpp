@@ -6,6 +6,13 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 #include "field.hpp"
 #include "input.hpp"
@@ -13,11 +20,7 @@
 #include "reduce.hpp"
 #include "grid.hpp"
 #include "timevarEnergy.hpp"
-#include <iostream>
-#include <fstream>
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
+
 
 void TimeVarEnergy::Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) {
     astra::pushRegion("TimeVarEnergy::Write");

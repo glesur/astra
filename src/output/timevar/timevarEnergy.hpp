@@ -11,12 +11,13 @@
 #ifndef OUTPUT_TIMEVAR_TIMEVARENERGY_HPP_
 #define OUTPUT_TIMEVAR_TIMEVARENERGY_HPP_
 
+#include <string>
 #include "timevar.hpp"
 #include "arrays.hpp"
 
 class TimeVarEnergy : public TimeVar {
  public:
-  TimeVarEnergy(Input &input, Grid *grid, std::string name, std::string directory) : TimeVar(input, grid, name, directory) {};
+  TimeVarEnergy(Input &input, Grid *grid, std::string name, std::string directory) : TimeVar(input, grid, name, directory) {}
   ~TimeVarEnergy() override {}
   void Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) override;
 };

@@ -7,6 +7,9 @@
 // ***********************************************************************************
 
 #include "timevar.hpp"
+#include <memory>
+#include <string>
+
 #include "field.hpp"
 #include "grid.hpp"
 #include "input.hpp"
@@ -38,13 +41,13 @@ TimeVar::TimeVar(Input &input, Grid *grid, std::string name, std::string directo
   ssfileName << name << ".dat";
   this->filename = outputDirectory / ssfileName.str();
 }
-  
+
 void TimeVar::Reset() {
   // Remove files if they exist
   if(isRoot) {
     if(fs::exists(filename)) {
       fs::remove(filename);
-    } 
+    }
   }
 }
 
@@ -60,7 +63,7 @@ std::string TimeVar::ExtractVarName(const std::string& name) {
   else varname = name;
   return varname;
 }
-  
+
 void TimeVarOutput::Write(Field<Array3D<complex>>& field, const real t) {
   astra::pushRegion("TimeVarOutput::Write");
   astra::CheckNan(field);
@@ -77,7 +80,7 @@ void TimeVarOutput::Write(Field<Array3D<complex>>& field, const real t) {
     } catch(const std::exception& e) {
       std::stringstream msg;
       msg <<  e.what() << std::endl
-          << "TimeVarOutput: Error writing timevar variable: \"" << timevar->GetName() << "\"" << std::endl 
+          << "TimeVarOutput: Error writing timevar variable: \"" << timevar->GetName() << "\"" << std::endl
           << "Check that this is a valid timevar variable name. " << std::endl;
       throw std::runtime_error(msg.str());
     }
@@ -99,7 +102,7 @@ TimeVarOutput::TimeVarOutput(Input &input, Grid *grid) {
     return;
   }
   std::string directory = input.GetOrSet<std::string>("Output","timevar_dir",0,"timevar");
-  
+
   // Create output directory if it does not exist
   fs::path outputDirectory = directory;
   if(astra::prank == 0) {

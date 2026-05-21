@@ -49,7 +49,7 @@ class Grid {
 
   std::array<int,3> npf_glob;          ///< total number of grid points in Fourier space
   std::array<int,3> npf;          ///< local process number of grid points in Fourier space
-  
+
 
   // Constructor
   explicit Grid(Input &);
@@ -61,11 +61,9 @@ class Grid {
   std::unique_ptr<FFT> fft;  ///< FFT wrapper
 
 #ifdef WITH_MPI
-  MPI_Comm comm; ///< MPI communicator for the subgrid 
+  MPI_Comm comm; ///< MPI communicator for the subgrid
 #endif
   int prank{0}; ///< MPI rank in the subgrid communicator
- private:
-
 };
 
 

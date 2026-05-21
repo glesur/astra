@@ -6,6 +6,7 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <memory>
 #include <KokkosFFT.hpp>
 #include <Kokkos_Random.hpp>
 
@@ -44,9 +45,11 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
     tempComplex = Array3D<complex>("FFT temp complex", npf);
 
     // Create the FFT plans
-    this->r2cPlan = std::make_unique<PlanR2CType>(Kokkos::DefaultExecutionSpace(), tempReal, tempComplex, KokkosFFT::Direction::forward, std::array<int,3>{-3,-2,-1});
-    this->c2rPlan = std::make_unique<PlanC2RType>(Kokkos::DefaultExecutionSpace(), tempComplex, tempReal, KokkosFFT::Direction::backward, std::array<int,3>{-3,-2,-1});
-    
+    this->r2cPlan = std::make_unique<PlanR2CType>(Kokkos::DefaultExecutionSpace(),
+      tempReal, tempComplex, KokkosFFT::Direction::forward, std::array<int,3>{-3,-2,-1});
+    this->c2rPlan = std::make_unique<PlanC2RType>(Kokkos::DefaultExecutionSpace(),
+      tempComplex, tempReal, KokkosFFT::Direction::backward, std::array<int,3>{-3,-2,-1});
+
     #ifdef WITH_MPI
       // Allocate temporary arrays for domain-splited FFTs and transposes
       this->tempTransposedComplex = Array3D<complex>("FFT transpose temp", npf[1]/astra::psize, npf[0]*astra::psize, npf[2]);
@@ -58,13 +61,17 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
 
      // MPI C2R Plans
       // Axis 1 transposed is axis2 for the fft library
-      this->c2ciMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempT2Complex, tempT2Complex2, KokkosFFT::Direction::backward, std::array<int,1>{-1});
-      this->c2rMPIPlan_axis1t3 = std::make_unique<PlanC2RType2D>(Kokkos::DefaultExecutionSpace(), tempTransposedComplex, tempTransposedReal, KokkosFFT::Direction::backward, std::array<int,2>{-2,-1});
-      
+      this->c2ciMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(),
+                                tempT2Complex, tempT2Complex2, KokkosFFT::Direction::backward, std::array<int,1>{-1});
+      this->c2rMPIPlan_axis1t3 = std::make_unique<PlanC2RType2D>(Kokkos::DefaultExecutionSpace(),
+                                tempTransposedComplex, tempTransposedReal, KokkosFFT::Direction::backward, std::array<int,2>{-2,-1});
+
       // MPI R2C plans
-      this->r2cMPIPlan_axis1t3 = std::make_unique<PlanR2CType2D>(Kokkos::DefaultExecutionSpace(), tempTransposedReal, tempTransposedComplex, KokkosFFT::Direction::forward, std::array<int,2>{-2,-1});      
-      this->c2cfMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(), tempT2Complex, tempT2Complex2, KokkosFFT::Direction::forward, std::array<int,1>{-1});
-    
+      this->r2cMPIPlan_axis1t3 = std::make_unique<PlanR2CType2D>(Kokkos::DefaultExecutionSpace(),
+                                  tempTransposedReal, tempTransposedComplex, KokkosFFT::Direction::forward, std::array<int,2>{-2,-1});
+      this->c2cfMPIPlan_axis2 = std::make_unique<PlanC2CType1D>(Kokkos::DefaultExecutionSpace(),
+                                  tempT2Complex, tempT2Complex2, KokkosFFT::Direction::forward, std::array<int,1>{-1});
+
       this->transposeComplex = std::make_unique<Transpose<complex>>(npf);
       this->transposeReal = std::make_unique<Transpose<real>>(npr);
 
@@ -92,7 +99,7 @@ void FFT::R2C(const Array3D<real>& in, Array3D<complex>& out, bool transpose) {
 
 void FFT::R2C_MPI(const Array3D<real>& in, Array3D<complex>& out, bool transpose) {
   astra::pushRegion("FFT::R2C_MPI");
-  
+
   if(transpose) {
     this->transposeReal->Apply(in,tempTransposedReal);
     astra::pushRegion("FFT::R2C_MPI axis1t3");
@@ -142,7 +149,7 @@ void FFT::C2R_MPI(const Array3D<complex>& in, Array3D<real>& out, bool transpose
     astra::pushRegion("FFT::C2R_MPI axis1t3");
     KokkosFFT::execute(*(c2rMPIPlan_axis1t3.get()), tempTransposedComplex, tempTransposedReal);
     astra::popRegion();
-    this->transposeReal->Apply(tempTransposedReal,out);    
+    this->transposeReal->Apply(tempTransposedReal,out);
   } else {
     astra::pushRegion("FFT::C2R_MPI axis1t3");
     KokkosFFT::execute(*(c2rMPIPlan_axis1t3.get()), tempTransposedComplex, out);
@@ -206,7 +213,7 @@ void FFT::TestMPI() {
 
   MPI_Bcast(globalReal_right.data(), npr_glob[0]*npr_glob[1]*npr_glob[2],
             MPI_Astra_real, 0, MPI_COMM_WORLD);
-  
+
   // Change array Layout
   astra_for("Reshape global",0, npr_glob[0],
                             0, npr_glob[1],
@@ -270,5 +277,3 @@ void FFT::TestMPI() {
     });
 #endif
 }
-
-

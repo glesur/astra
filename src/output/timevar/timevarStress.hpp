@@ -11,6 +11,7 @@
 #ifndef OUTPUT_TIMEVAR_TIMEVARSTRESS_HPP_
 #define OUTPUT_TIMEVAR_TIMEVARSTRESS_HPP_
 
+#include <string>
 #include "timevar.hpp"
 #include "arrays.hpp"
 
@@ -20,11 +21,12 @@ class TimeVarStress : public TimeVar {
     size_t dotLocation = this->name.find(".");
     var1 = this->name.substr(0, dotLocation);
     var2 = this->name.substr(dotLocation+1);
-    
+
     // translate variable names from snoopy
     var1 = this->ExtractVarName(var1);
     var2 = this->ExtractVarName(var2);
-  };
+  }
+
   ~TimeVarStress() override {}
   void Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) override;
  private:

@@ -1,4 +1,18 @@
 
+// ***********************************************************************************
+// ASTRA spectral code
+// Accelerated Spectral code for TuRbulent plasmA
+// Copyright(C) Geoffroy R. J. Lesur <geoffroy.lesur@univ-grenoble-alpes.fr>
+// and other code contributors
+// Licensed under CeCILL 2.1 License, see COPYING for more information
+// ***********************************************************************************
+
+#include <iostream>
+#include <fstream>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
 #include "field.hpp"
 #include "input.hpp"
 #include "global.hpp"
@@ -7,12 +21,6 @@
 #include "loop.hpp"
 #include "fft.hpp"
 #include "timevarEnstrophy.hpp"
-#include <iostream>
-#include <fstream>
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
-
 
 void TimeVarEnstrophy::Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) {
     astra::pushRegion("TimeVarEnstrophy::Write");
@@ -58,11 +66,11 @@ void TimeVarEnstrophy::Write(const real t, Field<Array3D<complex>>& field, Field
     // Compute enstrophy
     astra_reduce("timevar_enstrophy_compute_", fieldReal,
         KOKKOS_LAMBDA(int64_t i,int64_t j,int64_t k, real& local_sum) {
-          local_sum += 0.5 * ( wr1(i,j,k) * wr1(i,j,k) 
-                             + wr2(i,j,k) * wr2(i,j,k) 
+          local_sum += 0.5 * ( wr1(i,j,k) * wr1(i,j,k)
+                             + wr2(i,j,k) * wr2(i,j,k)
                              + wr3(i,j,k) * wr3(i,j,k) );
       }, Kokkos::Sum<real>(enstrophy));
-      
+
     int64_t ntot = grid->npr_glob[IDIR];
     ntot *= grid->npr_glob[JDIR];
     ntot *= grid->npr_glob[KDIR];

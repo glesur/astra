@@ -6,9 +6,10 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-#ifndef TIMEINTEGRATORFACTORY_HPP_
-#define TIMEINTEGRATORFACTORY_HPP_
+#ifndef TIMEINTEGRATOR_TIMEINTEGRATORFACTORY_HPP_
+#define TIMEINTEGRATOR_TIMEINTEGRATORFACTORY_HPP_
 
+#include <memory>
 #include <string>
 #include <vector>
 #include "timeIntegrator.hpp"
@@ -21,7 +22,7 @@
 // A factory for time integrators
 template<typename T>
 class TimeIntegratorFactory {
-public:
+ public:
   static std::unique_ptr<TimeIntegrator<T>> Create(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector) {
     std::string method = input.Get<std::string>("TimeIntegrator","method",0);
     if(method == "rk3") {
@@ -36,4 +37,4 @@ public:
   }
 };
 
-#endif // TIMEINTEGRATORFACTORY_HPP_
+#endif // TIMEINTEGRATOR_TIMEINTEGRATORFACTORY_HPP_

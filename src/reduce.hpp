@@ -123,8 +123,8 @@ template <typename Function, typename Reducer, typename T>
       astra_reduce(NAME, 0, dims[0],0,dims[1],0,dims[2],function, redFunction);
     } else if constexpr(Field<T>::rank == 4) {
       astra_reduce(NAME, 0, dims[0],0,dims[1],0,dims[2],0,dims[3],function, redFunction);
-    } 
-  } 
+    }
+  }
 
 
 #endif // REDUCE_HPP_

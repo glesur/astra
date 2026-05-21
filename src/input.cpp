@@ -120,7 +120,6 @@ void Input::ParseCommandLine(int argc, char **argv) {
   std::stringstream msg;
   bool enableLogs = true;
   for(int i = 1 ; i < argc ; i++) {
-    
     if(std::string(argv[i]) == "-restart") {
       std::string sirestart{};
       bool explicitDump = true;     // by default, assume a restart dump # was given

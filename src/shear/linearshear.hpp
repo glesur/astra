@@ -33,8 +33,8 @@ class LinearShear : public NoShear {
     x0 = grid->xbeg_glob[IDIR];
     remapInterval = ly / (std::fabs(this->shearRate) * lx);
     this->grid = grid;
-  };
-  
+  }
+
   void Refresh(real t) {
     tremap = t - nremaps * remapInterval;
     x0advection = std::fmod(t*this->shearRate*x0, ly);
@@ -106,7 +106,6 @@ class LinearShear : public NoShear {
   }
 
   void UnshearFrame(Array3D<real> field) {
-
     Array3D<complex> temp("temp", field.extent(0), field.extent(1), field.extent(2));
     Array3D<complex> temp2("temp2", field.extent(0), field.extent(1), field.extent(2));
     // Forward FFT along x2
@@ -143,7 +142,7 @@ class LinearShear : public NoShear {
   real kx1tmax() const {
     return this->kx1max + std::fabs(this->shearRate * tremap) * this->kx2max;
   }
-  
+
   // kx2t and kx3t are unchanged
  private:
   real tremap; // time between +/- remapInterval/2 to compute wave vectors

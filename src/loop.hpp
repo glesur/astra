@@ -311,7 +311,7 @@ template <typename Function, typename T>
       astra_for(NAME, 0, dims[0],0,dims[1],0,dims[2],function);
     } else if constexpr(Field<T>::rank == 4) {
       astra_for(NAME, 0, dims[0],0,dims[1],0,dims[2],0,dims[3],function);
-    } 
-  } 
+    }
+  }
 
 #endif // LOOP_HPP_

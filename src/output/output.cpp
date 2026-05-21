@@ -6,6 +6,9 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <memory>
+#include <string>
+
 #include "output.hpp"
 #include "dump.hpp"
 #include "dumpVariables.hpp"
@@ -26,7 +29,7 @@ Output::Output(Input &input, Grid &grid) {
   // Initialise vtk output variables
   outputVtkStep = input.GetOrSet<real>("Output","vtk",0,0.1);
   lastVtkOutput = -outputVtkStep; // so that we output at time 0.0
-  
+
   if(input.CheckEntry("Output","vtk_dir")>=0) {
     outputVtkDirectory = input.Get<std::string>("Output","vtk_dir",0);
   }
@@ -92,7 +95,6 @@ Output::Output(Input &input, Grid &grid) {
   DumpVariables::Register("lastTimevar", lastTimevar);
   DumpVariables::Register("nvtk", nvtk);
   DumpVariables::Register("ndmp", ndmp);
-    
 }
 
 void Output::RestartFromDump(Input &input) {
@@ -117,7 +119,7 @@ void Output::RestartFromDump(Input &input) {
     filename = outputDmpDir+"/"+CreateDumpFileName(restartFileNumber);
     astra::cout << "Output: Restarting from dump file number " << restartFileNumber << std::endl;
   }
-  
+
   Dump dump(grid, filename);
   if(restartFileNumber==-2) {
     dump.ReadSnoopy();
@@ -221,7 +223,6 @@ void Output::ComputeAdditionalVariables(Field<Array3D<complex>> state, real time
   }
 }
 
-// Compute out = i (k1 in2 - k2 in1), where k1 and k2 are the wavevector components along the two directions perpendicular to the direction of the output variable out (e.g. for out=jx1, k1=kx2 and k2=kx3)
 void Output::ComputeCurl(std::array<Array3D<complex>, 3> out , std::array<Array3D<complex>, 3> in, real time) {
   auto kx1 = grid->kx[IDIR];
   auto kx2 = grid->kx[JDIR];
@@ -233,7 +234,7 @@ void Output::ComputeCurl(std::array<Array3D<complex>, 3> out , std::array<Array3
   auto out1 = out[0];
   auto out2 = out[1];
   auto out3 = out[2];
-  
+
   bool haveShear = this->haveShear;
   LinearShear shear = *(this->linearShear.get());
   if(haveShear) {
@@ -256,7 +257,3 @@ void Output::ComputeCurl(std::array<Array3D<complex>, 3> out , std::array<Array3
       out3(i,j,k) = Kokkos::complex(0.0,1.0) * (k1*in2(i,j,k) - k2*in1(i,j,k));
   });
 }
-
-
-
-

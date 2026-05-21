@@ -6,6 +6,13 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <iostream>
+#include <fstream>
+#include <limits>
+#include <string>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 #include "field.hpp"
 #include "input.hpp"
@@ -13,11 +20,7 @@
 #include "reduce.hpp"
 #include "grid.hpp"
 #include "timevarMinMax.hpp"
-#include <iostream>
-#include <fstream>
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
+
 
 TimeVarMinMax::TimeVarMinMax(Input &input, Grid *grid, std::string name, std::string directory) : TimeVar(input, grid, name, directory) {
   if(name.substr(2,3).compare("max") == 0) {

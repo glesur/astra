@@ -50,10 +50,10 @@ Slice::Slice(Input &input, Grid *grid, int nSlice) {
   }
   // Register the last output in dumps so that we restart from the right slice
   DumpVariables::Register(std::string("slcLast-")+std::to_string(nSlice), sliceLast);
-  DumpVariables::Register(std::string("slcNvtk-")+std::to_string(nSlice), nvtk);  
+  DumpVariables::Register(std::string("slcNvtk-")+std::to_string(nSlice), nvtk);
 
   // Initialize the subGrid
-  try{
+  try {
     this->subGrid = std::make_unique<SubGrid>(grid, type, direction, x0);
   } catch(const std::exception& e) {
     std::stringstream msg;
@@ -116,14 +116,14 @@ void Slice::CheckForWrite(Field<Array3D<complex>> state, real time, Output *outp
     ssvtkFileNum << std::setfill('0') << std::setw(4) << nvtk;
     std::string filename = std::string("slice") + std::to_string(nSlice) + "." + ssvtkFileNum.str();
 
-    // 
+    //
     Vtk *vtk;
     if(containsX0) {
       vtk = new Vtk(subGrid.get(), *input, time, filename,outputVtkDirectory);
     }
 
     Array3D<real> realView("real_array",subGrid->parentGrid->npr);
-    
+
     // Write the slice for each variable in the field
     for(auto const &it : state) {
       auto name = it.first;
@@ -137,7 +137,7 @@ void Slice::CheckForWrite(Field<Array3D<complex>> state, real time, Output *outp
       }
       WriteSlice(realView, vtk, time, name);
     }
-    
+
     // Additional variables output
     if(!output->vtkAdditionalVariableNames.empty()) {
       output->ComputeAdditionalVariables(state, time);

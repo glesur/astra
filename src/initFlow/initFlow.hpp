@@ -7,8 +7,8 @@
 // ***********************************************************************************
 
 // A generic interface to initialise the flow
-#ifndef INITFLOW_HPP_
-#define INITFLOW_HPP_
+#ifndef INITFLOW_INITFLOW_HPP_
+#define INITFLOW_INITFLOW_HPP_
 
 #include "input.hpp"
 #include "field.hpp"
@@ -17,12 +17,12 @@ class Grid;
 
 
 class InitFlow {
-public:
+ public:
   InitFlow(Input &input, Grid *grid);
-  
+
   void Init(Field<Array3D<complex>>& field);
 
-private:
+ private:
   Grid *grid;
   Input *input;
   void ShearLayer(Field<ArrayHost3D<complex>>& field);
@@ -36,7 +36,6 @@ private:
 
   std::array<ArrayHost1D<real>,3> kx;
   std::array<ArrayHost1D<real>,3> x;
-
 };
 
-#endif // INITFLOW_HPP_
+#endif // INITFLOW_INITFLOW_HPP_

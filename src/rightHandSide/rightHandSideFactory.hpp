@@ -8,10 +8,11 @@
 
 // A generic Factory for the right hand side computation
 
-#ifndef RIGHTHANDSIDEFACTORY_HPP_
-#define RIGHTHANDSIDEFACTORY_HPP_
+#ifndef RIGHTHANDSIDE_RIGHTHANDSIDEFACTORY_HPP_
+#define RIGHTHANDSIDE_RIGHTHANDSIDEFACTORY_HPP_
 
 #include <string>
+#include <utility>
 #include <vector>
 #include "rightHandSide.hpp"
 #include "grid.hpp"
@@ -24,7 +25,7 @@
 // A factory for right hand side computations
 template<typename T>
 class RightHandSideFactory {
-public:
+ public:
   enum class ShearType { NoShear, LinearShear };
   static std::vector<std::unique_ptr<RightHandSideConcept<T>>> Create(Input &input, Grid *grid) {
     std::vector<std::unique_ptr<RightHandSideConcept<T>>> rhsVector;
@@ -71,4 +72,4 @@ public:
   }
 };
 
-#endif // RIGHTHANDSIDEFACTORY_HPP_
+#endif // RIGHTHANDSIDE_RIGHTHANDSIDEFACTORY_HPP_

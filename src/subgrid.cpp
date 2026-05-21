@@ -1,10 +1,12 @@
 // ***********************************************************************************
-// Astra MHD astrophysical code
+// ASTRA spectral code
+// Accelerated Spectral code for TuRbulent plasmA
 // Copyright(C) Geoffroy R. J. Lesur <geoffroy.lesur@univ-grenoble-alpes.fr>
 // and other code contributors
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <utility>
 #ifdef WITH_MPI
 #include <mpi.h>
 #endif
@@ -20,7 +22,6 @@ SubGrid::~SubGrid() = default;
 
 SubGrid::SubGrid(Grid * grid, SliceType type, int dir, real x0):
           parentGrid(grid), sliceType(type), direction(dir) {
-
   // Copy everything from the parent grid, and then modify the relevant arrays
   this->x_glob = parentGrid->x_glob;
   this->x = parentGrid->x;
@@ -84,7 +85,7 @@ SubGrid::SubGrid(Grid * grid, SliceType type, int dir, real x0):
   this->x0 = x_mirror_glob(iref);
   // Slice the MPI communicator
   #ifdef WITH_MPI
-    int color = containsX0 ? 0 : 1; // processes that contain x0 are in color 0, others in color 1  
+    int color = containsX0 ? 0 : 1; // processes that contain x0 are in color 0, others in color 1
     MPI_Comm_split(parentGrid->comm, color, 0, &this->comm);
     MPI_Comm_rank(this->comm, &this->prank);
   #endif
@@ -106,6 +107,4 @@ SubGrid::SubGrid(Grid * grid, SliceType type, int dir, real x0):
   this->npf_glob[dir] = 1;
   this->npr[dir] = 1;
   this->npf[dir] = 1;
-
-
 }

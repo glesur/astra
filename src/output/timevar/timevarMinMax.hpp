@@ -11,6 +11,7 @@
 #ifndef OUTPUT_TIMEVAR_TIMEVARMINMAX_HPP_
 #define OUTPUT_TIMEVAR_TIMEVARMINMAX_HPP_
 
+#include <string>
 #include "timevar.hpp"
 #include "arrays.hpp"
 

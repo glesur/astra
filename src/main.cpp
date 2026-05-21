@@ -1,3 +1,11 @@
+// ***********************************************************************************
+// ASTRA spectral code
+// Accelerated Spectral code for TuRbulent plasmA
+// Copyright(C) Geoffroy R. J. Lesur <geoffroy.lesur@univ-grenoble-alpes.fr>
+// and other code contributors
+// Licensed under CeCILL 2.1 License, see COPYING for more information
+// ***********************************************************************************
+
 #include <stdlib.h>
 #include <iostream>
 
@@ -59,8 +67,8 @@ int main( int argc, char* argv[] ) {
 
     Grid grid(input);
     InitFlow initFlow(input, &grid);
-    
-    
+
+
     // Show configuration after initialisation
     input.ShowConfig();
     grid.ShowConfig();
@@ -89,13 +97,13 @@ int main( int argc, char* argv[] ) {
 
     // Declare the state for I/O routines
     DumpVariables::Register("state", state);
-    
+
     // Init the output.
     Output output(input, grid);
 
     /*********************************************************************************** */
     // From this point the basic logic is initialized. We needd to fill the state array
-    // either from initial conditions or from a dump file, and then we can start 
+    // either from initial conditions or from a dump file, and then we can start
     // the time integration loop.
 
     if(input.restartRequested) {
@@ -113,7 +121,7 @@ int main( int argc, char* argv[] ) {
 
 
     astra::cout << "Main: Starting time integration..." << std::endl;
-    
+
     real tstop = input.Get<real>("TimeIntegrator","tstop",0);
     Kokkos::Timer timer;
 
@@ -128,7 +136,7 @@ int main( int argc, char* argv[] ) {
       output.CheckForOutput(input, state, timeIntegrator->GetTime());
 
       // Abort checks
-      bool abortRequested = false;  
+      bool abortRequested = false;
       if(input.CheckForAbort()) {
         abortRequested = true;
         astra::cout << "Main: Abort signal received." << std::endl;
@@ -213,4 +221,3 @@ void LogFinished(Grid &grid, Input &Tint, Kokkos::Timer &timer, TimeIntegrator<A
     astra::cout << "Main: ";
     astra::cout << "Perfs are " << std::scientific << 1/perfs << " cell updates/second" << std::endl;
 }
-

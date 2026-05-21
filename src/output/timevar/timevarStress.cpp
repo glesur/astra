@@ -6,19 +6,17 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-
+#include <iostream>
+#include <fstream>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 #include "field.hpp"
 #include "input.hpp"
 #include "global.hpp"
 #include "reduce.hpp"
 #include "grid.hpp"
 #include "timevarStress.hpp"
-#include <iostream>
-#include <fstream>
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
-
 
 void TimeVarStress::Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) {
     astra::pushRegion("TimeVarStress::Write");

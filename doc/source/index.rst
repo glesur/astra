@@ -51,7 +51,7 @@ Features
 Terms and condition of Use
 ===========================
 *Astra* is distributed freely under the `CeCILL license <https://en.wikipedia.org/wiki/CeCILL>`_, a free software license adapted to both international and French legal matters, in the spirit of and retaining
-compatibility with the GNU General Public License (GPL). 
+compatibility with the GNU General Public License (GPL).
 
 *Astra* also relies on the `Kokkos <https://github.com/kokkos/kokkos>`_ performance portability programming ecosystem released under the terms
 of Contract DE-NA0003525 with National Technology & Engineering Solutions of Sandia, LLC (NTESS).

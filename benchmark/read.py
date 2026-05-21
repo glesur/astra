@@ -1,4 +1,3 @@
-from datetime import datetime
 import argparse
 from pathlib import Path
 import json
@@ -44,7 +43,7 @@ for date_dir in date_dirs:
                         print("Exception in read")
                         f.close()
                 performances_data[date_dir.name][problem_size_dir.name][ncores_dir.name] = perfs
-                
+
             else:
                 print(f"Output file not found in {ncores_dir}")
 # Save the performance data to a JSON file

@@ -9,13 +9,15 @@
 #ifndef TRANSPOSE_HPP_
 #define TRANSPOSE_HPP_
 
-#include <Kokkos_Core.hpp>
 #include <mpi.h>
+#include <iostream>
+#include <Kokkos_Core.hpp>
+
 
 template <typename T>
 class Transpose {
-public:
-  Transpose(std::array<int,3> n) {
+ public:
+  explicit Transpose(std::array<int,3> n) {
     // Allocate temporary arrays for domain-splited FFTs and transposes
     int64_t n1 = n[0]*n[1]; // Block size
     int64_t nk = n[2];
@@ -25,9 +27,8 @@ public:
   void Apply(const Array3D<T>& input, Array3D<T>& output);
   void Test();
 
-private:
+ private:
   Kokkos::View<T**, Kokkos::LayoutRight, Device> tempB, tempC;
-
 };
 
 
@@ -35,7 +36,7 @@ private:
 /* MPI Transposition routines.
 From complex to real, we first transform along x2
 Then we transpose x2 and x1 to have x1 contiguous in memory
-We then transform along x1 and finally x3 (this last one being a real fft). This gives a final 
+We then transform along x1 and finally x3 (this last one being a real fft). This gives a final
 
 Transposition is done as follows:
 Star with a matrix A_ijk
@@ -138,15 +139,15 @@ void Transpose<T>::Apply(const Array3D<T>& in, Array3D<T>& out) {
   //Array2D<complex> tempB("FFT transpose temp", n1,nk);
   auto tempB = this->tempB;
   if(tempB.extent(0) != n1 || tempB.extent(1) != nk) {
-    astra:: cout << "!! tempB size: " << tempB.extent(0) << "," << tempB.extent(1) << std::endl; 
+    astra:: cout << "!! tempB size: " << tempB.extent(0) << "," << tempB.extent(1) << std::endl;
     astra:: cout << "!! in size: " << in.extent(0) << "," << in.extent(1) << "," << in.extent(2) << std::endl;
     throw std::runtime_error("Transpose::Apply: temporary array size does not match input size");
   }
-  
+
   astra_for("FFT::TransposeLocal1", 0,n1, 0, nk,
     KOKKOS_LAMBDA(const int64_t ij, const int64_t k) {
     // for in array, ij = j'+nj*p +i'*nj*n= j+i'*nj*n (given that j=j'+nj*p)
-    // For tempB, ij=i'+ni*(j'+nj*p) 
+    // For tempB, ij=i'+ni*(j'+nj*p)
      int64_t i = ij / (nj*n);
      int64_t j = ij- i*nj*n;
      int64_t ijprime = i + ni*j;
@@ -183,7 +184,6 @@ void Transpose<T>::Apply(const Array3D<T>& in, Array3D<T>& out) {
 
 template <typename T>
 void Transpose<T>::Test() {
-
   astra::cout << "Testing FFT Transpose" << std::endl;
   const int64_t n = astra::psize; // number of MPI processes
   const int64_t rank = astra::prank; // rank of the current process
@@ -210,7 +210,8 @@ void Transpose<T>::Test() {
     for(int64_t i = 0 ; i < ni*n ; i++) {
       for(int64_t k = 0 ; k < nk ; k++) {
         if(outHost(j,i,k) != k+10*(j+rank*nj)+100*(i)) {
-          astra::cout << "rank " << rank << " Transpose error at (" << i << "," << j << "," << k << "): got " << outHost(j,i,k) << " instead of " << k+10*(j+rank*nj)+100*(i) << std::endl;
+          astra::cout << "rank " << rank << " Transpose error at (" << i << "," << j << "," << k
+                      << "): got " << outHost(j,i,k) << " instead of " << k+10*(j+rank*nj)+100*(i) << std::endl;
           error = true;
         }
       }
@@ -226,4 +227,3 @@ void Transpose<T>::Test() {
 
 
 #endif // TRANSPOSE_HPP_
-

@@ -22,8 +22,7 @@ InitFlow::InitFlow(Input &input, Grid *grid) : grid(grid), input(&input) {
     kx[dir] = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),grid->kx[dir]);
     x[dir] =  Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),grid->x[dir]);
   }
-};
-
+}
 
 void InitFlow::Init(Field<Array3D<complex>>& field) {
   // Initialize the flow according to input parameters
@@ -87,7 +86,7 @@ void InitFlow::ShearLayer(Field<ArrayHost3D<complex>>& hfieldOut) {
 
   // Fourier transform to get the complex field
   grid->fft->R2C_Host(realField["vx1"], complexField["vx1"]);
-  
+
   // add to output field
   for(auto it : hfieldOut) {
     auto viewOut = it.second;
@@ -174,13 +173,13 @@ void InitFlow::LargeScale3DNoise(Field<ArrayHost3D<complex>>& field) {
             auto view = it.second;
             const real ampl = noiseAmplitude*astra::randm();
             const real phase = 2.0*M_PI*astra::randm();
-            
+
             view(i,j,k) += Kokkos::complex(ampl*std::cos(phase), ampl*std::sin(phase))/fact*ntot;
           }
         }
       }
     }
-  } 
+  }
 }
 
 void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
@@ -213,7 +212,7 @@ void InitFlow::LargeScale2DNoise(Field<ArrayHost3D<complex>>& field) {
         }
       }
     }
-  } 
+  }
 }
 
 
@@ -246,7 +245,7 @@ void InitFlow::LargeScale1DNoise(Field<ArrayHost3D<complex>>& field) {
         }
       }
     }
-  } 
+  }
 }
 
 void InitFlow::PureSine(Field<ArrayHost3D<complex>>& field) {
@@ -254,7 +253,7 @@ void InitFlow::PureSine(Field<ArrayHost3D<complex>>& field) {
   const int direction = input->Get<int>("InitFlow","pure_sine",0);
   const real amplitude = input->Get<real>("InitFlow","pure_sine",1);
 
-  
+
   for(auto& it : field) {
     auto view = it.second;
     if(direction == IDIR) {
@@ -290,8 +289,8 @@ void InitFlow::Projector(Field<ArrayHost3D<complex>>& fldin) {
           vx2(i,j,k) -= kv_dot_v*kx2(j)/k2;
           vx3(i,j,k) -= kv_dot_v*kx3(k)/k2;
         }
-    }}}  
+    }}}
   } catch(...) {
-    astra::cerr << "Projector: can't apply projection on this field." << std::endl;  
+    astra::cerr << "Projector: can't apply projection on this field." << std::endl;
   }
 }

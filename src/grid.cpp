@@ -6,6 +6,7 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <memory>
 #include <string>
 #include <KokkosFFT.hpp>
 
@@ -133,6 +134,4 @@ void Grid::ShowConfig() {
                  << "...." << npr_glob[dir] << "...." << xend_glob[dir] << "\t"
                  << std::endl;
   }
-  
 }
-

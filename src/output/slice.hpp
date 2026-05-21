@@ -33,7 +33,7 @@ class Slice {
   Slice(Input &, Grid *, int nSlice);
   void CheckForWrite(Field<Array3D<complex>> state, real time, Output *output);
   void WriteSlice(Array3D<real> slice, Vtk *vtk, real time, std::string name);
-  
+
  private:
   // vtk output periods
   real slicePeriod = 0.0;
@@ -53,7 +53,6 @@ class Slice {
   std::unique_ptr<LinearShear> linearShear;
 
   Array2D<real> Subview(Array3D<real> slice, int direction, int idx);
-
 };
 
 #endif // OUTPUT_SLICE_HPP_

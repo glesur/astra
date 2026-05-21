@@ -6,6 +6,9 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#ifndef CHECKNAN_HPP_
+#define CHECKNAN_HPP_
+
 #include <Kokkos_Core.hpp>
 
 #include "arrays.hpp"
@@ -52,7 +55,7 @@ int CheckNan3D(ArrayType array) {
     KOKKOS_LAMBDA (const int64_t i, const int64_t j, const int64_t k, int& localCount) {
       if (isNanValue(array(i,j,k))) localCount++;
     }, Kokkos::Sum<int>(nNan));
-  
+
   return nNan;
 }
 
@@ -74,13 +77,15 @@ void CheckNan(ArrayType array) {
 template<typename T>
 void CheckNan(Field<T>& field) {
   astra::pushRegion("CheckNan(Field)");
-  try{
+  try {
      for(auto it : field) {
-        CheckNan(it.second);  
+        CheckNan(it.second);
       }
   } catch(const std::runtime_error& e) {
     throw std::runtime_error("NaN values found in Field \"" + field.GetName() + "\": " + e.what());
   }
   astra::popRegion();
 }
-}
+} // namespace astra
+
+#endif // CHECKNAN_HPP_

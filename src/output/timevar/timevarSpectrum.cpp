@@ -6,6 +6,15 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include "timevarSpectrum.hpp"
+
+#include <string>
+#include <memory>
+#include <iostream>
+#include <fstream>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 #include "field.hpp"
 #include "input.hpp"
@@ -13,13 +22,7 @@
 #include "reduce.hpp"
 #include "grid.hpp"
 #include "loop.hpp"
-#include "timevarSpectrum.hpp"
 #include "linearshear.hpp"
-#include <iostream>
-#include <fstream>
-#ifdef WITH_MPI
-#include <mpi.h>
-#endif
 
 TimeVarSpectrum::TimeVarSpectrum(Input &input, Grid *grid, std::string name, std::string directory) : TimeVar(input, grid, name, directory) {
   const std::string token = "spectrum_";
@@ -28,7 +31,7 @@ TimeVarSpectrum::TimeVarSpectrum(Input &input, Grid *grid, std::string name, std
     throw std::runtime_error("TimeVarSpectrum: variable name must start with 'spectrum_'");
   }
   std::string varNames = this->name.substr(tokenLocation + token.length());
-  
+
   size_t dotLocation = varNames.find(".");
   var1 = varNames.substr(0, dotLocation);
   var2 = varNames.substr(dotLocation+1);
@@ -70,7 +73,7 @@ TimeVarSpectrum::TimeVarSpectrum(Input &input, Grid *grid, std::string name, std
     outfile << std::endl;
     outfile.close();
   }
-};
+}
 
 void TimeVarSpectrum::Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) {
     astra::pushRegion("TimeVarSpectrum::Write");
@@ -82,7 +85,7 @@ void TimeVarSpectrum::Write(const real t, Field<Array3D<complex>>& field, Field<
     real kmax = this->kmax;
     int nbins = this->nbins;
     real kmin = this->kmin;
-    
+
     Array1D<real> spectrum("spectrum", nbins);
     Kokkos::deep_copy(spectrum, 0.0);
 

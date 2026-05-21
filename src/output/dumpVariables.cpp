@@ -6,6 +6,9 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <map>
+#include <string>
+#include "field.hpp"
 #include "dumpVariables.hpp"
 #include "dump.hpp"
 

@@ -69,7 +69,7 @@ for ncores in coreList:
 
     if strongScaling:
         nproc1=1
-        
+
     inputOptions={}
     inputOptions['resx1']="%d"%(nproc1*problemSize)
     inputOptions['resx2']="%d"%(nproc2*problemSize)

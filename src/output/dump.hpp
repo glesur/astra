@@ -9,6 +9,9 @@
 #ifndef OUTPUT_DUMP_HPP_
 #define OUTPUT_DUMP_HPP_
 
+#include <map>
+#include <vector>
+#include <cstdio>
 #include <string>
 #include "field.hpp"
 #include "global.hpp"
@@ -34,6 +37,67 @@ using DumpFileHandler = FILE*;
 
 class Grid;
 
+
+
+class Dump {
+ public:
+  Dump(Grid *grid, std::string filename);
+
+  void Register(std::string name, Field<Array3D<complex>>);
+  void Register(std::string name, real);
+  void Register(std::string name, int);
+  void Write();
+
+  void Fetch(std::string name, Field<Array3D<complex>> &);
+  void Fetch(std::string name, real &);
+  void Fetch(std::string name, int &);
+  void Read();
+
+  void ReadSnoopy(); // Read snoopy dump files
+
+ private:
+  enum DataType {DoubleType, SingleType,
+                ComplexDoubleType, ComplexSingleType,
+                IntegerType, BoolType};
+  void WriteString(DumpFileHandler file, std::string str);
+  std::string ReadString(DumpFileHandler file);
+
+  template <typename T>
+  void WriteData(DumpFileHandler fileHdl, std::string name, T data);
+
+  template <typename T>
+  void ReadData(DumpFileHandler fileHdl, T &data);
+
+  template <typename T>
+  void ReadSnoopyScalar(DumpFileHandler fileHdl, T &data);
+  template <typename T>
+  DataType TypeToInt();
+
+  void ReadSnoopyArray(DumpFileHandler fileHdl, std::string name, Field<Array3D<complex>> &data);
+
+
+  void ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &dim,
+                                        DataType &type, std::string &name);
+
+
+
+  static constexpr int StringMaxLength{64};
+  bool isRoot{false};
+  std::array<int,3> npf_glob, npf, npr_glob;
+  std::map<std::string, Field<Array3D<complex>>> fields;
+  std::map<std::string, real> reals;
+  std::map<std::string, int> ints;
+
+  fs::path filename;
+  #ifdef WITH_MPI
+    MPI_Offset offset;
+    MPI_Datatype view;
+    MPI_Comm comm;
+  #endif
+};
+
+// Implementation of template functions
+
 // Check if type is a fundamental type for dump I/O
 template<typename T>
 struct IsFundamentalType { enum { result = false }; };
@@ -51,77 +115,25 @@ struct IsFundamentalType<float> { enum { result = true }; };
 template<>
 struct IsFundamentalType<complex> { enum { result = true }; };
 
-class Dump {
-  public:
-    Dump(Grid *grid, std::string filename);
+template <typename T>
+  DataType TypeToInt() {
+    if constexpr (std::is_same<T, double>::value) {
+      return DoubleType;
+    } else if constexpr (std::is_same<T, float>::value) {
+      return SingleType;
+    } else if constexpr (std::is_same<T, Kokkos::complex<double>>::value) {
+      return ComplexDoubleType;
+    } else if constexpr (std::is_same<T, Kokkos::complex<float>>::value) {
+      return ComplexSingleType;
+    } else if constexpr (std::is_same<T, int>::value) {
+      return IntegerType;
+    } else if constexpr (std::is_same<T, bool>::value) {
+      return BoolType;
+    }
+    throw std::runtime_error("Unsupported type for TypeToInt");
+    return BoolType; // To suppress compiler warning
+  }
 
-    void Register(std::string name, Field<Array3D<complex>>);
-    void Register(std::string name, real);
-    void Register(std::string name, int);
-    void Write();
-
-    void Fetch(std::string name, Field<Array3D<complex>> &);
-    void Fetch(std::string name, real &);
-    void Fetch(std::string name, int &);
-    void Read();
-
-    void ReadSnoopy(); // Read snoopy dump files
-
-  private:
-    enum DataType {DoubleType, SingleType, 
-                  ComplexDoubleType, ComplexSingleType, 
-                  IntegerType, BoolType};
-    void WriteString(DumpFileHandler file, std::string str);
-    std::string ReadString(DumpFileHandler file);
-
-    template <typename T>
-    void WriteData(DumpFileHandler fileHdl, std::string name, T data);
-    
-    template <typename T>
-    void ReadData(DumpFileHandler fileHdl, T &data);
-
-    template <typename T>
-    void ReadSnoopyScalar(DumpFileHandler fileHdl, T &data);
-    void ReadSnoopyArray(DumpFileHandler fileHdl, std::string name, Field<Array3D<complex>> &data);
-
-
-    void ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &dim,
-                                         DataType &type, std::string &name);
-
-    
-
-    template <typename T>
-    DataType TypeToInt() {
-      if constexpr (std::is_same<T, double>::value) {
-        return DoubleType;
-      } else if constexpr (std::is_same<T, float>::value) {
-        return SingleType;
-      } else if constexpr (std::is_same<T, Kokkos::complex<double>>::value) {
-        return ComplexDoubleType;
-      } else if constexpr (std::is_same<T, Kokkos::complex<float>>::value) {
-        return ComplexSingleType;
-      } else if constexpr (std::is_same<T, int>::value) {
-        return IntegerType;
-      } else if constexpr (std::is_same<T, bool>::value) {
-        return BoolType;
-      }
-      throw std::runtime_error("Unsupported type for TypeToInt");
-      return BoolType; // To suppress compiler warning
-    };
-    static constexpr int StringMaxLength{64};
-    bool isRoot{false};
-    std::array<int,3> npf_glob, npf, npr_glob;
-    std::map<std::string, Field<Array3D<complex>>> fields;
-    std::map<std::string, real> reals;
-    std::map<std::string, int> ints;
-
-    fs::path filename;
-    #ifdef WITH_MPI
-      MPI_Offset offset;
-      MPI_Datatype view;
-      MPI_Comm comm;
-    #endif
-};
 
 template <typename T>
 void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
@@ -151,7 +163,7 @@ void Dump::WriteData(DumpFileHandler fileHdl, std::string name, T data) {
     type = static_cast<int>(TypeToInt<T>());
     ndim = 1;
   }
-  
+
   // Write field name
   WriteString(fileHdl, name);
 
@@ -273,7 +285,7 @@ void Dump::ReadData(DumpFileHandler fileHdl, T& data) {
     }
   #endif
   // Check that data was read correctly
-  
+
   if constexpr(std::is_same<T, ArrayHost3D<complex>>::value) {
     for(int i=0 ; i < data.extent(0) ; i++) {
       for(int j=0 ; j < data.extent(1) ; j++) {
@@ -316,6 +328,5 @@ void Dump::ReadSnoopyScalar(DumpFileHandler fileHdl, T &data) {
     throw std::runtime_error("Error: unexpected end of dump file");
   }
   #endif
-
 }
 #endif// OUTPUT_DUMP_HPP_

@@ -12,12 +12,10 @@
 #ifndef OUTPUT_TIMEVAR_TIMEVAR_HPP_
 #define OUTPUT_TIMEVAR_TIMEVAR_HPP_
 
-#include "field.hpp"
-#include "input.hpp"
 
 #include <limits>
+#include <string>x
 #include <vector>
-
 #if __has_include(<filesystem>)
   #include <filesystem> // NOLINT [build/c++17]
   namespace fs = std::filesystem;
@@ -27,46 +25,48 @@
 #else
   error "Missing the <filesystem> header."
 #endif
+#include "field.hpp"
+#include "input.hpp"
 
 class Grid;
 
 class TimeVar {
-  public:
-    TimeVar(Input &input, Grid *grid, std::string name, std::string directory);
-    virtual ~TimeVar() {}
-    virtual void Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) = 0;
-    void Reset();
-    std::string GetName() const { return name; }
+ public:
+  TimeVar(Input &input, Grid *grid, std::string name, std::string directory);
+  virtual ~TimeVar() {}
+  virtual void Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) = 0;
+  void Reset();
+  std::string GetName() const { return name; }
 
 
-  protected:
-    Grid *grid;
-    std::string name;
-    fs::path filename;
-    std::string directory;
-    bool isRoot{false};
-    std::string ExtractVarName(const std::string& name);
+ protected:
+  Grid *grid;
+  std::string name;
+  fs::path filename;
+  std::string directory;
+  bool isRoot{false};
+  std::string ExtractVarName(const std::string& name);
 };
 
 
 class TimeVarOutput {
-  public:
-    TimeVarOutput(Input &input, Grid *grid);
-    void Write(Field<Array3D<complex>>& field, const real t);
-    void Reset();
-  
-  private:
-    // Hashing functions
-    static uint64_t str2int(const std::string& str) {
-      return str2int(str.c_str());
-    }
+ public:
+  TimeVarOutput(Input &input, Grid *grid);
+  void Write(Field<Array3D<complex>>& field, const real t);
+  void Reset();
 
-    static constexpr int64_t str2int(const char* str, int h = 0) {
-      return !str[h] ? 5381 : (str2int(str, h+1) * 33) ^ str[h];
-    }
+ private:
+  // Hashing functions
+  static uint64_t str2int(const std::string& str) {
+    return str2int(str.c_str());
+  }
 
-    Grid *grid;
-    std::vector<std::unique_ptr<TimeVar>> timevarList;
+  static constexpr int64_t str2int(const char* str, int h = 0) {
+    return !str[h] ? 5381 : (str2int(str, h+1) * 33) ^ str[h];
+  }
+
+  Grid *grid;
+  std::vector<std::unique_ptr<TimeVar>> timevarList;
 };
 
 #endif // OUTPUT_TIMEVAR_TIMEVAR_HPP_

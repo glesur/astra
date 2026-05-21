@@ -11,6 +11,8 @@
 #ifndef OUTPUT_TIMEVAR_TIMEVARSPECTRUM_HPP_
 #define OUTPUT_TIMEVAR_TIMEVARSPECTRUM_HPP_
 
+#include <string>
+#include <memory>
 #include "timevar.hpp"
 #include "arrays.hpp"
 #include "linearshear.hpp"
@@ -21,7 +23,8 @@ class TimeVarSpectrum : public TimeVar {
 
   ~TimeVarSpectrum() override {}
   void Write(const real t, Field<Array3D<complex>>& field, Field<Array3D<real>>& fieldReal) override;
-private:
+
+ private:
   std::string var1, var2;
   int nbins{0};
   real kmin{0.0}, kmax{0.0};
