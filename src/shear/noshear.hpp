@@ -65,6 +65,6 @@ class NoShear {
 
  protected:
     real kx1max, kx2max, kx3max;
-}
+};
 
 #endif // SHEAR_NOSHEAR_HPP_

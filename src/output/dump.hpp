@@ -71,13 +71,13 @@ class Dump {
   template <typename T>
   void ReadSnoopyScalar(DumpFileHandler fileHdl, T &data);
   template <typename T>
-  DataType TypeToInt();
+  Dump::DataType TypeToInt();
 
   void ReadSnoopyArray(DumpFileHandler fileHdl, std::string name, Field<Array3D<complex>> &data);
 
 
   void ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &dim,
-                                        DataType &type, std::string &name);
+                                        Dump::DataType &type, std::string &name);
 
 
 
@@ -116,22 +116,22 @@ template<>
 struct IsFundamentalType<complex> { enum { result = true }; };
 
 template <typename T>
-  DataType TypeToInt() {
+  Dump::DataType Dump::TypeToInt() {
     if constexpr (std::is_same<T, double>::value) {
-      return DoubleType;
+      return Dump::DoubleType;
     } else if constexpr (std::is_same<T, float>::value) {
-      return SingleType;
+      return Dump::SingleType;
     } else if constexpr (std::is_same<T, Kokkos::complex<double>>::value) {
-      return ComplexDoubleType;
+      return Dump::ComplexDoubleType;
     } else if constexpr (std::is_same<T, Kokkos::complex<float>>::value) {
-      return ComplexSingleType;
+      return Dump::ComplexSingleType;
     } else if constexpr (std::is_same<T, int>::value) {
-      return IntegerType;
+      return Dump::IntegerType;
     } else if constexpr (std::is_same<T, bool>::value) {
-      return BoolType;
+      return Dump::BoolType;
     }
     throw std::runtime_error("Unsupported type for TypeToInt");
-    return BoolType; // To suppress compiler warning
+    return Dump::BoolType; // To suppress compiler warning
   }
 
 
