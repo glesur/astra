@@ -59,24 +59,24 @@ class Mhd : public RightHandSide<Array3D<complex>, Shear> {
 template <typename Shear>
 Mhd<Shear>::Mhd(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, Shear>(input, grid) {
   // Allocate all of the temporary arrays
-  vr1 = Array3D<real>("Mhd::vr1", grid->npr_t);
-  vr2 = Array3D<real>("Mhd::vr2", grid->npr_t);
-  vr3 = Array3D<real>("Mhd::vr3", grid->npr_t);
-  br1 = Array3D<real>("Mhd::br1", grid->npr_t);
-  br2 = Array3D<real>("Mhd::br2", grid->npr_t);
-  br3 = Array3D<real>("Mhd::br3", grid->npr_t);
-  wr11 = Array3D<real>("Mhd::wr11", grid->npr_t);
-  wr12 = Array3D<real>("Mhd::wr12", grid->npr_t);
-  wr13 = Array3D<real>("Mhd::wr13", grid->npr_t);
-  wr22 = Array3D<real>("Mhd::wr22", grid->npr_t);
-  wr23 = Array3D<real>("Mhd::wr23", grid->npr_t);
-  wr33 = Array3D<real>("Mhd::wr33", grid->npr_t);
-  wf11 = Array3D<complex>("Mhd::wf11", grid->npf);
-  wf12 = Array3D<complex>("Mhd::wf12", grid->npf);
-  wf13 = Array3D<complex>("Mhd::wf13", grid->npf);
-  wf22 = Array3D<complex>("Mhd::wf22", grid->npf);
-  wf23 = Array3D<complex>("Mhd::wf23", grid->npf);
-  wf33 = Array3D<complex>("Mhd::wf33", grid->npf);
+  vr1 = astra::makeArray<Array3D<real>>("Mhd::vr1", grid->npr_t);
+  vr2 = astra::makeArray<Array3D<real>>("Mhd::vr2", grid->npr_t);
+  vr3 = astra::makeArray<Array3D<real>>("Mhd::vr3", grid->npr_t);
+  br1 = astra::makeArray<Array3D<real>>("Mhd::br1", grid->npr_t);
+  br2 = astra::makeArray<Array3D<real>>("Mhd::br2", grid->npr_t);
+  br3 = astra::makeArray<Array3D<real>>("Mhd::br3", grid->npr_t);
+  wr11 = astra::makeArray<Array3D<real>>("Mhd::wr11", grid->npr_t);
+  wr12 = astra::makeArray<Array3D<real>>("Mhd::wr12", grid->npr_t);
+  wr13 = astra::makeArray<Array3D<real>>("Mhd::wr13", grid->npr_t);
+  wr22 = astra::makeArray<Array3D<real>>("Mhd::wr22", grid->npr_t);
+  wr23 = astra::makeArray<Array3D<real>>("Mhd::wr23", grid->npr_t);
+  wr33 = astra::makeArray<Array3D<real>>("Mhd::wr33", grid->npr_t);
+  wf11 = astra::makeArray<Array3D<complex>>("Mhd::wf11", grid->npf);
+  wf12 = astra::makeArray<Array3D<complex>>("Mhd::wf12", grid->npf);
+  wf13 = astra::makeArray<Array3D<complex>>("Mhd::wf13", grid->npf);
+  wf22 = astra::makeArray<Array3D<complex>>("Mhd::wf22", grid->npf);
+  wf23 = astra::makeArray<Array3D<complex>>("Mhd::wf23", grid->npf);
+  wf33 = astra::makeArray<Array3D<complex>>("Mhd::wf33", grid->npf);
   npr=grid->npr_t;
   npf=grid->npf;
 

@@ -55,21 +55,21 @@ class Hydro : public RightHandSide<Array3D<complex>, Shear> {
 template <typename Shear>
 Hydro<Shear>::Hydro(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, Shear>(input, grid) {
   // Allocate all of the temporary arrays
-  vr1 = Array3D<real>("Hydro::vr1", grid->npr_t);
-  vr2 = Array3D<real>("Hydro::vr2", grid->npr_t);
-  vr3 = Array3D<real>("Hydro::vr3", grid->npr_t);
-  wr11 = Array3D<real>("Hydro::wr11", grid->npr_t);
-  wr12 = Array3D<real>("Hydro::wr12", grid->npr_t);
-  wr13 = Array3D<real>("Hydro::wr13", grid->npr_t);
-  wr22 = Array3D<real>("Hydro::wr22", grid->npr_t);
-  wr23 = Array3D<real>("Hydro::wr23", grid->npr_t);
-  wr33 = Array3D<real>("Hydro::wr33", grid->npr_t);
-  wf11 = Array3D<complex>("Hydro::wf11", grid->npf);
-  wf12 = Array3D<complex>("Hydro::wf12", grid->npf);
-  wf13 = Array3D<complex>("Hydro::wf13", grid->npf);
-  wf22 = Array3D<complex>("Hydro::wf22", grid->npf);
-  wf23 = Array3D<complex>("Hydro::wf23", grid->npf);
-  wf33 = Array3D<complex>("Hydro::wf33", grid->npf);
+  vr1 = astra::makeArray<Array3D<real>>("Hydro::vr1", grid->npr_t);
+  vr2 = astra::makeArray<Array3D<real>>("Hydro::vr2", grid->npr_t);
+  vr3 = astra::makeArray<Array3D<real>>("Hydro::vr3", grid->npr_t);
+  wr11 = astra::makeArray<Array3D<real>>("Hydro::wr11", grid->npr_t);
+  wr12 = astra::makeArray<Array3D<real>>("Hydro::wr12", grid->npr_t);
+  wr13 = astra::makeArray<Array3D<real>>("Hydro::wr13", grid->npr_t);
+  wr22 = astra::makeArray<Array3D<real>>("Hydro::wr22", grid->npr_t);
+  wr23 = astra::makeArray<Array3D<real>>("Hydro::wr23", grid->npr_t);
+  wr33 = astra::makeArray<Array3D<real>>("Hydro::wr33", grid->npr_t);
+  wf11 = astra::makeArray<Array3D<complex>>("Hydro::wf11", grid->npf);
+  wf12 = astra::makeArray<Array3D<complex>>("Hydro::wf12", grid->npf);
+  wf13 = astra::makeArray<Array3D<complex>>("Hydro::wf13", grid->npf);
+  wf22 = astra::makeArray<Array3D<complex>>("Hydro::wf22", grid->npf);
+  wf23 = astra::makeArray<Array3D<complex>>("Hydro::wf23", grid->npf);
+  wf33 = astra::makeArray<Array3D<complex>>("Hydro::wf33", grid->npf);
   npr=grid->npr_t;
   npf=grid->npf;
 

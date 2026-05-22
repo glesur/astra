@@ -6,6 +6,7 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
+#include <string>
 #include <Kokkos_Core.hpp>
 #include "initFlow.hpp"
 #include "input.hpp"
@@ -35,7 +36,19 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
   hfield.Reset();
   if(input->CheckEntry("InitFlow","python")>=0) {
     #ifdef WITH_PYTHON
-      astraPy.InitFlow(grid, hfield);
+      std::string functionName = input->Get<std::string>("InitFlow","python",0);
+      std::string realSpaceStr = input->GetOrSet<std::string>("InitFlow","python",1,"real");
+      bool realSpace = true;
+      if(realSpaceStr == "real") {
+        realSpace = true;
+      } else if(realSpaceStr == "fourier" || realSpaceStr == "complex") {
+        realSpace = false;
+      } else {
+        std::stringstream msg;
+        msg << "The second parameter of [InitFlow]:python should be either \"real\" \"fourier\" or \"complex\". I read \"" << realSpaceStr << "\".";
+        throw std::runtime_error(msg.str());
+      }
+      astraPy.InitFlow(input->Get<std::string>("InitFlow","python",0), grid, hfield, realSpace);
     #else
       throw std::runtime_error("Python initial conditions were required, but Python support is disabled \
                                 in this build of ASTRA. \n Please recompile with WITH_PYTHON=ON.");

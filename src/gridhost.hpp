@@ -19,9 +19,10 @@
 /// A minimal host image of the grid class
 ///////////////////////////////////////////
 
-class GridHost : Grid {
+class GridHost : public Grid {
  public:
   // Constructor from a Grid
+  GridHost() = default;
   explicit GridHost(Grid &grid) : Grid(grid) {
     // Create host mirror of the grid arrays
     for(int dir = 0 ; dir < 3 ; dir++) {

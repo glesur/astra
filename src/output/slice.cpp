@@ -122,7 +122,7 @@ void Slice::CheckForWrite(Field<Array3D<complex>> state, real time, Output *outp
       vtk = new Vtk(subGrid.get(), *input, time, filename,outputVtkDirectory);
     }
 
-    Array3D<real> realView("real_array",subGrid->parentGrid->npr);
+    Array3D<real> realView = astra::makeArray<Array3D<real>>("real_array", subGrid->parentGrid->npr);
 
     // Write the slice for each variable in the field
     for(auto const &it : state) {

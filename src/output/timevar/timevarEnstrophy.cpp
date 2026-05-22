@@ -38,9 +38,9 @@ void TimeVarEnstrophy::Write(const real t, Field<Array3D<complex>>& field, Field
     }
 
     // Compute curl of input field
-    Array3D<complex> wx1 ("w_x1", grid->npf);
-    Array3D<complex> wx2 ("w_x2", grid->npf);
-    Array3D<complex> wx3 ("w_x3", grid->npf);
+    Array3D<complex> wx1 = astra::makeArray<Array3D<complex>>("w_x1", grid->npf);
+    Array3D<complex> wx2 = astra::makeArray<Array3D<complex>>("w_x2", grid->npf);
+    Array3D<complex> wx3 = astra::makeArray<Array3D<complex>>("w_x3", grid->npf);
     auto kx1 = this->grid->kx[IDIR];
     auto kx2 = this->grid->kx[JDIR];
     auto kx3 = this->grid->kx[KDIR];
@@ -55,9 +55,9 @@ void TimeVarEnstrophy::Write(const real t, Field<Array3D<complex>>& field, Field
         wx3(i,j,k) = ikx * vx2(i,j,k) - iky * vx1(i,j,k);
     });
 
-    Array3D<real> wr1 ("w1_real", grid->npr);
-    Array3D<real> wr2 ("w2_real", grid->npr);
-    Array3D<real> wr3 ("w3_real", grid->npr);
+    Array3D<real> wr1 = astra::makeArray<Array3D<real>>("w1_real", grid->npr);
+    Array3D<real> wr2 = astra::makeArray<Array3D<real>>("w2_real", grid->npr);
+    Array3D<real> wr3 = astra::makeArray<Array3D<real>>("w3_real", grid->npr);
     // Transform to real space
     grid->fft->C2R(wx1, wr1);
     grid->fft->C2R(wx2, wr2);

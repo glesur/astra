@@ -41,8 +41,8 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
       this->npr_t[1] = npr_glob[0];
     #endif
 
-    tempReal = Array3D<real>("FFT temp real", npr);
-    tempComplex = Array3D<complex>("FFT temp complex", npf);
+    tempReal = astra::makeArray<Array3D<real>>("FFT temp real", npr);
+    tempComplex = astra::makeArray<Array3D<complex>>("FFT temp complex", npf);
 
     // Create the FFT plans
     this->r2cPlan = std::make_unique<PlanR2CType>(Kokkos::DefaultExecutionSpace(),

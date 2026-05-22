@@ -9,8 +9,20 @@
 #ifndef ARRAYS_HPP_
 #define ARRAYS_HPP_
 
+#include <string>
 #include <Kokkos_Core.hpp>
 #include "astra.hpp"
+
+namespace astra {
+  // A helper function to unpack an array of dimensions into a variadic argument list for Array construction
+  template <typename ViewType, typename T, std::size_t N>
+  ViewType makeArray(const std::string& label, const std::array<T, N>& dims) {
+    return std::apply(
+        [&label](auto... args) { return ViewType(label, args...); },
+        dims
+    );
+  }
+}
 
 template <typename T> using Array1D =
                             Kokkos::View<T*, Layout, Device>;

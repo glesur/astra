@@ -42,7 +42,7 @@ class Field {
       throw std::runtime_error(key+" already exists in the Field \""+name+"\"");
     }
     // allocate memory
-    map[key] = T("Field "+name+" "+key, this->np);
+    map[key] = astra::makeArray<T>("Field "+name+" "+key, this->np);
   }
 
   void Reset() {

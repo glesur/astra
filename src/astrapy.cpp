@@ -6,13 +6,6 @@
 // Licensed under CeCILL 2.1 License, see COPYING for more information
 // ***********************************************************************************
 
-// ***********************************************************************************
-// Idefix MHD astrophysical code
-// Copyright(C) Geoffroy R. J. Lesur <geoffroy.lesur@univ-grenoble-alpes.fr>
-// and other code contributors
-// Licensed under CeCILL 2.1 License, see COPYING for more information
-// ***********************************************************************************
-
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
 #include "astrapy.hpp"
@@ -28,6 +21,7 @@
 #include "field.hpp"
 #include "grid.hpp"
 #include "gridhost.hpp"
+#include "fft.hpp"
 
 
 namespace py = pybind11;
@@ -38,14 +32,13 @@ int AstraPy::ninstance = 0;
 namespace AstraPyTools {
 // Functions provided by Idefix in AstraPy for user convenience
 py::array_t<real, py::array::c_style> GatherAstraArray(ArrayHost3D<real> in,
-                                                        DataBlockHost dataHost,
+                                                        GridHost gridHost,
                                                         bool keepBoundaries = true,
                                                         bool broadcast = true) {
   astra::pushRegion("AstraPyTools::GatherAstraArray");
   // To be done
   throw std::runtime_error("AstraPyTools::GatherAstraArray is not implemented yet");
   astra::popRegion();
-  return pyOut;
 }
 }// namespace AstraPyTools
 
@@ -54,12 +47,13 @@ py::array_t<real, py::array::c_style> GatherAstraArray(ArrayHost3D<real> in,
  * **********************************/
 
 PYBIND11_EMBEDDED_MODULE(astrapy, m) {
+  m.doc() = "AstraPy: Python interface for ASTRA spectral code";
   py::class_<GridHost>(m, "GridHost")
     .def(py::init<>())
     .def_readwrite("x", &GridHost::x)
     .def_readwrite("x_glob", &GridHost::x_glob)
     .def_readwrite("kx", &GridHost::kx)
-    .def_readwrite("kx_glob", &GridHost::kx_glob);
+    .def_readwrite("kx_glob", &GridHost::kx_glob)
     .def_readwrite("dx", &GridHost::dx)
     .def_readwrite("xbeg", &GridHost::xbeg_glob)
     .def_readwrite("xend", &GridHost::xend_glob)
@@ -70,21 +64,20 @@ PYBIND11_EMBEDDED_MODULE(astrapy, m) {
     .def_readwrite("npf_glob", &GridHost::npf_glob)
     .def_readwrite("npf", &GridHost::npf);
 
+      m.attr("IDIR") = 0;
+      m.attr("JDIR") = 1;
+      m.attr("KDIR") = 2;
 
+      m.attr("prank") = astra::prank;
+      m.attr("psize") = astra::psize;
 
-    m.attr("IDIR") = IDIR;
-    m.attr("JDIR") = JDIR;
-    m.attr("KDIR") = KDIR;
-
-    m.attr("prank") = astra::prank;
-    m.attr("psize") = astra::psize;
-
+/*
     m.def("GatherAstraArray",&AstraPyTools::GatherAstraArray,
                                py::arg("in"),
                                py::arg("data"),
                                py::arg("keepBoundaries") = true,
                                py::arg("broadcast") = true,
-                               "Gather arrays from MPI domain decomposition");
+                               "Gather arrays from MPI domain decomposition");*/
 }
 
 
@@ -100,7 +93,7 @@ void AstraPy::CallScript(std::string scriptName, std::string funcName, Ts... arg
                 << "in file \"" << scriptName << ".py\" function \"" << funcName << "\":"
                 << std::endl
                 << e.what() << std::endl;
-    IDEFIX_ERROR(message);
+    throw std::runtime_error(message.str());
   }
   astra::popRegion();
 }
@@ -122,58 +115,63 @@ AstraPy::AstraPy(Input &input) {
     }
     this->scriptFilename = input.Get<std::string>("Python","script",0);
     if(scriptFilename.substr(scriptFilename.length() - 3, 3).compare(".py")==0) {
-      IDEFIX_ERROR("You should not include the python script .py extension in your input file");
-    }
-    if(input.CheckEntry("Python","output_function")>0) {
-      this->haveOutput = true;
-      this->outputFunctionName = input.Get<std::string>("Python","output_function",0);
-    }
-    if(input.CheckEntry("Python","initflow_function")>0) {
-      this->haveInitflow = true;
-      this->initflowFunctionName = input.Get<std::string>("Python","initflow_function",0);
+      throw std::runtime_error("You should not include the python script .py extension in your input file");
     }
   }
 }
 
-void AstraPy::Output(Grid *grid, Field<Array3D<complex>> &field, real time, int n) {
+void AstraPy::Output(std::string outputFunctionName, Grid *grid, Field<Array3D<complex>> &field, real time, int n) {
   astra::pushRegion("AstraPy::Output");
   if(!this->isActive) {
-    IDEFIX_ERROR("Python Outputs requires the [python] block to be defined in your input file.");
+    throw std::runtime_error("Python Outputs requires the [python] block to be defined in your input file.");
   }
-  if(!this->haveOutput) {
-    IDEFIX_ERROR("No python output function has been defined "
-                  "in your input file [python]:output_function");
-  }
+
   GridHost gridHost(*grid);
 
-  this->CallScript(this->scriptFilename,this->outputFunctionName, gridHost, time, n);
+  this->CallScript(this->scriptFilename,outputFunctionName, gridHost, time, n);
   astra::popRegion();
 }
 
-void AstraPy::InitFlow(Grid *grid, Field<ArrayHost3D<complex>> &field) {
+void AstraPy::InitFlow(std::string initflowFunctionName, Grid *grid, Field<ArrayHost3D<complex>> &field, bool realSpace) {
   astra::pushRegion("AstraPy::InitFlow");
   if(!this->isActive) {
-    IDEFIX_ERROR("Python Initflow requires the [python] block to be defined in your input file.");
-  }
-  if(!this->haveInitflow) {
-    IDEFIX_ERROR("No python initflow function has been defined "
-                  "in your input file [python]:initflow_function");
+    throw std::runtime_error("Python Initflow requires the [python] block to be defined in your input file.");
   }
 
   GridHost gridHost(*grid);
 
-  // Make a map-host copy of the field data to pass to Python
-  std::map<std::string, ArrayHost3D<complex>> fieldHost;
+  if(realSpace) {
+    // Fourier-transform the field to real space on host, and store in a map
+    std::map<std::string, ArrayHost3D<real>> fieldReal;
+    for(auto const& [name, view] : field) {
+      // Fourier transform each view
+      ArrayHost3D<real> hostReal = astra::makeArray<ArrayHost3D<real>>("hostView", grid->npr);
+      grid->fft->C2R_Host(view, hostReal);
+      // Store in the map
+      fieldReal[name] = hostReal;
+    }
 
-  for(auto const& [name, view] : field) {
-    fieldHost[name] = view;
+    // Call the Python function, passing the grid and field data
+    this->CallScript(this->scriptFilename,initflowFunctionName,gridHost, fieldReal);
+
+    //Transform back
+    for(auto const& [name, realView] : fieldReal) {
+      grid->fft->R2C_Host(realView, field[name]);
+    }
+  } else {
+    // Fourier-transform the field to real space on host, and store in a map
+    std::map<std::string, ArrayHost3D<complex>> mapField;
+    for(auto const& [name, view] : field) {
+      // Store in the map
+      mapField[name] = view;
+    }
+
+    // Call the Python function, passing the grid and field data
+    this->CallScript(this->scriptFilename,initflowFunctionName,gridHost, mapField);
+
+
+    // nothing to be done to transform back since the Python function directly modifies the complex field in Fourier space
   }
-
-  // Call the Python function, passing the grid and field data
-  this->CallScript(this->scriptFilename,this->initflowFunctionName,gridHost, fieldHost);
-
-  // Copy back the field data from host to device
-
 
   astra::popRegion();
 }
@@ -183,16 +181,6 @@ void AstraPy::ShowConfig() {
     astra::cout << "AstraPy: DISABLED." << std::endl;
   } else {
     astra::cout << "AstraPy: ENABLED." << std::endl;
-    if(haveOutput) {
-      astra::cout << "AstraPy: output function ENABLED." << std::endl;
-    } else {
-      astra::cout << "AstraPy: output function DISABLED." << std::endl;
-    }
-    if(haveInitflow) {
-      astra::cout << "AstraPy: initflow function ENABLED." << std::endl;
-    } else {
-      astra::cout << "AstraPy: initflow function DISABLED." << std::endl;
-    }
   }
 }
 
