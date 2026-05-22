@@ -66,8 +66,10 @@ int main( int argc, char* argv[] ) {
     input.PrintLogo();
 
     Grid grid(input);
+    #ifdef WITH_PYTHON
+      AstraPy astraPy(input);
+    #endif
     InitFlow initFlow(input, &grid);
-
 
     // Show configuration after initialisation
     input.ShowConfig();

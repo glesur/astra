@@ -122,7 +122,7 @@ void Grid::InitGrid() {
     });
   }
   // Nothing to do here for now
-  this->fft = std::make_unique<FFT>(npr_glob, npf_glob);
+  this->fft = std::make_shared<FFT>(npr_glob, npf_glob);
 
   astra::popRegion();
 }

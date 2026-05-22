@@ -17,7 +17,11 @@
 #include "fft.hpp"
 #include "checkNan.hpp"
 
-InitFlow::InitFlow(Input &input, Grid *grid) : grid(grid), input(&input) {
+InitFlow::InitFlow(Input &input, Grid *grid) : grid(grid), input(&input)
+#ifdef WITH_PYTHON
+  , astraPy(input)
+#endif
+{
   for(int dir = 0 ; dir < 3 ; dir++) {
     kx[dir] = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),grid->kx[dir]);
     x[dir] =  Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),grid->x[dir]);
@@ -29,7 +33,14 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
   // Make a host copy of the field
   Field<ArrayHost3D<complex>> hfield("hfield", field);
   hfield.Reset();
-
+  if(input->CheckEntry("InitFlow","python")>=0) {
+    #ifdef WITH_PYTHON
+      astraPy.InitFlow(grid, hfield);
+    #else
+      throw std::runtime_error("Python initial conditions were required, but Python support is disabled \
+                                in this build of ASTRA. \n Please recompile with WITH_PYTHON=ON.");
+    #endif
+  }
   if(input->CheckEntry("InitFlow","shear_layer")>=0) {
     ShearLayer(hfield);
   }

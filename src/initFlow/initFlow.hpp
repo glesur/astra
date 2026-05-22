@@ -12,6 +12,9 @@
 
 #include "input.hpp"
 #include "field.hpp"
+#ifdef WITH_PYTHON
+  #include "astrapy.hpp"
+#endif
 
 class Grid;
 
@@ -36,6 +39,10 @@ class InitFlow {
 
   std::array<ArrayHost1D<real>,3> kx;
   std::array<ArrayHost1D<real>,3> x;
+
+  #ifdef WITH_PYTHON
+    AstraPy astraPy;
+  #endif
 };
 
 #endif // INITFLOW_INITFLOW_HPP_

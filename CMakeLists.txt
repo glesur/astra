@@ -11,6 +11,7 @@ project (Astra VERSION 0.1.00)
 set(Astra_LOOP_PATTERN "Default" CACHE STRING "Loop pattern for astra_for")
 option(Astra_DEBUG "Enable Astra debug features (makes the code very slow)" OFF)
 option(Astra_MPI "enable Message Passing Interface parallelisation" OFF)
+option(Astra_PYTHON "Enable python bindings (requires pybind11)" OFF)
 
 # load git revision tools
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
@@ -29,6 +30,30 @@ add_subdirectory(src/kokkos-fft)
 
 add_executable(astra)
 add_subdirectory(src build)
+
+if(Astra_PYTHON)
+  add_compile_definitions("WITH_PYTHON")
+  find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+
+  execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -m pybind11 --cmakedir
+    OUTPUT_VARIABLE PYBIND11_CMAKE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+
+  list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_CMAKE_DIR}")
+  if (NOT DEFINED Python_FIND_FRAMEWORK)
+    set(Python_FIND_FRAMEWORK "LAST") # Use Apple's python only at last resort on Macos
+  endif ()
+  set(PYBIND11_FINDPYTHON ON CACHE BOOL "Astra requires python" FORCE)
+  find_package(pybind11 REQUIRED)
+  target_link_libraries(astra pybind11::embed)
+  target_sources(astra
+    PUBLIC src/astrapy.cpp
+    PUBLIC src/astrapy.hpp
+  )
+endif()
 
 #update version.hpp if possible
 git_describe(GIT_SHA1)

@@ -37,8 +37,6 @@ using DumpFileHandler = FILE*;
 
 class Grid;
 
-
-
 class Dump {
  public:
   Dump(Grid *grid, std::string filename);

@@ -18,14 +18,6 @@
 #include "input.hpp"
 
 class FFT;
-//////////////////////////////////////////////////////////////////////////////////////////////////
-/// The Grid class is designed to store the grid data of the FULL computational domain on the Host
-/// (i.e. of all of the MPI processes running).
-/// The domain decomposition is performed by the child instances of the DataBlock class, which are
-/// built on a Grid instance, using the cartesian MPI communicator of that Grid. Note that all of
-/// the arrays of a Grid are on the device. If a Host access is needed,
-/// it is recommended to use a GridHost instance from this Grid, and sync it.
-/////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Grid {
  public:
@@ -58,7 +50,7 @@ class Grid {
   Grid();
   ~Grid();
 
-  std::unique_ptr<FFT> fft;  ///< FFT wrapper
+  std::shared_ptr<FFT> fft;  ///< FFT wrapper
 
 #ifdef WITH_MPI
   MPI_Comm comm; ///< MPI communicator for the subgrid
