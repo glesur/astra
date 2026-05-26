@@ -17,7 +17,9 @@
 #include "input.hpp"
 #include "field.hpp"
 #include "linearshear.hpp"
-
+#ifdef WITH_PYTHON
+  #include "astrapy.hpp"
+#endif
 class TimeVarOutput;
 class Slice;
 class Output {
@@ -75,5 +77,15 @@ class Output {
   // Timevar output
   real lastTimevar{0.0};
   real timevarStep{-1.0};
+
+  // Python outputs
+  real lastPythonOutput{0.0};
+  real outputPythonStep{-1.0};
+  int nPythonOutput{0};
+  std::string pythonFunctionName;
+  bool pythonOutputIsReal{true};
+  #ifdef WITH_PYTHON
+  AstraPy astraPy;
+  #endif
 };
 #endif// OUTPUT_OUTPUT_HPP_

@@ -20,10 +20,17 @@
 #include "loop.hpp"
 #include "linearshear.hpp"
 #include "slice.hpp"
+#ifdef WITH_PYTHON
+  #include "astrapy.hpp"
+#endif
 
 Output::~Output() = default;    // Destructor needed for unique_ptr of timeVarOutput
 
-Output::Output(Input &input, Grid &grid) {
+Output::Output(Input &input, Grid &grid)
+#ifdef WITH_PYTHON
+  : astraPy(input)
+#endif
+  {
   this->grid = &grid;
 
   // Initialise vtk output variables
@@ -88,13 +95,39 @@ Output::Output(Input &input, Grid &grid) {
     this->linearShear = std::make_unique<LinearShear>(input, &grid);
   }
 
+  // Whether we want python output
+  outputPythonStep = input.GetOrSet<real>("Output","python",0,-1);
+  lastPythonOutput = -outputPythonStep; // so that we output at time 0.0
+  nPythonOutput = 0;
+
+  if(outputPythonStep>=0.0) {
+    #ifndef WITH_PYTHON
+      astra::cout << "Output: WARNING!! Python output requested but Python support is disabled from CMake." << std::endl;
+      astra::cout << "Output: WARNING!! Python output will be ignored." << std::endl;
+    #else
+      this->pythonFunctionName = input.Get<std::string>("Output","python",1);
+      std::string realSpaceStr = input.GetOrSet<std::string>("Output","python",2,"real");
+      if(realSpaceStr == "real") {
+        this->pythonOutputIsReal = true;
+      } else if(realSpaceStr == "fourier" || realSpaceStr == "complex") {
+        this->pythonOutputIsReal = false;
+      } else {
+        std::stringstream msg;
+        msg << "The third parameter of [Output]:python should be either \"real\" \"fourier\" or \"complex\". I read \""
+            << realSpaceStr << "\".";
+        throw std::runtime_error(msg.str());
+      }
+    #endif // WITH_PYTHON
+  }
   // Declare what we need as dump variables for restarts
 
   DumpVariables::Register("lastVtkOutput", lastVtkOutput);
   DumpVariables::Register("lastDmpOutput", lastDmpOutput);
   DumpVariables::Register("lastTimevar", lastTimevar);
+  DumpVariables::Register("lastPythonOutput", lastPythonOutput);
   DumpVariables::Register("nvtk", nvtk);
   DumpVariables::Register("ndmp", ndmp);
+  DumpVariables::Register("nPythonOutput", nPythonOutput);
 }
 
 void Output::RestartFromDump(Input &input) {
@@ -159,6 +192,13 @@ void Output::CheckForOutput(Input &input, Field<Array3D<complex>> state, real ti
   if(outputDmpStep>=0.0 && time-lastDmpOutput>=outputDmpStep) {
     ForceDump(time);
   }
+  #ifdef WITH_PYTHON
+    if(outputPythonStep>=0.0 && time-lastPythonOutput>=outputPythonStep) {
+      this->astraPy.Output(this->pythonFunctionName, grid, state, time, nPythonOutput);
+      nPythonOutput++;
+      lastPythonOutput += outputPythonStep;
+    }
+  #endif
 }
 
 void Output::ForceDump(real time) {

@@ -33,7 +33,7 @@ class AstraPy {
  public:
   explicit AstraPy(Input&);
   ~AstraPy();
-  void Output(std::string, Grid *, Field<Array3D<complex>> &, real, int );
+  void Output(std::string, Grid *, Field<Array3D<complex>> &, real, int, bool realSpace = true);
   void InitFlow(std::string, Grid *, Field<ArrayHost3D<complex>> &, bool realSpace = true);
   void ShowConfig();
   bool isActive{false};

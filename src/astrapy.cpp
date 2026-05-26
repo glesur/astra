@@ -12,6 +12,7 @@
 #include <pybind11/embed.h> // everything needed for embedding
 #include <pybind11/numpy.h> // for numpy arrays
 #include <pybind11/stl.h>   // For STL vectors and containers
+#include <iomanip>
 #include <map>
 #include <string>
 #include <vector>
@@ -120,20 +121,46 @@ AstraPy::AstraPy(Input &input) {
   }
 }
 
-void AstraPy::Output(std::string outputFunctionName, Grid *grid, Field<Array3D<complex>> &field, real time, int n) {
+void AstraPy::Output(std::string outputFunctionName, Grid *grid, Field<Array3D<complex>> &field, real time, int n, bool realSpace) {
   astra::pushRegion("AstraPy::Output");
+  astra::cout << "Astrapy: Python output n " << n << "..." << std::flush;
   if(!this->isActive) {
     throw std::runtime_error("Python Outputs requires the [python] block to be defined in your input file.");
   }
 
   GridHost gridHost(*grid);
 
-  this->CallScript(this->scriptFilename,outputFunctionName, gridHost, time, n);
+  if(realSpace) {
+    // Fourier-transform the field to real space on host, and store in a map
+    std::map<std::string, ArrayHost3D<real>> mapFieldReal;
+    for(auto const& [name, view] : field) {
+      // Fourier transform each view
+      ArrayHost3D<real> hostReal = astra::makeArray<ArrayHost3D<real>>("hostView", grid->npr);
+      grid->fft->C2R_Host(view, hostReal);
+      // Store in the map
+      mapFieldReal[name] = hostReal;
+    }
+
+    // todo(lesurg): remap the flow
+    // Call the Python function, passing the grid and field data
+    this->CallScript(this->scriptFilename,outputFunctionName, gridHost, mapFieldReal, time, n);
+  } else {
+    // copy the complex field in the map
+    std::map<std::string, ArrayHost3D<complex>> mapFieldComplex;
+    for(auto const& [name, view] : field) {
+      // Store in the map
+      mapFieldComplex[name] = view;
+    }
+
+    this->CallScript(this->scriptFilename,outputFunctionName, gridHost, mapFieldComplex, time, n);
+  }
+  astra::cout << "done." << std::endl;
   astra::popRegion();
 }
 
 void AstraPy::InitFlow(std::string initflowFunctionName, Grid *grid, Field<ArrayHost3D<complex>> &field, bool realSpace) {
   astra::pushRegion("AstraPy::InitFlow");
+  astra::cout << "Astrapy: calling python initflow function..." << std::flush;
   if(!this->isActive) {
     throw std::runtime_error("Python Initflow requires the [python] block to be defined in your input file.");
   }
@@ -142,37 +169,35 @@ void AstraPy::InitFlow(std::string initflowFunctionName, Grid *grid, Field<Array
 
   if(realSpace) {
     // Fourier-transform the field to real space on host, and store in a map
-    std::map<std::string, ArrayHost3D<real>> fieldReal;
+    std::map<std::string, ArrayHost3D<real>> mapFieldReal;
     for(auto const& [name, view] : field) {
       // Fourier transform each view
       ArrayHost3D<real> hostReal = astra::makeArray<ArrayHost3D<real>>("hostView", grid->npr);
       grid->fft->C2R_Host(view, hostReal);
       // Store in the map
-      fieldReal[name] = hostReal;
+      mapFieldReal[name] = hostReal;
     }
 
     // Call the Python function, passing the grid and field data
-    this->CallScript(this->scriptFilename,initflowFunctionName,gridHost, fieldReal);
+    this->CallScript(this->scriptFilename,initflowFunctionName,gridHost, mapFieldReal);
 
     //Transform back
-    for(auto const& [name, realView] : fieldReal) {
+    for(auto const& [name, realView] : mapFieldReal) {
       grid->fft->R2C_Host(realView, field[name]);
     }
   } else {
     // Fourier-transform the field to real space on host, and store in a map
-    std::map<std::string, ArrayHost3D<complex>> mapField;
+    std::map<std::string, ArrayHost3D<complex>> mapFieldComplex;
     for(auto const& [name, view] : field) {
       // Store in the map
-      mapField[name] = view;
+      mapFieldComplex[name] = view;
     }
 
     // Call the Python function, passing the grid and field data
-    this->CallScript(this->scriptFilename,initflowFunctionName,gridHost, mapField);
-
-
+    this->CallScript(this->scriptFilename,initflowFunctionName,gridHost, mapFieldComplex);
     // nothing to be done to transform back since the Python function directly modifies the complex field in Fourier space
   }
-
+  astra::cout << "done." << std::endl;
   astra::popRegion();
 }
 
