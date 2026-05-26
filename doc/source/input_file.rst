@@ -51,14 +51,16 @@ Depending on the choice of the right-hand side, other entries may be required.
 | ``rhs`` value              |  Comment                                              |
 +============================+=======================================================+
 | ``advection``              | An homogenous advection rhs, used for testing         |
-+----------------------------+-------------------------+-----------------------------+
++----------------------------+-------------------------------------------------------+
 | ``hydro``                  | Incompressible Navier Stokes equations                |
-+----------------------------+-------------------------+-----------------------------+
++----------------------------+-------------------------------------------------------+
+| ``mhd  ``                  | Incompressible magnetohydrodynamocs equation          |
++----------------------------+-------------------------------------------------------+
 
 Depending on the choice of the right-hand side, the following entries may be required in the physics section:
 
 ``advection`` right hand side
-+++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 +----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 |  Entry name    | Parameter type     | Comment                                                                                                   |
@@ -69,16 +71,46 @@ Depending on the choice of the right-hand side, the following entries may be req
 +----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 
 ``hydro`` right hand side
-+++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 |  Entry name     | Parameter type     | Comment                                                                                                   |
 +=================+====================+===========================================================================================================+
-| nu              | float              | kinematic viscosity                                                                                       |
+| viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
+|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta ^n v (default 1)        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: `linear``                                            |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+
+
+
+``mhd`` right hand side
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+|  Entry name     | Parameter type     | Comment                                                                                                   |
++=================+====================+===========================================================================================================+
+| viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
+|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta ^n v (default 1)        |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| resistivity     | float, (int)       | | 1st parameter: kinematic resistivity                                                                    |
+|                 |                    | | 2nd parameter (optional): order of the resistivity term *n* in :math:`=\nu \Delta ^n B (default 1)      |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: `linear``                                            |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 
 
@@ -107,6 +139,28 @@ The ``InitFlow`` section defines the initial conditions of the flow. Several ent
 +------------------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | mean_flow              | float, float, float|  (optional) Create a mean flow. The three parameters are the three components of the mean velocity        |
 +------------------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| python                 | string, (string)   | | 1st parameter: Name of the Python function to call to initialize the flow in the script provided in the |
+|                        |                    | | [python] block of the input file.                   ,                                                   |
+|                        |                    | | 2nd parameter (optional): "real" or "fourier", to specify whether the field passed to the               |
+|                        |                    | | Python function is in real space or Fourier space. Default is "real".                                   |
++------------------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+
+``Python`` section
+--------------------
+The python section defines how Astra interacts with the Python interpreter. Usually, Astra interacts
+by calling dedicated python functions from a script provided in this section. The script is assumed
+to be localised in the execution directory. The name of the function called inside the script are specified
+in the dedicated items in the ``Output`` and ``InitFlow`` sections of the input file (see above).
+The definition of the entries in the Python section is as follows:
+
+.. note:: This functionality requires `Astra_PYTHON` to be enabled during the code configuration with Cmake.
+
++--------------------+-------------------------------------------------------------+
+| Entry name         |  Comment                                                    |
++====================+=============================================================+
+| ``script``         | filename of the python script, without the ".py" extension. |
++--------------------+-------------------------------------------------------------+
+
 
 ``Output`` section
 --------------------
@@ -140,4 +194,10 @@ The ``InitFlow`` section defines the initial conditions of the flow. Several ent
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | vtk_dir        | string                  | | directory for vtk file outputs. Default to "./"                                                |
 |                |                         | | The directory is automatically created if it does not exist.                                   |
++----------------+-------------------------+--------------------------------------------------------------------------------------------------+
+| python         | float, string, (string) | | 1st parameeter: Time interval between python outputs, in code units.                           |
+|                |                         | | 2nd parameter: Name of the Python function to call for output in the script provided in the    |
+|                |                         | | [python] block of the input file.                   ,                                          |
+|                |                         | | 3rd parameter (optional): "real" or "fourier", to specify whether the field passed to the      |
+|                |                         | | Python function is in real space or Fourier space. Default is "real".                          |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+

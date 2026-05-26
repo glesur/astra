@@ -14,7 +14,6 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-import textwrap
 
 # -- Project information -----------------------------------------------------
 
@@ -35,9 +34,9 @@ release = '1.0.0'
 extensions = [
     "sphinx_rtd_theme",
     'sphinx_git',
-    "breathe",
-    "exhale",
-    "m2r2",
+#    "breathe",
+#    "exhale",
+#    "m2r2",
     "sphinx_copybutton"
     ]
 
@@ -73,31 +72,32 @@ def setup(app):
 # Breathe/Exhale options
 
 # Setup the breathe extension
-breathe_projects = {
-    "Astra": "./xml"
-}
+#breathe_projects = {
+#    "Astra": "./xml"
+##}
 breathe_default_project = "Astra"
 
 # Setup the exhale extension
-exhale_args = {
+#exhale_args = {
     # These arguments are required
-    "containmentFolder":     "./api",
-    "rootFileName":          "library_root.rst",
-    "rootFileTitle":         "Astra API",
+#    "containmentFolder":     "./api",
+#    "rootFileName":          "library_root.rst",
+#    "rootFileTitle":         "Astra API",
     # Suggested optional arguments
-    "createTreeView":        False,
+#    "createTreeView":        False,
     # TIP: if using the sphinx-bootstrap-theme, you need
     # "treeViewIsBootstrap": True,
-    "doxygenStripFromPath": "../../src",
-    "exhaleExecutesDoxygen": True,
-    "exhaleDoxygenStdin":    textwrap.dedent('''
-            INPUT = ../../src
-            EXCLUDE = ../../src/kokkos
-            ''')
-}
+#    "doxygenStripFromPath": "../../src",
+#    "exhaleExecutesDoxygen": True,
+#    "exhaleDoxygenStdin":    textwrap.dedent('''
+#            INPUT = ../../src
+#            EXCLUDE = ../../src/kokkos
+#            EXCLUDE = ../../src/kokkos-fft
+#            ''')
+#}
 
 # Tell sphinx what the primary language being documented is.
-primary_domain = 'cpp'
+#primary_domain = 'cpp'
 
 # Tell sphinx what the pygments highlight language should be.
-highlight_language = 'cpp'
+#highlight_language = 'cpp'

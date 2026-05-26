@@ -89,16 +89,7 @@ The Astra collaboration benefited from funding from the “Programme National de
    :maxdepth: 3
    :caption: Contents:
 
-   quickstart
-   reference
-   modules
-   programmingguide
-   testing
-   performances
-   kokkos
-   contributing
-   faq
-   changelog
+   input_file
 
    api/library_root
 
