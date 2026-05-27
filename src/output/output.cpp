@@ -194,7 +194,7 @@ void Output::CheckForOutput(Input &input, Field<Array3D<complex>> state, real ti
   }
   #ifdef WITH_PYTHON
     if(outputPythonStep>=0.0 && time-lastPythonOutput>=outputPythonStep) {
-      this->astraPy.Output(this->pythonFunctionName, grid, state, time, nPythonOutput);
+      this->astraPy.Output(this->pythonFunctionName, grid, state, time, nPythonOutput, pythonOutputIsReal);
       nPythonOutput++;
       lastPythonOutput += outputPythonStep;
     }
