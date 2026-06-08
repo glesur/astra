@@ -60,3 +60,9 @@ void DumpVariables::FetchFromDump(Dump *dump) {
     dump->Fetch(pair.first, *(pair.second));
   }
 }
+
+void DumpVariables::Release() {
+  fields.clear();
+  reals.clear();
+  ints.clear();
+}

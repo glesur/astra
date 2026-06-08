@@ -25,6 +25,8 @@ class DumpVariables {
   static void StoreToDump(Dump *dump);
   static void FetchFromDump(Dump *dump);
 
+  static void Release();
+
  private:
   static std::map<std::string, Field<Array3D<complex>>> fields;
   static std::map<std::string, real*> reals;

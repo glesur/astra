@@ -158,7 +158,7 @@ int main( int argc, char* argv[] ) {
     LogFinished(grid, input, timer, timeIntegrator.get());
     // Show profiler output
     astra::prof.Show();
-
+    DumpVariables::Release();  // Release dump variables allow array dealocation before finalization of Kokkos
     astra::cout << "Main: Job completed successfully." << std::endl;
   }
   Kokkos::finalize();
