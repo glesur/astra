@@ -34,7 +34,7 @@ Output::Output(Input &input, Grid &grid)
   this->grid = &grid;
 
   // Initialise vtk output variables
-  outputVtkStep = input.GetOrSet<real>("Output","vtk",0,0.1);
+  outputVtkStep = input.GetOrSet<real>("Output","vtk",0,-1);
   lastVtkOutput = -outputVtkStep; // so that we output at time 0.0
 
   if(input.CheckEntry("Output","vtk_dir")>=0) {
