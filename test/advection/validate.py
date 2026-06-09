@@ -10,7 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
-import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../pytools/"))
 from vtk_io import readVTK
 import inifix
@@ -43,7 +42,7 @@ if(not args.noplot):
   plt.rc('font', family='serif')
   plt.rc('font', size=16)
   plt.close('all')
-  
+
   v0=0
   v1=0
   x=0
