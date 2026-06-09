@@ -61,7 +61,6 @@ class VTKDataset(object):
         assert line.startswith("DATASET ")
         self._dataset_type = line.split()[1]
 
-        print("Dataset type: %s" % self._dataset_type)
         self.geometry = geometry
         if self._dataset_type == "STRUCTURED_POINTS":
             self.geometry = "cartesian" # only possible geometry for this dataset type
@@ -135,7 +134,6 @@ class VTKDataset(object):
             self.zl = self.z
             s = fh.readline()  # Extra line feed added by astra
             s = fh.readline()  # POINT_DATA NXNYNZ
-            print(repr(s))
             s = fh.readline()  # Extra line feed added by astra
         elif self.geometry in ("cartesian", "cylindrical"):
             # CARTESIAN geometry with RECTILINEAR_GRID
@@ -339,7 +337,6 @@ class VTKDataset(object):
             s = (
                 fh.readline()
             )  # SCALARS/VECTORS name data_type (ex: SCALARS imagedata unsigned_char)
-            print(repr(s))
             if len(s) < 2:  # leave if end of file
                 break
             slist = s.split()
