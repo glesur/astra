@@ -65,6 +65,7 @@ class Input {
   int maxCycles{-1};                   //< whether we should perform a maximum number of cycles
 
   bool forceNoWrite{false};           //< explicitely disable all writes to disk
+  bool testRequested{false};          //< are we running in test mode (for unit tests) ?
 
  private:
   std::string inputFileName;

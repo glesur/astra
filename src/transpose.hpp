@@ -185,11 +185,11 @@ void Transpose<T>::Apply(const Array3D<T>& in, Array3D<T>& out) {
 template <typename T>
 void Transpose<T>::Test() {
   astra::cout << "Testing FFT Transpose" << std::endl;
-  const int64_t n = astra::psize; // number of MPI processes
-  const int64_t rank = astra::prank; // rank of the current process
-  const int64_t ni = 3; // Size of local block
-  const int64_t nj = 4;
-  const int64_t nk = 9;
+  const int n = astra::psize; // number of MPI processes
+  const int rank = astra::prank; // rank of the current process
+  const int ni = 3; // Size of local block
+  const int nj = 4;
+  const int nk = 9;
 
 
   Transpose<T> myTranspose({ni,nj*n,nk});

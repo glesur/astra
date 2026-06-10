@@ -64,55 +64,54 @@ Input::Input(int argc, char* argv[] ) {
 
   file.open(this->inputFileName);
 
-  if(!file) {
-    msg << "Input: cannot open input file " << this->inputFileName;
-    throw std::runtime_error(msg.str());
-  }
+  if(file) {
+    while(std::getline(file, lineWithComments)) {
+      line = lineWithComments.substr(0, lineWithComments.find("#",0));
+      if (line.empty()) continue;     // skip blank line
+      firstChar = line.find_first_not_of(" ");
+      if (firstChar == std::string::npos) continue;      // line is all white space
 
-  while(std::getline(file, lineWithComments)) {
-    line = lineWithComments.substr(0, lineWithComments.find("#",0));
-    if (line.empty()) continue;     // skip blank line
-    firstChar = line.find_first_not_of(" ");
-    if (firstChar == std::string::npos) continue;      // line is all white space
+      if (line.compare(firstChar, 1, "[") == 0) {        // a new block
+        firstChar++;
+        lastChar = (line.find_first_of("]", firstChar));
 
-    if (line.compare(firstChar, 1, "[") == 0) {        // a new block
-      firstChar++;
-      lastChar = (line.find_first_of("]", firstChar));
+        if (lastChar == std::string::npos) {
+          msg << "Block name '" << blockName << "' in file '"
+              << this->inputFileName << "' not properly ended";
+          throw std::invalid_argument(msg.str());
+        }
+        // Check if previous block was empty
+        if(haveBlock && nParameters == 0) {
+          throw std::invalid_argument(blockName+std::string(" block is empty in "+inputFileName));
+          inputParameters[blockName]["!!empty!!"].push_back("!!empty!!");
+        }
+        blockName.assign(line, firstChar, lastChar-1);
+        haveBlock = true;
+        nParameters = 0;
 
-      if (lastChar == std::string::npos) {
-        msg << "Block name '" << blockName << "' in file '"
-            << this->inputFileName << "' not properly ended";
+        continue;   // Go to next line
+      }   // New block
+
+      // At this point, we should have a parameter set in the line
+      if(haveBlock == false) {
+        msg << "Input file '" << this->inputFileName
+            << "' must specify a block name before the first parameter";
         throw std::invalid_argument(msg.str());
       }
-      // Check if previous block was empty
-      if(haveBlock && nParameters == 0) {
-        throw std::invalid_argument(blockName+std::string(" block is empty in "+inputFileName));
-        inputParameters[blockName]["!!empty!!"].push_back("!!empty!!");
+
+      std::stringstream streamline(line);
+      // Store the name of the parameter
+      streamline >> paramName;
+      nParameters++;
+      // Store the parameters in parameter block
+      while(streamline >> paramValue) {
+        inputParameters[blockName][paramName].push_back(paramValue);
       }
-      blockName.assign(line, firstChar, lastChar-1);
-      haveBlock = true;
-      nParameters = 0;
-
-      continue;   // Go to next line
-    }   // New block
-
-    // At this point, we should have a parameter set in the line
-    if(haveBlock == false) {
-      msg << "Input file '" << this->inputFileName
-          << "' must specify a block name before the first parameter";
-      throw std::invalid_argument(msg.str());
     }
-
-    std::stringstream streamline(line);
-    // Store the name of the parameter
-    streamline >> paramName;
-    nParameters++;
-    // Store the parameters in parameter block
-    while(streamline >> paramValue) {
-      inputParameters[blockName][paramName].push_back(paramValue);
-    }
+    file.close();
+  } else {
+    astra::cout << "Input: WARNING!!input file " << this->inputFileName << " not found. Using default parameters." << std::endl;
   }
-  file.close();
 }
 
 // This routine parse command line options
@@ -173,6 +172,8 @@ void Input::ParseCommandLine(int argc, char **argv) {
       enableLogs = false;
     } else if(std::string(argv[i]) == "-nolog") {
       enableLogs = false;
+    } else if(std::string(argv[i]) == "-test") {
+      this->testRequested = true;
     } else if(std::string(argv[i]) == "-profile") {
       astra::prof.EnablePerformanceProfiling();
     } else if(std::string(argv[i]) == "-Werror") {
@@ -343,6 +344,8 @@ void Input::PrintOptions() {
   astra::cout << "         Do not write any log file." << std::endl;
   astra::cout << " -profile" << std::endl;
   astra::cout << "         Enable on-the-fly performance profiling." << std::endl;
+  astra::cout << " -test" << std::endl;
+  astra::cout << "         Run unit tests only and exit." << std::endl;
   astra::cout << " -Werror" << std::endl;
   astra::cout << "         Consider warnings as errors." << std::endl;
   astra::cout << " -v/-version" << std::endl;

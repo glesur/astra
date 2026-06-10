@@ -27,4 +27,3 @@ def init_flow(grid, field):
 
   # Field amplitude
   #field["vx1"] = 0*x
-  

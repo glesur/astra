@@ -26,7 +26,8 @@ target_sources(astra
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/subgrid.hpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/subgrid.cpp
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/transpose.hpp
-
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/test.hpp
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/test.cpp
   )
 
 #add_subdirectory("${PROJECT_BINARY_DIR}" "${PROJECT_BINARY_DIR}/local")

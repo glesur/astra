@@ -31,6 +31,7 @@
 #include "transpose.hpp"
 #include "fft.hpp"
 #include "checkNan.hpp"
+#include "test.hpp"
 
 
 void LogFinished(Grid &grid, Input &Tint, Kokkos::Timer &timer, TimeIntegrator<Array3D<complex>> *timeIntegrator);
@@ -64,6 +65,12 @@ int main( int argc, char* argv[] ) {
     // Read input
     Input input(argc, argv);
     input.PrintLogo();
+
+    if(input.testRequested) {
+      Test test(&input);
+      test.Run();
+      test.Finalize();
+    }
 
     Grid grid(input);
     InitFlow initFlow(input, &grid);
