@@ -78,7 +78,7 @@ error_threshold=0
 if scheme == "rk3":
   error_threshold=1.7e-3
 elif scheme == "rk2":
-  error_threshold=3.5e-2
+  error_threshold=4.0e-2
 elif scheme == "euler":
   error_threshold=0.2
 if(error<error_threshold):

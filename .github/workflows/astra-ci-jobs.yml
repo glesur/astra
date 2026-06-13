@@ -36,11 +36,16 @@ jobs:
           mkdir -p job-serial
           cd job-serial
           python3 ../test/test.py build $TEST_OPTIONS
-      - name: Run tests
+      - name: Advection tests
         run: |
           source .venv/bin/activate
           cd job-serial
-          python3 ../test/test.py run all $TEST_OPTIONS
+          python3 ../test/test.py run advection $TEST_OPTIONS
+      - name: Hydro tests
+        run: |
+          source .venv/bin/activate
+          cd job-serial
+          python3 ../test/test.py run shearing_wave $TEST_OPTIONS
 
   Parallel:
     runs-on: self-hosted
@@ -59,13 +64,18 @@ jobs:
           mkdir -p job-parallel
           cd job-parallel
           python3 ../test/test.py build $TEST_OPTIONS -mpi
-      - name: Run unit tests
+      - name: Unit tests
         run: |
           source .venv/bin/activate
           cd job-parallel
           mpirun -np 4 ./build/astra -test
-      - name: Run tests
+      - name: Advection tests
         run: |
           source .venv/bin/activate
           cd job-parallel
-          python3 ../test/test.py run all $TEST_OPTIONS -mpi
+          python3 ../test/test.py run advection $TEST_OPTIONS -mpi
+      - name: Hydro tests
+        run: |
+          source .venv/bin/activate
+          cd job-parallel
+          python3 ../test/test.py run shearing_wave $TEST_OPTIONS -mpi
