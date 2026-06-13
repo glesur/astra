@@ -193,7 +193,7 @@ class astraTest:
   def run(self, inputFile="", problemDir="./", np=2, nowrite=False, restart=-1):
       # log
 
-      comm=[os.path.join(self.buildDir,"astra")]
+      comm=[os.path.abspath(os.path.join(self.buildDir,"astra"))]
       if inputFile:
           comm.append("-i")
           comm.append(inputFile)
