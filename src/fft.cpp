@@ -192,11 +192,11 @@ void FFT::TestMPI() {
   std::array<int,3> npf_glob = npr_glob;
   npf_glob[2] = npr_glob[2]/2+1;
 
-  Kokkos::View<real***, Kokkos::LayoutRight, Device> localReal_right("local real array", npr);
-  Array3D<real> localReal("local real array", npr);
+  Kokkos::View<real***, Kokkos::LayoutRight, Device> localReal_right("local real array", npr[0], npr[1], npr[2]);
+  Array3D<real> localReal = astra::makeArray<Array3D<real>>("local real array", npr);
 
-  Kokkos::View<real***, Kokkos::LayoutRight, Device> globalReal_right("global real array", npr_glob);
-  Array3D<real> globalReal("global real array", npr_glob);
+  Kokkos::View<real***, Kokkos::LayoutRight, Device> globalReal_right("global real array", npr_glob[0], npr_glob[1], npr_glob[2]);
+  Array3D<real> globalReal = astra::makeArray<Array3D<real>>("global real array", npr_glob);
 
   // Compute a dummy real array
   if(astra::prank == 0) {
@@ -231,8 +231,8 @@ void FFT::TestMPI() {
     });
 
     // Create the complex arrays
-    Array3D<complex> localComplex("local complex array", npf);
-    Array3D<complex> globalComplex("global complex array", npf_glob);
+    Array3D<complex> localComplex = astra::makeArray<Array3D<complex>>("local complex array", npf);
+    Array3D<complex> globalComplex = astra::makeArray<Array3D<complex>>("global complex array", npf_glob);
 
     // Compute the full serial fft
     KokkosFFT::rfftn(Kokkos::DefaultExecutionSpace(), globalReal, globalComplex);
