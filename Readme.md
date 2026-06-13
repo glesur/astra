@@ -1,5 +1,5 @@
 
-
+[![Documentation status](https://github.com/glesur/astra/actions/workflows/astra-ci-doc.yml/badge.svg?branch=master)](https://github.com/glesur/astra/actions/workflows/astra-ci-doc.yml)
 [![Astra CIs](https://github.com/glesur/astra/actions/workflows/astra-ci.yml/badge.svg?branch=master)](https://github.com/glesur/astra/actions/workflows/astra-ci.yml)
 # Astra
 
@@ -11,6 +11,9 @@
 
 By leveraging modern C++ abstraction layers, Astra achieves performance portability across a wide range of high-performance computing architectures without compromising the numerical accuracy established by its predecessor.
 
+## Documentation
+
+The full documentation is automatically generated and available on [GitHub Pages](https://glesur.github.io/astra/).
 ## Key Features
 
   * **Performance Portability:** Built on top of **Kokkos**, allowing a single codebase to run efficiently on multicore CPUs and various GPU architectures.

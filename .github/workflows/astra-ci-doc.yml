@@ -1,4 +1,4 @@
-name: Build the docs
+name: Build documentation
 on:
   workflow_dispatch:
   push:
