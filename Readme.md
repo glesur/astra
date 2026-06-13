@@ -1,7 +1,6 @@
-Here is a template for the `README.md` file based on the specifications provided.
 
------
 
+[![Idefix CIs](https://github.com/glesur/astra/actions/workflows/astra-ci.yml/badge.svg?branch=master)](https://github.com/glesur/astra/actions/workflows/astra-ci.yml)
 # Astra
 
 **A**ccelerated **S**pectral code for **T**uRbulent pl**A**smas
@@ -16,7 +15,7 @@ By leveraging modern C++ abstraction layers, Astra achieves performance portabil
 
   * **Performance Portability:** Built on top of **Kokkos**, allowing a single codebase to run efficiently on multicore CPUs and various GPU architectures.
   * **Spectral Solver:** Utilizes **Kokkos-fft** to handle Fast Fourier Transforms across different hardware backends.
-  * **Parallelization:** Supports distributed memory parallelism via **MPI** utilizing a 1D stencil decomposition strategy.
+  * **Parallelization:** Supports distributed memory parallelism via **MPI** utilizing a 1D slab decomposition strategy. No MPI support is required from the FFT library.
 
 ## Hardware Backend Support
 
@@ -34,7 +33,7 @@ Thanks to the integration of [Kokkos](https://github.com/kokkos/kokkos) and [Kok
       * *CPU:* FFTW3
       * *Nvidia:* CUDA Toolkit (cuFFT)
       * *AMD:* ROCm (rocFFT)
-  * Optional: MPI Implementation (OpenMPI, MPICH, etc.)
+  * Optional: GPU-aware MPI Implementation (OpenMPI, MPICH, etc.)
 
 ## Build Instructions
 
@@ -82,7 +81,7 @@ Astra utilizes CMake for its build system. It is recommended to configure the bu
 
 ## Running Astra
 
-Once compiled, the executable can be run directly (without mpi) or using standard MPI launchers (mpi). For example, to run on 4 processes:
+Once compiled, the executable can be run directly (without mpi) or using standard MPI launchers (mpirun). For example, to run on 4 processes:
 
 ```bash
 mpirun -np 4 ./astra -i ../problem/hydro_turbulence.ini
