@@ -218,7 +218,7 @@ class astraTest:
       print("***************************************************")
 
       try:
-          make=subprocess.run(comm, cwd=problemDir)
+          make=subprocess.run(comm,cwd=problemDir)
           make.check_returncode()
       except subprocess.CalledProcessError as e:
           print(bcolors.FAIL+"***************************************************")

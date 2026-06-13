@@ -48,6 +48,7 @@ parser.add_argument("testName",
 
 parser.add_argument("buildDir",
                     help="Directory for the build",
+                    nargs='?',
                     default="build")
 
 args, unknown=parser.parse_known_args()
