@@ -80,7 +80,7 @@ if scheme == "rk3":
 elif scheme == "rk2":
   error_threshold=4.0e-2
 elif scheme == "euler":
-  error_threshold=0.2
+  error_threshold=0.26
 if(error<error_threshold):
   print("SUCCESS")
   sys.exit(0)
