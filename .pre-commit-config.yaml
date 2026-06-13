@@ -1,0 +1,69 @@
+exclude: "^(src/kokkos)"
+
+repos:
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace  # auto-fix trailing whitespaces
+      - id: end-of-file-fixer  # add EOF "\n" if missing
+      #- id: no-commit-to-branch  # forbid direct commits to master # suspend this since it fails CIs on master with github
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-added-large-files
+        args: ['--maxkb=100'] ## prevent files larger than 100kB from being commited (exclude git lfs files)
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.23.1
+    hooks:
+    - id: zizmor
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-nodejs
+    rev: v1.1.2
+    hooks:
+      - id: markdown-toc
+        files: README.md
+
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args:
+        - --quiet
+        - --fix
+        - --select
+        - F # pyflakes
+        - B # flake8-bugbear
+        - I # isort
+        - NPY # numpy-specific rules
+        - --ignore
+        - F405
+        - --ignore
+        - F403 # ignore import *
+
+  - repo: https://github.com/neutrinoceros/inifix
+    rev: v6.1.2
+    hooks:
+      - id: inifix-format
+        files: ^(test/).*\.(ini)$ # want to skip pytest.ini
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs  # auto-fix tab/space mixing
+      - id: insert-license
+        files: ^(src/).*\.(hpp|cpp)$
+        args:
+        - --license-filepath
+        - src/license_header.txt
+        - --comment-style
+        - //
+
+  - repo: https://gitlab.com/daverona/pre-commit/cpp
+    rev: 0.8.0
+    hooks:
+      - id: cpplint
+        args: [--counting=detailed, --exclude=test/*]
