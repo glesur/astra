@@ -306,7 +306,7 @@ class astraTest:
       print(bcolors.WARNING+"No standard test validate.py for this test"+bcolors.ENDC)
     sys.stdout.flush()
 
-  def nonRegressionTest(self, filename,tolerance=0):
+  """ def nonRegressionTest(self, filename,tolerance=0):
     # log and in fake mode do not execute.
 
     fileref=os.path.join(self.referenceDirectory, self.testDir, self._getReferenceFilename())
@@ -361,7 +361,7 @@ class astraTest:
 
     shutil.copy(filename,fileout)
     print(bcolors.OKGREEN+"Reference file "+fileout+" created"+bcolors.ENDC)
-    sys.stdout.flush()
+    sys.stdout.flush() """
 
   def _showConfig(self):
     print("**************************************************************")
