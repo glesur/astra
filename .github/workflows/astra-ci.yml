@@ -30,13 +30,13 @@ jobs:
   gcc-jobs:
     needs: Linter
     name: CPU Jobs (gcc)
-    uses: ./.github/workflows/idefix-ci-jobs.yml
+    uses: ./.github/workflows/astra-ci-jobs.yml
     with:
       TEST_OPTIONS: -Werror
 
   cuda-jobs:
     needs: Linter
     name: CUDA Jobs
-    uses: ./.github/workflows/idefix-ci-jobs.yml
+    uses: ./.github/workflows/astra-ci-jobs.yml
     with:
       TEST_OPTIONS: -cuda
