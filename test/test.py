@@ -46,10 +46,14 @@ parser.add_argument("testName",
                     nargs='?',
                     default="all")
 
+parser.add_argument("buildDir",
+                    help="Directory for the build",
+                    default="build")
+
 args, unknown=parser.parse_known_args()
 thisDir = os.getcwd()
 testDir = os.path.dirname(os.path.abspath(__file__))
-buildDir = os.path.join(thisDir, "build")
+buildDir = os.path.join(thisDir, args.buildDir)
 test = tst.astraTest(buildDirInput=buildDir)
 
 if args.action == "build":
