@@ -471,13 +471,13 @@ void Dump::ReadNextFieldProperties(DumpFileHandler fileHdl, std::vector<int> &di
 
 void Dump::ReadSnoopyArray(DumpFileHandler fileHdl, std::string name, Field<Array3D<complex>> &data) {
   astra::pushRegion("Dump::ReadSnoopyArray");
-  int ntot,size,nglob;
+  int ntot,size;
   ntot = data.GetDimensions()[0]*data.GetDimensions()[1]*data.GetDimensions()[2];
   size = sizeof(complex);
-  nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
 
   ArrayHost3D<complex> temp("temp", data.GetDimensions()[0], data.GetDimensions()[1], data.GetDimensions()[2]);
   #ifdef WITH_MPI
+    int nglob = npf_glob[0]*npf_glob[1]*npf_glob[2];
     MPI_Status status;
 
     MPI_File_set_view(fileHdl, offset, MPI_C_DOUBLE_COMPLEX, this->view, "native", MPI_INFO_NULL );

@@ -82,7 +82,6 @@ void TimeVarSpectrum::Write(const real t, Field<Array3D<complex>>& field, Field<
     auto view1 = field[var1];
     auto view2 = field[var2];
 
-    real kmax = this->kmax;
     int nbins = this->nbins;
     real kmin = this->kmin;
 
