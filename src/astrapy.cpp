@@ -137,7 +137,7 @@ void AstraPy::Output(std::string outputFunctionName, Grid *grid, Field<Array3D<c
       // Fourier transform each view
       Array3D<real> deviceReal = astra::makeArray<Array3D<real>>("deviceReal", grid->npr);
       grid->fft->C2R(view, deviceReal);
-      ArrayHost3D<real> hostReal = Kokkos::create_mirror_view_and_copy(Kokkos::HostExecutionSpace(), deviceReal);
+      ArrayHost3D<real> hostReal = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), deviceReal);
       // Store in the map
       mapFieldReal[name] = hostReal;
     }
