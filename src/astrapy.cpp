@@ -150,7 +150,7 @@ void AstraPy::Output(std::string outputFunctionName, Grid *grid, Field<Array3D<c
     std::map<std::string, ArrayHost3D<complex>> mapFieldComplex;
     for(auto const& [name, view] : field) {
       // Store in the map
-      mapFieldComplex[name] = view;
+      mapFieldComplex[name] = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),view);
     }
 
     this->CallScript(this->scriptFilename,outputFunctionName, gridHost, mapFieldComplex, time, n);
