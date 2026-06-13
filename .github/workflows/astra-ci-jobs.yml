@@ -29,7 +29,7 @@ jobs:
           submodules: recursive
           persist-credentials: false
       - name: Python packages
-        uses: ./.github/workflows/actions/pre-install-py-packages
+        uses: ./.github/workflows/pre-install-py-packages
       - name: Build
         run: python3 test/test.py build -buildDir build-serial $TEST_OPTIONS
       - name: Run tests
@@ -44,7 +44,7 @@ jobs:
           submodules: recursive
           persist-credentials: false
       - name: Python packages
-        uses: ./.github/workflows/actions/pre-install-py-packages
+        uses: ./.github/workflows/pre-install-py-packages
       - name: Build
         run: python3 test/test.py build -buildDir build-parallel $TEST_OPTIONS -mpi
       - name: Run unit tests
