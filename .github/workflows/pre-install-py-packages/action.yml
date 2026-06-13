@@ -1,0 +1,15 @@
+name: Install astra packages
+
+description: "Action installing the astra python packages before running the tests."
+
+inputs: {}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create venv
+      shell: bash
+      run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        python3 -m pip install -r ./test/python_requirements.txt

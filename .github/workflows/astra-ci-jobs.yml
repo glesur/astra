@@ -1,0 +1,53 @@
+on:
+  workflow_call:
+    inputs:
+      TEST_OPTIONS:
+        required: true
+        type: string
+
+# concurrency:
+#   # auto-cancel any concurrent job *in the same context*
+#   # see https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+#   # see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
+
+env:
+  TEST_OPTIONS: ${{ inputs.TEST_OPTIONS }}
+  PYTHONPATH: ${{ github.workspace }}
+  ASTRA_DIR: ${{ github.workspace }}
+
+permissions: {}
+
+jobs:
+  Serial:
+    runs-on: self-hosted
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Python packages
+        uses: ./.github/workflows/actions/pre-install-py-packages
+      - name: Build
+        run: python3 test/test.py build -buildDir build-serial $TEST_OPTIONS
+      - name: Run tests
+        run: python3 test/test.py run all -buildDir build-serial $TEST_OPTIONS
+
+  Parallel:
+    runs-on: self-hosted
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Python packages
+        uses: ./.github/workflows/actions/pre-install-py-packages
+      - name: Build
+        run: python3 test/test.py build -buildDir build-parallel $TEST_OPTIONS -mpi
+      - name: Run unit tests
+        run: mpirun -np 4 ./build-parallel/astra -test
+      - name: Run tests
+        run: python3 test/test.py run all -buildDir build-parallel $TEST_OPTIONS -mpi
