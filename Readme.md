@@ -1,6 +1,6 @@
 
 
-[![Idefix CIs](https://github.com/glesur/astra/actions/workflows/astra-ci.yml/badge.svg?branch=master)](https://github.com/glesur/astra/actions/workflows/astra-ci.yml)
+[![Astra CIs](https://github.com/glesur/astra/actions/workflows/astra-ci.yml/badge.svg?branch=master)](https://github.com/glesur/astra/actions/workflows/astra-ci.yml)
 # Astra
 
 **A**ccelerated **S**pectral code for **T**uRbulent pl**A**smas
