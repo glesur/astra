@@ -137,7 +137,7 @@ void AstraPy::Output(std::string outputFunctionName, Grid *grid, Field<Array3D<c
       // Fourier transform each view
       Array3D<real> deviceReal = astra::makeArray<Array3D<real>>("deviceReal", grid->npr);
       grid->fft->C2R(view, deviceReal);
-      ArrayHost3D<real> hostReal = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), deviceReal);
+      ArrayHost3D<real> hostReal = Kokkos::create_mirror_view_and_copy(Kokkos::HostExecutionSpace(), deviceReal);
       // Store in the map
       mapFieldReal[name] = hostReal;
     }
@@ -173,9 +173,8 @@ void AstraPy::InitFlow(std::string initflowFunctionName, Grid *grid, Field<Array
     std::map<std::string, ArrayHost3D<real>> mapFieldReal;
     for(auto const& [name, view] : field) {
       // Fourier transform each view
-      Array3D<real> deviceReal = astra::makeArray<Array3D<real>>("deviceReal", grid->npr);
-      grid->fft->C2R(view, deviceReal);
-      ArrayHost3D<real> hostReal = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), deviceReal);
+      ArrayHost3D<real> hostReal = astra::makeArray<ArrayHost3D<real>>("hostView", grid->npr);
+      grid->fft->C2R_Host(view, hostReal);
       // Store in the map
       mapFieldReal[name] = hostReal;
     }
