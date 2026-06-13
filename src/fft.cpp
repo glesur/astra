@@ -57,7 +57,7 @@ FFT::FFT(std::array<int,3> npr_glob, std::array<int,3> npf_glob) {
       this->tempTransposedReal = Array3D<real>("FFT transpose temp2", npr[1]/astra::psize, npr[0]*astra::psize, npr[2]);
       this->tempT2Complex = Array3D<complex>("FFT temp2 complex", npf[0],npf[2], npf[1]);
       this->tempT2Complex2 = Array3D<complex>("FFT temp2 complex2",  npf[0],npf[2], npf[1]);
-      Array3D<complex> tempComplex2("FFT temp complex", npf);
+      Array3D<complex> tempComplex2 = astra::makeArray<Array3D<complex>>("FFT temp complex", npf);
 
      // MPI C2R Plans
       // Axis 1 transposed is axis2 for the fft library
