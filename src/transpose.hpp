@@ -9,7 +9,9 @@
 #ifndef TRANSPOSE_HPP_
 #define TRANSPOSE_HPP_
 
+#ifdef WITH_MPI
 #include <mpi.h>
+#endif
 #include <iostream>
 #include <Kokkos_Core.hpp>
 
