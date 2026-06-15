@@ -17,6 +17,7 @@
 #include "rightHandSide.hpp"
 #include "grid.hpp"
 #include "advection.hpp"
+#include "burgers.hpp"
 #include "hydro.hpp"
 #include "mhd.hpp"
 #include "input.hpp"
@@ -51,6 +52,12 @@ class RightHandSideFactory {
           rhsVector.emplace_back(std::move(std::make_unique<Advection<NoShear>>(input, grid)));
         } else if(shearType == ShearType::LinearShear) {
           rhsVector.emplace_back(std::move(std::make_unique<Advection<LinearShear>>(input, grid)));
+        }
+      } else if(method == "burgers") {
+        if(shearType == ShearType::NoShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<Burgers<NoShear>>(input, grid)));
+        } else if(shearType == ShearType::LinearShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<Burgers<LinearShear>>(input, grid)));
         }
       } else if(method == "hydro") {
         if(shearType == ShearType::NoShear) {
