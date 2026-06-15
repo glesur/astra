@@ -50,7 +50,7 @@ void InitFlow::Init(Field<Array3D<complex>>& field) {
       }
       astraPy.InitFlow(input->Get<std::string>("InitFlow","python",0), grid, hfield, realSpace);
     #else
-      throw std::runtime_error("Python initial conditions were required, but Python support is disabled \
+      throw std::runtime_error("Python initial conditions were requested, but Python support is disabled \
                                 in this build of ASTRA. \n Please recompile with WITH_PYTHON=ON.");
     #endif
   }
