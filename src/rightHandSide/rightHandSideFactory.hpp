@@ -19,6 +19,7 @@
 #include "advection.hpp"
 #include "burgers.hpp"
 #include "hydro.hpp"
+#include "compressible_hydro.hpp"
 #include "mhd.hpp"
 #include "input.hpp"
 #include "shear.hpp"
@@ -64,6 +65,12 @@ class RightHandSideFactory {
           rhsVector.emplace_back(std::move(std::make_unique<Hydro<NoShear>>(input, grid)));
         } else if(shearType == ShearType::LinearShear) {
           rhsVector.emplace_back(std::move(std::make_unique<Hydro<LinearShear>>(input, grid)));
+        }
+      } else if(method == "compressible_hydro") {
+        if(shearType == ShearType::NoShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<CompressibleHydro<NoShear>>(input, grid)));
+        } else if(shearType == ShearType::LinearShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<CompressibleHydro<LinearShear>>(input, grid)));
         }
       } else if(method == "mhd") {
         if(shearType == ShearType::NoShear) {
