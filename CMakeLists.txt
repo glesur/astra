@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_BUILD_TYPE Release)
-set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD 20)
 
-set(Astra_VERSION_MAJOR 0)
-set(Astra_VERSION_MINOR 1)
+set(Astra_VERSION_MAJOR 1)
+set(Astra_VERSION_MINOR 0)
 set(Astra_VERSION_PATCH 00)
 
-project (Astra VERSION 0.1.00)
+project (Astra VERSION 1.0.00)
 
 set(Astra_LOOP_PATTERN "Default" CACHE STRING "Loop pattern for astra_for")
 option(Astra_DEBUG "Enable Astra debug features (makes the code very slow)" OFF)
