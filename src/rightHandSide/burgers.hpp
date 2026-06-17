@@ -85,7 +85,7 @@ void Burgers<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<
   astra::pushRegion("Burgers::ExplicitStep");
   // Fourier transform the velocity field to real space (use transposed arrays)
   auto v = fldin["v"];
-
+  auto vr = this->vr;
   this->grid->fft->C2R(v, vr, false);
   auto wr11 = this->wr11;
   auto wf11 = this->wf11;
