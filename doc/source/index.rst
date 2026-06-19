@@ -89,9 +89,10 @@ The Astra collaboration benefited from funding from the “Programme National de
    :maxdepth: 3
    :caption: Contents:
 
+   quickstart
+   configuration
+   commandline
    input_file
-
-   api/library_root
 
 
 

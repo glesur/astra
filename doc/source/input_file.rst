@@ -11,7 +11,7 @@ allows for comments, which should start with ``#``.
 .. tip::
     You can add arbitray sections and entries in the input file freely. *Astra*
     will automatically read and store them on startup. They are then accessible in the code using the
-    ``Input::Get<T>(..)`` and ``Input::GetOrSet<T>`` template methods defined in the ``Input`` class (see :ref:`inputClass`).
+    ``Input::Get<T>(..)`` and ``Input::GetOrSet<T>`` template methods defined in the ``Input`` class.
     To avoid any name collisions with future versions of Astra, we recommend setting setup-specific parameters in a ``[Setup]`` section.
 
 .. _gridSection:
