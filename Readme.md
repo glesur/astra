@@ -31,7 +31,7 @@ Thanks to the integration of [Kokkos](https://github.com/kokkos/kokkos) and [Kok
 ## Dependencies
 
   * CMake (3.16+)
-  * C++ Compiler (supporting C++17 or higher)
+  * C++ Compiler (supporting C++20 or higher)
   * **Backend specific libraries:**
       * *CPU:* FFTW3
       * *Nvidia:* CUDA Toolkit (cuFFT)

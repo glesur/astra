@@ -42,7 +42,7 @@ class Output {
   std::unique_ptr<TimeVarOutput> timeVarOutput;
   // Helper function to convert filesystem::file_time into std::time_t
   // see https://stackoverflow.com/questions/56788745/
-  // This conversion "hack" is required in C++17 as no proper conversion bewteen
+  // This conversion "hack" is required in C++20 as no proper conversion bewteen
   // fs::last_write_time and std::time_t
   // exists in the standard library until C++20
   template <typename TP>

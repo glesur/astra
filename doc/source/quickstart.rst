@@ -24,7 +24,7 @@ Prerequisites
 You need:
 
 * CMake >= 3.16
-* A C++17-capable compiler
+* A C++20-capable compiler
 * Backend-specific FFT library:
 
   * CPU: FFTW3

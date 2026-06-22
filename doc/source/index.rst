@@ -12,7 +12,7 @@ About *Astra*
 
 *Astra* is designed to be a performance-portable code to model astrophysical plasmas with spectral accuracy. This means that it can run both on your laptop's cpu or on the largest GPU HPCs recently
 bought by your university. More technically, *Astra* can run in serial, use OpenMP and/or MPI (message passing interface) for parallelization, and use CUDA or Xeon-Phi for
-out of chip acceleration. Of course, all these capabilities are embedded within one single code, so the code relies on relatively abstracted classes and objects available in C++17, which are not necessarily
+out of chip acceleration. Of course, all these capabilities are embedded within one single code, so the code relies on relatively abstracted classes and objects available in C++20, which are not necessarily
 familiar to astrophysicists. A large effort has been devoted to simplify this level of abstraction so that the code can be modified by researchers and students familiar with C and who are aware of basic object-oriented concepts.
 
 The algorithms implemented in *Astra* are based on the `Snoopy Code <https://ipag.osug.fr/~lesurg/snoopy>`_.
@@ -20,10 +20,10 @@ The algorithms implemented in *Astra* are based on the `Snoopy Code <https://ipa
 ================
 Requirements
 ================
-*Astra* is written is standard C++17 and does not rely on any external library in serial (non MPI).
+*Astra* is written is standard C++20 and does not rely on any external library in serial (non MPI).
 
 Compiler
-  *Astra* requires a C++17 compatible compiler. It has been tested successfully with GCC (>10), Intel compiler suite (>2018) and
+  *Astra* requires a C++20 compatible compiler. It has been tested successfully with GCC (>10), Intel compiler suite (>2018) and
   Clang on both Intel and AMD CPUs. *Astra* has also been tested on NVIDIA GPUs (Pascal, Volta and Ampere architectures) using the nvcc (>10) compiler, and on AMD GPUs (Radeon Mi50, Mi210, Mi250) using the hipcc compiler.
 
 Kokkos and kokkos-fft libraries
