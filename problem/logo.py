@@ -66,7 +66,7 @@ def _fit_font_to_box(text: str, box_w: int, box_h: int, padding: int) -> ImageFo
 
 def text_to_array(
     text: str,
-    size: tuple[int, int] | None = None,
+    size: "tuple[int, int] | None" = None,
     font_size: int = 64,
     padding: int = 10,
     align: str = "center",
