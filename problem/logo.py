@@ -1,7 +1,12 @@
 from astrapy import *
 import numpy as np
 #import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw, ImageFont
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ModuleNotFoundError as e:
+    raise ModuleNotFoundError(
+        "problem/logo.py requires Pillow (PIL). Install it with `python -m pip install pillow`."
+    ) from e
 
 def init_flow(grid, field):
     field["vx1"][:,:,:] = 0.0
