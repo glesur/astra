@@ -86,12 +86,13 @@ The Astra collaboration benefited from funding from the “Programme National de
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 
+   quickstart
+   configuration
+   commandline
    input_file
-
-   api/library_root
 
 
 
