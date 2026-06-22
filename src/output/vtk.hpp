@@ -16,7 +16,7 @@
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Timer.hpp>
 #if __has_include(<filesystem>)
-  #include <filesystem> // NOLINT [build/c++17]
+  #include <filesystem> // NOLINT [build/C++20]
   namespace fs = std::filesystem;
 #elif __has_include(<experimental/filesystem>)
   #include <experimental/filesystem>
