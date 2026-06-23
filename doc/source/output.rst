@@ -17,6 +17,7 @@ for 5 kinds of outputs:
 * VTK files (.vtk) are Visualation Toolkit files, which are easily readable by visualisation softwares such as `Paraview <https://www.paraview.org/>`_
   or `Visit <https://wci.llnl.gov/simulation/computer-codes/visit>`_. A set of python methods is also provided to read vtk file from your
   python scripts in the `pytools` directory.
+* timevar files are text file in csv format, that allow to easily trace box-averaged quantities as a function of time. A list of possible timevar diagnostics is given in :ref:`outputSection`.
 * python script, defined in the input file :ref:`astraPySection`. This launches a user-defined python function fed with Astra data. One can then directly plot or interact with Astra outputs from python.
 
 The output periodicity and the userdef variables should all be declared in the input file, as described in :ref:`outputSection`.
