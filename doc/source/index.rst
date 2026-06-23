@@ -20,6 +20,7 @@ The algorithms implemented in *Astra* are based on the `Snoopy Code <https://ipa
 ================
 Requirements
 ================
+*Astra* is written in standard C++20 and does not rely on any external libraries when running in serial (non-MPI mode).
 
 Compiler
   *Astra* requires a C++20 compatible compiler. It has been tested successfully with GCC (>10), Intel compiler suite (>2018) and
@@ -62,6 +63,8 @@ Main Contributors
 Geoffroy Lesur
   code design and architecture, implementation of the main algorithms, documentation and testing.
 
+*Astra* has also been inspired by all of the contributors of the `Idefix code <https://github.com/idefix-code/idefix>`_, from which the general framework has been derived.
+
 ========================
 About this documentation
 ========================
@@ -92,6 +95,7 @@ The Astra collaboration benefited from funding from the “Programme National de
    configuration
    commandline
    input_file
+   output
 
 
 

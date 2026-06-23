@@ -33,6 +33,21 @@ You need:
 
 * Optional: MPI implementation (OpenMPI, MPICH, ...)
 
+Download Astra
+--------------
+
+You can get the latest source code from `GitHub <https://github.com/glesur/astra>`_ by cloning the repository with:
+
+.. code-block:: bash
+
+    git clone --recurse-submodules https://github.com/glesur/astra.git astra
+    cd astra
+
+
+.. note::
+
+    If you are updating an already cloned Astra installation (e.g. ``git pull``), you can use the ``git submodule update --init --recursive`` command to automatically update submodules.
+
 Build Astra
 -----------
 
