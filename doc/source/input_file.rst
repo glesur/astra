@@ -1,18 +1,15 @@
+.. _inputFile:
+
 Problem input file
 =================================
 
 The problem input file uses the extension `.ini`. By default, *Astra* uses `astra.ini` in the current directory. It is possible to start astra with an other
 input file using the `-i` command line option specifying the full path to the input file.
 
-The problem input file is read when *Astra* starts. It is split into several sections, each section name corresponding to a C++ class in *Astra   * structure. Inside each section, each line defines an entry, which can have as many parameters as one wishes
+The problem input file is read when *Astra* starts. It is split into several sections, each section name corresponding to a C++ class in *Astra* structure.
+Inside each section, each line defines an entry, which can have as many parameters as one wishes
 (note that it requires at least one parameter). The input file
 allows for comments, which should start with ``#``.
-
-.. tip::
-    You can add arbitray sections and entries in the input file freely. *Astra*
-    will automatically read and store them on startup. They are then accessible in the code using the
-    ``Input::Get<T>(..)`` and ``Input::GetOrSet<T>`` template methods defined in the ``Input`` class.
-    To avoid any name collisions with future versions of Astra, we recommend setting setup-specific parameters in a ``[Setup]`` section.
 
 .. _gridSection:
 
@@ -54,7 +51,11 @@ Depending on the choice of the right-hand side, other entries may be required.
 +----------------------------+-------------------------------------------------------+
 | ``hydro``                  | Incompressible Navier Stokes equations                |
 +----------------------------+-------------------------------------------------------+
-| ``mhd  ``                  | Incompressible magnetohydrodynamocs equation          |
+| ``burgers``                | 1D Burgers equations (used for testing)               |
++----------------------------+-------------------------------------------------------+
+| ``mhd``                    | Incompressible magnetohydrodynamocs equation          |
++----------------------------+-------------------------------------------------------+
+| ``compressible_hydro``     | compressible Navier Stokes equations                  |
 +----------------------------+-------------------------------------------------------+
 
 Depending on the choice of the right-hand side, the following entries may be required in the physics section:
@@ -78,7 +79,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 |  Entry name     | Parameter type     | Comment                                                                                                   |
 +=================+====================+===========================================================================================================+
 | viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
-|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta ^n v (default 1)        |
+|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -99,12 +100,33 @@ Depending on the choice of the right-hand side, the following entries may be req
 |  Entry name     | Parameter type     | Comment                                                                                                   |
 +=================+====================+===========================================================================================================+
 | viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
-|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta ^n v (default 1)        |
+|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | resistivity     | float, (int)       | | 1st parameter: kinematic resistivity                                                                    |
-|                 |                    | | 2nd parameter (optional): order of the resistivity term *n* in :math:`=\nu \Delta ^n B (default 1)      |
+|                 |                    | | 2nd parameter (optional): order of the resistivity term *n* in :math:`=\nu \Delta^n B (default 1)`      |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: `linear``                                            |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+
+``compressible_hydro`` right hand side
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+|  Entry name     | Parameter type     | Comment                                                                                                   |
++=================+====================+===========================================================================================================+
+| viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
+|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta ^n v (default 1)`       |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| cs              | float              | (optional) isothermal sound speed (default 1)                                                             |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -145,6 +167,8 @@ The ``InitFlow`` section defines the initial conditions of the flow. Several ent
 |                        |                    | | Python function is in real space or Fourier space. Default is "real".                                   |
 +------------------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 
+.. _astraPySection:
+
 ``Python`` section
 --------------------
 The python section defines how Astra interacts with the Python interpreter. Usually, Astra interacts
@@ -161,6 +185,7 @@ The definition of the entries in the Python section is as follows:
 | ``script``         | filename of the python script, without the ".py" extension. |
 +--------------------+-------------------------------------------------------------+
 
+.. _outputSection:
 
 ``Output`` section
 --------------------
@@ -191,6 +216,17 @@ The definition of the entries in the Python section is as follows:
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | vtk            | float                   | | Time interval between vtk outputs, in code units.                                              |
 |                |                         | | If negative, periodic vtk outputs are disabled.                                                |
++----------------+-------------------------+--------------------------------------------------------------------------------------------------+
+| vtk_sliceN     | float, int, float,      | | Create VTK files that contain a slice (cut or average) of the full domain.                     |
+|                | string                  | | the "N" of the entry name is an integer that identify each slice, starting from n=1            |
+|                |                         | | 1st parameter: Time interval between each slice vtk file                                       |
+|                |                         | | 2nd parameter: plane of the slice. 0=(x2,x3) slice, 1=(x1,x3), 2=(x1,x2)                       |
+|                |                         | | 3rd parameter: localisation of the slice (when the slice is an average, this parameter only    |
+|                |                         | |                affect the localisation of the slice in the produced vtk file                   |
+|                |                         | | 4th parameter: slice type. Can be "cut" (for a slice of the full domain) or "average" (for an  |
+|                |                         | | average along the direction given by the second parameter). NB: "average" performs a naive     |
+|                |                         | | point average, without any consideration on the cell volumes/areas.                            |
+|                |                         | | NB2: this feature is in beta, and sometimes fail with some MPI implementations.                |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | vtk_dir        | string                  | | directory for vtk file outputs. Default to "./"                                                |
 |                |                         | | The directory is automatically created if it does not exist.                                   |
