@@ -208,6 +208,9 @@ The definition of the entries in the Python section is as follows:
 |                |                         | | - spectrum_vi.vj: shell-integrated power spectrum of the correlation :math:`v_i v_j`:          |
 |                |                         | |   :math:`\int_{k-\Delta k/2}^{k+\Delta k/2} \langle \hat{v}_i(k) \hat{v}_j^*(k) \rangle dk`    |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
+| timevar_dir    | string                  | | directory for timevar file outputs. Default to "./timevar"                                                |
+|                |                         | | The directory is automatically created if it does not exist.                                   |
++----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | timevar_step   | float                   | | Time interval between timevar outputs, in code units.                                          |
 |                |                         | | If negative, periodic timevar outputs are disabled.                                            |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
