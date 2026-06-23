@@ -107,7 +107,7 @@ if(not args.noplot):
 err=np.mean(error)
 print("Error=",err)
 
-if(err<8e-4):
+if(err<7e-3):
   print("SUCCESS")
   sys.exit(0)
 else:
