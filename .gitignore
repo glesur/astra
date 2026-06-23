@@ -3,8 +3,10 @@
 # compiled files
 **/__pycache__
 *.pyc
-**/idefix
+**/astra
 bin*/**
+build*/**
+validation*/**
 
 # generated doc files
 doc/build/**
