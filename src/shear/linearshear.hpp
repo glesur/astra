@@ -58,6 +58,13 @@ class LinearShear : public NoShear {
 
     int nx_glob = this->grid->npf_glob[IDIR];
     int ny_glob = this->grid->npf_glob[JDIR];
+
+    real kx1max = this->grid->kmax[IDIR];
+    real kx2max = this->grid->kmax[JDIR];
+    real kx3max = this->grid->kmax[KDIR];
+    auto kx1 = this->grid->kx[IDIR];
+    auto kx2 = this->grid->kx[JDIR];
+    auto kx3 = this->grid->kx[KDIR];
     #ifdef WITH_MPI
       Array3D<complex> transposed("transposed", this->grid->npf_glob[JDIR]/astra::psize, this->grid->npf_glob[IDIR], this->grid->npf_glob[KDIR]);
       Transpose<complex> transpose(this->grid->npf);
@@ -76,7 +83,10 @@ class LinearShear : public NoShear {
           // Check if mode goes out of bounds
           if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
             const int inew = (nxtarget + nx_glob) % nx_glob;
-            temp(j,inew,k) = transposed(j,i,k);
+            complex mask = (std::fabs(kx1(inew))< 2./3*kx1max
+                          && std::fabs(kx2(j))< 2./3*kx2max
+                          && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
+            temp(j,inew,k) = mask*transposed(j,i,k);
           }
         }
       );
@@ -95,7 +105,10 @@ class LinearShear : public NoShear {
           // Check if mode goes out of bounds
           if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
             const int inew = (nxtarget + nx_glob) % nx_glob;
-            temp(inew,j,k) = field(i,j,k);
+            complex mask = (std::fabs(kx1(inew))< 2./3*kx1max
+                          && std::fabs(kx2(j))< 2./3*kx2max
+                          && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
+            temp(inew,j,k) = mask*field(i,j,k);
           }
         }
       );
