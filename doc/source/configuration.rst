@@ -1,3 +1,5 @@
+.. _configuration:
+
 Code configuration with Cmake
 =============================
 

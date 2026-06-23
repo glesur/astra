@@ -63,6 +63,8 @@ Main Contributors
 Geoffroy Lesur
   code design and architecture, implementation of the main algorithms, documentation and testing.
 
+and all of the contributors of the `Idefix code <https://github.com/idefix-code/idefix>`_, from which the general framework of *Astra* has been inspired.
+
 ========================
 About this documentation
 ========================
@@ -93,6 +95,7 @@ The Astra collaboration benefited from funding from the “Programme National de
    configuration
    commandline
    input_file
+   output
 
 
 
