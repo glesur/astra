@@ -53,7 +53,7 @@ Depending on the choice of the right-hand side, other entries may be required.
 +----------------------------+-------------------------------------------------------+
 | ``burgers``                | 1D Burgers equations (used for testing)               |
 +----------------------------+-------------------------------------------------------+
-| ``mhd``                    | Incompressible magnetohydrodynamocs equation          |
+| ``mhd``                    | Incompressible magnetohydrodynamics equation          |
 +----------------------------+-------------------------------------------------------+
 | ``compressible_hydro``     | compressible Navier Stokes equations                  |
 +----------------------------+-------------------------------------------------------+
@@ -85,7 +85,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_type      | string             | (optional) type of large-scale shear. Value allowed: `linear``                                            |
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                            |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -109,7 +109,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_type      | string             | (optional) type of large-scale shear. Value allowed: `linear``                                            |
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                            |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -122,7 +122,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 |  Entry name     | Parameter type     | Comment                                                                                                   |
 +=================+====================+===========================================================================================================+
 | viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
-|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta ^n v (default 1)`       |
+|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -130,7 +130,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_type      | string             | (optional) type of large-scale shear. Value allowed: `linear``                                            |
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                            |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -221,15 +221,15 @@ The definition of the entries in the Python section is as follows:
 |                |                         | | If negative, periodic vtk outputs are disabled.                                                |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | vtk_sliceN     | float, int, float,      | | Create VTK files that contain a slice (cut or average) of the full domain.                     |
-|                | string                  | | the "N" of the entry name is an integer that identify each slice, starting from n=1            |
-|                |                         | | 1st parameter: Time interval between each slice vtk file                                       |
+|                | string                  | | the "N" of the entry name is an integer that identifies each slice, starting from n=1          |
+|                |                         | | 1st parameter: Time interval between each slice VTK file                                       |
 |                |                         | | 2nd parameter: plane of the slice. 0=(x2,x3) slice, 1=(x1,x3), 2=(x1,x2)                       |
 |                |                         | | 3rd parameter: localisation of the slice (when the slice is an average, this parameter only    |
-|                |                         | |                affect the localisation of the slice in the produced vtk file                   |
+|                |                         | |                affects the localisation of the slice in the produced VTK file                  |
 |                |                         | | 4th parameter: slice type. Can be "cut" (for a slice of the full domain) or "average" (for an  |
 |                |                         | | average along the direction given by the second parameter). NB: "average" performs a naive     |
-|                |                         | | point average, without any consideration on the cell volumes/areas.                            |
-|                |                         | | NB2: this feature is in beta, and sometimes fail with some MPI implementations.                |
+|                |                         | | point average, without any consideration of the cell volumes/areas.                            |
+|                |                         | | NB2: this feature is in beta, and sometimes fails with some MPI implementations.               |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | vtk_dir        | string                  | | directory for vtk file outputs. Default to "./"                                                |
 |                |                         | | The directory is automatically created if it does not exist.                                   |

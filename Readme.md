@@ -43,10 +43,10 @@ Thanks to the integration of [Kokkos](https://github.com/kokkos/kokkos) and [Kok
 
 It is recommended to directly clone Astra and its submodules (Kokkos and Kokkos-fft) from GitHub. In the directory of your choice:
 
-    ```bash
-    git clone --recurse-submodules https://github.com/glesur/astra.git astra
-    cd astra
-    ```
+```bash
+git clone --recurse-submodules https://github.com/glesur/astra.git astra
+cd astra
+```
 
 
 ## Build Instructions

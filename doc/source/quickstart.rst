@@ -36,7 +36,7 @@ You need:
 Download Astra
 --------------
 
-You can download the latest release from `GitHub <https://github.com/glesur/astra/releases>`_ by cloning the repository with:
+You can get the latest source code from `GitHub <https://github.com/glesur/astra>`_ by cloning the repository with:
 
 .. code-block:: bash
 
