@@ -83,9 +83,6 @@ class LinearShear : public NoShear {
           // Check if mode goes out of bounds
           if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
             const int inew = (nxtarget + nx_glob) % nx_glob;
-            complex mask = (std::fabs(kx1(inew))< 2./3*kx1max
-                          && std::fabs(kx2(j))< 2./3*kx2max
-                          && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
             temp(j,inew,k) = mask*transposed(j,i,k);
           }
         }
@@ -105,15 +102,22 @@ class LinearShear : public NoShear {
           // Check if mode goes out of bounds
           if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
             const int inew = (nxtarget + nx_glob) % nx_glob;
-            complex mask = (std::fabs(kx1(inew))< 2./3*kx1max
-                          && std::fabs(kx2(j))< 2./3*kx2max
-                          && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
-            temp(inew,j,k) = mask*field(i,j,k);
+            temp(inew,j,k) = field(i,j,k);
           }
         }
       );
       Kokkos::deep_copy(field, temp);
     #endif
+
+    // Apply 2/3 de-aliasing rule
+    astra_for("mask_remap", 0,field.extent(0),0,field.extent(1),0,field.extent(2),
+      KOKKOS_LAMBDA (const int i, const int j, const int k) {
+        complex mask = (std::fabs(kx1(i))< 2./3*kx1max
+                      && std::fabs(kx2(j))< 2./3*kx2max
+                      && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
+        field(i,j,k) *= mask;
+      }
+    );
     // Done
     astra::popRegion();
   }
