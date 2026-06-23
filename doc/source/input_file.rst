@@ -7,7 +7,7 @@ The problem input file uses the extension `.ini`. By default, *Astra* uses `astr
 input file using the `-i` command line option specifying the full path to the input file.
 
 The problem input file is read when *Astra* starts. It is split into several sections, each section name corresponding to a C++ class in *Astra* structure.
-Inside each section, each line defines an entry, which can have as many parameters as one wishes
+Inside each section, each line defines an entry, which can have as many parameters as one wishes.
 (note that it requires at least one parameter). The input file
 allows for comments, which should start with ``#``.
 
@@ -230,9 +230,6 @@ The definition of the entries in the Python section is as follows:
 |                |                         | | average along the direction given by the second parameter). NB: "average" performs a naive     |
 |                |                         | | point average, without any consideration of the cell volumes/areas.                            |
 |                |                         | | NB2: this feature is in beta, and sometimes fails with some MPI implementations.               |
-+----------------+-------------------------+--------------------------------------------------------------------------------------------------+
-| vtk_dir        | string                  | | directory for vtk file outputs. Default to "./"                                                |
-|                |                         | | The directory is automatically created if it does not exist.                                   |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | python         | float, string, (string) | | 1st parameeter: Time interval between python outputs, in code units.                           |
 |                |                         | | 2nd parameter: Name of the Python function to call for output in the script provided in the    |

@@ -20,7 +20,7 @@ The algorithms implemented in *Astra* are based on the `Snoopy Code <https://ipa
 ================
 Requirements
 ================
-*Astra* is written in standard C++20 and does not rely on any external library in serial (non MPI).
+*Astra* is written in standard C++20 and does not rely on any external libraries when running in serial (non-MPI mode).
 
 Compiler
   *Astra* requires a C++20 compatible compiler. It has been tested successfully with GCC (>10), Intel compiler suite (>2018) and
