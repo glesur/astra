@@ -159,7 +159,11 @@ The ``InitFlow`` section defines the initial conditions of the flow. Several ent
 | shear_layer            | float, float       | | (optional) Create a shear layer:  :math:`v_x=-v_0` if :math:`y<y_0`, else :math:`v_x=v_0`               |
 |                        |                    | | The first parameter is :math:`y_0` and the second parameter is :math:`v_0`.                             |
 +------------------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| mean_flow              | float, float, float|  (optional) Create a mean flow. The three parameters are the three components of the mean velocity        |
+| mean_flow              | float, float, float|  (optional) Adds a mean flow. The three parameters are the three components of the mean velocity          |
++------------------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| mean_field             | float, float, float| | (optional) Adds a constant magnetic field. The three parameters are the three components of field       |
+|                        |                    | | :math:`\mathbf{B}=(B_x, B_y, B_z)`.                                                                     |
+|                        |                    | | NB: this entry is only available when the rhs is ``mhd``.                                               |
 +------------------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | python                 | string, (string)   | | 1st parameter: Name of the Python function to call to initialize the flow in the script provided in the |
 |                        |                    | | [python] block of the input file.                   ,                                                   |
