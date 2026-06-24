@@ -83,7 +83,7 @@ class LinearShear : public NoShear {
           // Check if mode goes out of bounds
           if(nxtarget > -nx_glob/2 && nxtarget <= nx_glob/2) {
             const int inew = (nxtarget + nx_glob) % nx_glob;
-            temp(j,inew,k) = mask*transposed(j,i,k);
+            temp(j,inew,k) = transposed(j,i,k);
           }
         }
       );
