@@ -83,9 +83,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                            |
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -107,9 +105,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                            |
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -124,13 +120,16 @@ Depending on the choice of the right-hand side, the following entries may be req
 | viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
 |                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| eta_rho         | float, (int)       | | 1st parameter: mass diffusion                                                                           |
+|                 |                    | | 2nd parameter (optional): order of the diffusion term *n* in :math:`=\eta_\rho \Delta^n v (default 1)`  |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
+| rho_floor       | float              | (optional) density floor (default 1e-6)                                                                   |
++-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | cs              | float              | (optional) isothermal sound speed (default 1)                                                             |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| viscosity_order | int                | (optional) order of the viscosity term *n* in :math:`=\nu \Delta ^n v`                                    |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                            |
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
