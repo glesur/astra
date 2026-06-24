@@ -12,6 +12,7 @@
 #include <pybind11/embed.h> // everything needed for embedding
 #include <pybind11/numpy.h> // for numpy arrays
 #include <pybind11/stl.h>   // For STL vectors and containers
+#include <csignal>
 #include <iomanip>
 #include <map>
 #include <string>
@@ -108,8 +109,9 @@ AstraPy::AstraPy(Input &input) {
     // Check whether we need to start an interpreter
     if(ninstance==1) {
       astra::cout << "AstraPy: start Python interpreter." << std::endl;
-
       py::initialize_interpreter();
+      std::signal(SIGINT, SIG_DFL);  // restore "terminate on Ctrl-C" signal handler
+
       py::exec("import sys; print(f'AstraPy: Python Version: {sys.version}')");
       py::exec("print(f'AstraPy: Executable Path: {sys.executable}')");
       py::exec("print(f'AstraPy: Sys Path: {sys.path}')");

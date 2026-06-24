@@ -56,6 +56,7 @@ jobs:
           source .venv/bin/activate
           cd job-serial
           python3 ../test/test.py run shearing_wave_compressible $TEST_OPTIONS
+          python3 ../test/test.py run sod-iso $TEST_OPTIONS
 
   Parallel:
     runs-on: self-hosted
@@ -98,4 +99,5 @@ jobs:
         run: |
           source .venv/bin/activate
           cd job-parallel
+          python3 ../test/test.py run sod-iso $TEST_OPTIONS -mpi
           python3 ../test/test.py run shearing_wave_compressible $TEST_OPTIONS -mpi
