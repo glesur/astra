@@ -141,9 +141,7 @@ void CompressibleHydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Fiel
       real p2 = pr2(i, j, k);
       real p3 = pr3(i, j, k);
 
-      real rhor_val = std::fmax(rhor(i, j, k), rhoFloor);  // Ensure density is above the floor value
-      rhor(i, j, k) = rhor_val;  // Update the density field with the floored value
-      // Possibly a check on the minimum allowable density to avoid division by zero?
+      const real rhor_val = std::fmax(rhor(i, j, k), rhoFloor);  // avoid division by ~0 when computing p_i p_j / rho
       wr11(i, j, k) = p1 * p1 / rhor_val;
       wr12(i, j, k) = p1 * p2 / rhor_val;
       wr13(i, j, k) = p1 * p3 / rhor_val;
