@@ -33,7 +33,10 @@ class CompressibleHydro : public RightHandSide<Array3D<complex>, Shear> {
 
  private:
   real nu;
+  real etaRho;
   int viscosityOrder{1};
+  int etaRhoOrder{1};
+  real rhoFloor;
   bool haveSourceTerm{false};
   real Omega;
   real cs{1.0}; // Sound speed (for isothermal equation of state)
@@ -80,6 +83,12 @@ CompressibleHydro<Shear>::CompressibleHydro(Input &input, Grid *grid) : RightHan
 
   this->nu = input.GetOrSet<real>("Physics","viscosity",0,1e-3);
   this->viscosityOrder = input.GetOrSet<int>("Physics","viscosity",1,1);
+
+  this->etaRho = input.GetOrSet<real>("Physics","eta_rho",0,0.0);
+  this->etaRhoOrder = input.GetOrSet<int>("Physics","eta_rho",1,1);
+
+  this->rhoFloor = input.GetOrSet<real>("Physics","rho_floor",0,1e-6);
+
   this->Omega = input.GetOrSet<real>("Physics","omega",0,0.0);
   this->haveSourceTerm = (input.CheckEntry("Physics","omega") >0 || Shear::isEnabled);
   this->cs = input.GetOrSet<real>("Physics","cs",0,1.0);
@@ -124,18 +133,23 @@ void CompressibleHydro<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Fiel
 
   Shear &shear = this->shear;
   shear.Refresh(t);
+
+  real rhoFloor = this->rhoFloor;
   astra_for("hydro_windup", 0,npr[IDIR],0,npr[JDIR],0,npr[KDIR],
     KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
       real p1 = pr1(i, j, k);
       real p2 = pr2(i, j, k);
       real p3 = pr3(i, j, k);
+
+      real rhor_val = std::fmax(rhor(i, j, k), rhoFloor);  // Ensure density is above the floor value
+      rhor(i, j, k) = rhor_val;  // Update the density field with the floored value
       // Possibly a check on the minimum allowable density to avoid division by zero?
-      wr11(i, j, k) = p1 * p1 / rhor(i, j, k);
-      wr12(i, j, k) = p1 * p2 / rhor(i, j, k);
-      wr13(i, j, k) = p1 * p3 / rhor(i, j, k);
-      wr22(i, j, k) = p2 * p2 / rhor(i, j, k);
-      wr23(i, j, k) = p2 * p3 / rhor(i, j, k);
-      wr33(i, j, k) = p3 * p3 / rhor(i, j, k);
+      wr11(i, j, k) = p1 * p1 / rhor_val;
+      wr12(i, j, k) = p1 * p2 / rhor_val;
+      wr13(i, j, k) = p1 * p3 / rhor_val;
+      wr22(i, j, k) = p2 * p2 / rhor_val;
+      wr23(i, j, k) = p2 * p3 / rhor_val;
+      wr33(i, j, k) = p3 * p3 / rhor_val;
     });
 
   // Fourier transform back to spectral space
@@ -218,9 +232,13 @@ void CompressibleHydro<Shear>::ImplicitStep(Field<Array3D<complex>>& fldin, real
   auto px1 = fldin["px1"];
   auto px2 = fldin["px2"];
   auto px3 = fldin["px3"];
+  auto rho = fldin["rho"];
 
   real nu= this->nu;
   int n = this->viscosityOrder;
+  real etaRho = this->etaRho;
+  int nRho = this->etaRhoOrder;
+
   Shear shear = this->shear;
   shear.Refresh(t);
   astra_for("CompressibleHydro_viscosity", fldin,
@@ -235,6 +253,9 @@ void CompressibleHydro<Shear>::ImplicitStep(Field<Array3D<complex>>& fldin, real
       px1(i,j,k) *= factor;
       px2(i,j,k) *= factor;
       px3(i,j,k) *= factor;
+
+      real factorRho = std::exp(-dt * pow(etaRho*k2t, nRho)); // Exact integration
+      rho(i,j,k) *= factorRho;
     });
   astra::popRegion();
 }
