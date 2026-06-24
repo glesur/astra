@@ -188,32 +188,6 @@ void Mhd<Shear>::ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<comp
       dvx3(i,j,k) -= Kokkos::complex(0.0,1.0)*(kx1t*wf13(i,j,k)+kx2t*wf23(i,j,k)+kx3t*wf33(i,j,k))*mask;
   });
 
-  // Source terms
-  if(haveSourceTerm) {
-    real Omega = this->Omega;
-    real S = this->shear.shearRate;
-    astra_for("hydro_source_terms", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-      KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
-        dvx1(i,j,k) += 2.0*Omega*vx2(i,j,k);
-        dvx2(i,j,k) += -(2.0*Omega - S)*vx1(i,j,k);
-    });
-  }
-  // Pressure term
-  astra_for("hydro_pressure", 0,npf[IDIR],0,npf[JDIR],0,npf[KDIR],
-    KOKKOS_LAMBDA(int64_t i, int64_t j, int64_t k) {
-      const real kx1t = shear.kx1t(kx1(i),kx2(j),kx3(k));
-      const real kx2t = shear.kx2t(kx1(i),kx2(j),kx3(k));
-      const real kx3t = shear.kx3t(kx1(i),kx2(j),kx3(k));
-      const real k2t = kx1t*kx1t + kx2t*kx2t + kx3t*kx3t;
-      if(k2t > 0.0) {
-        complex kv_dot_v = kx1t*dvx1(i,j,k) + kx2t*dvx2(i,j,k) + kx3t*dvx3(i,j,k);
-        kv_dot_v += shear.shearRate * kx2(j) * vx1(i,j,k); // Shear contribution = dk/dt.v
-        dvx1(i,j,k) -= kv_dot_v*kx1t/k2t;
-        dvx2(i,j,k) -= kv_dot_v*kx2t/k2t;
-        dvx3(i,j,k) -= kv_dot_v*kx3t/k2t;
-      }
-  });
-
   // Magnetic field induction
   // vxB in real space
   astra_for("mhd_emf", 0,npr[IDIR],0,npr[JDIR],0,npr[KDIR],

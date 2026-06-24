@@ -58,6 +58,13 @@ class LinearShear : public NoShear {
 
     int nx_glob = this->grid->npf_glob[IDIR];
     int ny_glob = this->grid->npf_glob[JDIR];
+
+    real kx1max = this->grid->kmax[IDIR];
+    real kx2max = this->grid->kmax[JDIR];
+    real kx3max = this->grid->kmax[KDIR];
+    auto kx1 = this->grid->kx[IDIR];
+    auto kx2 = this->grid->kx[JDIR];
+    auto kx3 = this->grid->kx[KDIR];
     #ifdef WITH_MPI
       Array3D<complex> transposed("transposed", this->grid->npf_glob[JDIR]/astra::psize, this->grid->npf_glob[IDIR], this->grid->npf_glob[KDIR]);
       Transpose<complex> transpose(this->grid->npf);
@@ -101,6 +108,16 @@ class LinearShear : public NoShear {
       );
       Kokkos::deep_copy(field, temp);
     #endif
+
+    // Apply 2/3 de-aliasing rule
+    astra_for("mask_remap", 0,field.extent(0),0,field.extent(1),0,field.extent(2),
+      KOKKOS_LAMBDA (const int i, const int j, const int k) {
+        complex mask = (std::fabs(kx1(i))< 2./3*kx1max
+                      && std::fabs(kx2(j))< 2./3*kx2max
+                      && std::fabs(kx3(k))< 2./3*kx3max) ? 1.0 : 0.0;
+        field(i,j,k) *= mask;
+      }
+    );
     // Done
     astra::popRegion();
   }

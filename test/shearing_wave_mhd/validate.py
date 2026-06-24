@@ -12,7 +12,7 @@ from scipy.integrate import solve_ivp
 import argparse
 
 #compute theoretical solution (from Balbus & Hawley 2006, using notations from Lesur 2021)
-def rhs(t, y, Omega, q, k0x, k0y, k0z):
+def rhs(t, y, Omega, q, B0y, B0z, k0x, k0y, k0z):
     kx = k0x + q*Omega * t * k0y
     ky = k0y
     kz = k0z
@@ -20,8 +20,10 @@ def rhs(t, y, Omega, q, k0x, k0y, k0z):
     k2 = kx*kx+ky*ky+kz*kz
     vx = y[0]
     vy = y[1]
-    #vz = y[2]
-
+    vz = y[2]
+    bx = y[3]
+    by = y[4]
+    bz = y[5]
 
     gxx = kx*kx/k2
     gxy = kx*ky/k2
@@ -30,11 +32,19 @@ def rhs(t, y, Omega, q, k0x, k0y, k0z):
     gxz = kx*kz/k2
     #gzz = kz*kz/k2
 
-    dvx =  2*Omega*vy*(1-gxx) + 2*(1-q)*Omega*gxy*vx
-    dvy =  - q*Omega*vx*gyy - (2-q)*Omega*(1-gyy)*vx - 2*Omega*vy*gxy
-    dvz=   +2*(1-q)*Omega*vx*gyz-2*Omega*vy*gxz
+    kdotB = ky*B0y+kz*B0z
 
-    return np.asarray([dvx,dvy,dvz])
+    #we assume b=1j*db hence db=-1j*b
+
+    dvx = kdotB*bx + 2*Omega*vy*(1-gxx) + 2*(1-q)*Omega*gxy*vx
+    dvy = kdotB*by - q*Omega*vx*gyy - (2-q)*Omega*(1-gyy)*vx - 2*Omega*vy*gxy
+    dvz=  kdotB*bz +2*(1-q)*Omega*vx*gyz-2*Omega*vy*gxz
+
+    dbx = - kdotB*vx
+    dby = - kdotB*vy - q*Omega*bx
+    dbz = - kdotB*vz
+
+    return np.asarray([dvx,dvy,dvz,dbx,dby,dbz])
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-noplot",
@@ -47,7 +57,8 @@ args, unknown=parser.parse_known_args()
 
 
 #initial condition: vr=1, rest is 0, mode initial is nx=0, ny=1, nz=4)
-y=solve_ivp(rhs, [0,30], [1, 0, 0], args=(1, 1.5, 0, 2.0*np.pi, 8*np.pi), dense_output=True)
+y=solve_ivp(rhs, [0,30], [1, 0, 0, 0, 0, 0], args=(1, 1.5, 0.02, 0.05, 0, 2.0*np.pi, 8*np.pi), dense_output=True)
+
 
 
 # read timevol file
@@ -75,7 +86,14 @@ for name in varnames:
 # velocity normalisation
 v0=V['vx'][0]
 # compute L2 error norm
-error=np.sqrt((V['vx']/v0-y.sol(V["t"])[0,:])**2 + (V['vy']/v0-y.sol(V["t"])[1,:])**2+ + (V['vz']/v0-y.sol(V["t"])[2,:])**2)
+time = V["t"]
+error = (V['vx']/v0-y.sol(time)[0,:])**2
+error = error + (V['vy']/v0-y.sol(time)[1,:])**2
+error = error + (V['vz']/v0-y.sol(time)[2,:])**2
+error = error + (V['bx']/v0-y.sol(time)[3,:])**2
+error = error + (V['by']/v0-y.sol(time)[4,:])**2
+error = error + (V['bz']/v0-y.sol(time)[5,:])**2
+error = np.sqrt(error)
 
 
 
@@ -95,6 +113,16 @@ if(not args.noplot):
   plt.legend()
   plt.xlabel('t')
 
+  plt.figure(2)
+  plt.plot(V["t"],V['bx']/v0,'r-',label=r'$b_{R}$')
+  plt.plot(V["t"],y.sol(V["t"])[3,:],'r--')
+  plt.plot(V["t"],V['by']/v0,'b-',label=r'$b_{\varphi}$')
+  plt.plot(V["t"],y.sol(V["t"])[4,:],'b--')
+  plt.plot(V["t"],V['bz']/v0,'g-',label=r'$b_{z}$')
+  plt.plot(V["t"],y.sol(V["t"])[5,:],'g--')
+  plt.legend()
+  plt.xlabel('t')
+
   # plot error
   plt.figure()
   plt.semilogy(V["t"],error)
@@ -107,7 +135,7 @@ if(not args.noplot):
 err=np.mean(error)
 print("Error=",err)
 
-if(err<7e-3):
+if(err<8e-3):
   print("SUCCESS")
   sys.exit(0)
 else:
