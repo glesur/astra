@@ -121,7 +121,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 |                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | eta_rho         | float, (int)       | | 1st parameter: mass diffusion                                                                           |
-|                 |                    | | 2nd parameter (optional): order of the diffusion term *n* in :math:`=\eta_\rho \Delta^n v (default 1)`  |
+|                 |                    | | 2nd parameter (optional): order of the diffusion term *n* in :math:`=\eta_\rho \Delta^n \rho (default 1)`  |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | rho_floor       | float              | (optional) density floor (default 1e-6)                                                                   |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
