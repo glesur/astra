@@ -81,7 +81,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 | viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
 |                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                          |
+| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
