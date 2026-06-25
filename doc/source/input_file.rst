@@ -81,7 +81,7 @@ Depending on the choice of the right-hand side, the following entries may be req
 | viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
 |                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
+| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                          |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
 | shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                           |
 +-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
@@ -114,25 +114,25 @@ Depending on the choice of the right-hand side, the following entries may be req
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-|  Entry name     | Parameter type     | Comment                                                                                                   |
-+=================+====================+===========================================================================================================+
-| viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                      |
-|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v (default 1)`        |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| eta_rho         | float, (int)       | | 1st parameter: mass diffusion                                                                           |
-|                 |                    | | 2nd parameter (optional): order of the diffusion term *n* in :math:`=\eta_\rho \Delta^n \rho (default 1)`  |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| rho_floor       | float              | (optional) density floor (default 1e-6)                                                                   |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                           |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| cs              | float              | (optional) isothermal sound speed (default 1)                                                             |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                           |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
-| shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                       |
-+-----------------+--------------------+-----------------------------------------------------------------------------------------------------------+
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
+|  Entry name     | Parameter type     | Comment                                                                                                    |
++=================+====================+============================================================================================================+
+| viscosity       | float, (int)       | | 1st parameter: kinematic viscosity                                                                       |
+|                 |                    | | 2nd parameter (optional): order of the viscosity term *n* in :math:`=\nu \Delta^n v` (default 1)         |
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
+| eta_rho         | float, (int)       | | 1st parameter: mass diffusion                                                                            |
+|                 |                    | | 2nd parameter (optional): order of the diffusion term *n* in :math:`=\eta_\rho \Delta^n \rho` (default 1)|
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
+| rho_floor       | float              | (optional) density floor (default 1e-6)                                                                    |
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
+| omega           | float              | (optional) rotation rate along the x3 (=z) axis                                                            |
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
+| cs              | float              | (optional) isothermal sound speed (default 1)                                                              |
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
+| shear_type      | string             | (optional) type of large-scale shear. Value allowed: ``linear``                                            |
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
+| shear_rate      | float              | (optional) shear rate when `shear_type` is `linear`                                                        |
++-----------------+--------------------+------------------------------------------------------------------------------------------------------------+
 
 
 ``InitFlow`` section
@@ -211,7 +211,7 @@ The definition of the entries in the Python section is as follows:
 |                |                         | | - spectrum_vi.vj: shell-integrated power spectrum of the correlation :math:`v_i v_j`:          |
 |                |                         | |   :math:`\int_{k-\Delta k/2}^{k+\Delta k/2} \langle \hat{v}_i(k) \hat{v}_j^*(k) \rangle dk`    |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
-| timevar_dir    | string                  | | directory for timevar file outputs. Default to "./timevar"                                                |
+| timevar_dir    | string                  | | directory for timevar file outputs. Default to "./timevar"                                     |
 |                |                         | | The directory is automatically created if it does not exist.                                   |
 +----------------+-------------------------+--------------------------------------------------------------------------------------------------+
 | timevar_step   | float                   | | Time interval between timevar outputs, in code units.                                          |
