@@ -11,6 +11,7 @@
 #ifndef RIGHTHANDSIDE_ADVECTION_HPP_
 #define RIGHTHANDSIDE_ADVECTION_HPP_
 
+#include <memory>
 #include <string>
 #include <vector>
 #include "rightHandSide.hpp"
@@ -21,7 +22,7 @@ class Grid;
 template <typename Shear>
 class Advection : public RightHandSide<Array3D<complex>, Shear> {
  public:
-  Advection(Input &input, Grid *grid);
+  Advection(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<Array3D<complex>>>> &rhsVector);
 
   ~Advection();
 
@@ -45,8 +46,11 @@ class Advection : public RightHandSide<Array3D<complex>, Shear> {
 #include "global.hpp"
 #include "fft.hpp"
 
+using RhsPtr = std::unique_ptr<RightHandSideConcept<Array3D<complex>>>;
+
 template <typename Shear>
-Advection<Shear>::Advection(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, Shear>(input, grid) {
+Advection<Shear>::Advection(Input &input, Grid *grid, std::vector<RhsPtr> &rhsVector) :
+                            RightHandSide<Array3D<complex>, Shear>(input, grid, rhsVector) {
   direction = input.Get<int>("Physics","direction",0);
   velocity = input.GetOrSet<real>("Physics","velocity", 0,1.0);
   if(direction < 0 || direction > 2) {

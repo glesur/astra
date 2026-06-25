@@ -9,6 +9,7 @@
 #ifndef RIGHTHANDSIDE_MHD_HPP_
 #define RIGHTHANDSIDE_MHD_HPP_
 
+#include <memory>
 #include <string>
 #include <vector>
 #include "field.hpp"
@@ -17,13 +18,16 @@
 #include "arrays.hpp"
 #include "shear.hpp"
 
+using RhsPtr = std::unique_ptr<RightHandSideConcept<Array3D<complex>>>;
+
 class Grid;
+template <typename S> class Boussinesq;
 
 // A class for the hydrodynamics right hand side
 template <typename Shear>
 class Mhd : public RightHandSide<Array3D<complex>, Shear> {
  public:
-  Mhd(Input &input, Grid *grid);
+  Mhd(Input &input, Grid *grid, std::vector<RhsPtr> &rhsVector);
   ~Mhd();
 
   void ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) override;
@@ -46,6 +50,8 @@ class Mhd : public RightHandSide<Array3D<complex>, Shear> {
   Array3D<real> wr11,wr12,wr13,wr22,wr23,wr33;
   Array3D<complex> wf11,wf12,wf13,wf22,wf23,wf33;
   std::array<int,3> npr, npf;
+
+  friend class Boussinesq<Shear>;
 };
 
 
@@ -57,7 +63,8 @@ class Mhd : public RightHandSide<Array3D<complex>, Shear> {
 #include "fft.hpp"
 
 template <typename Shear>
-Mhd<Shear>::Mhd(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, Shear>(input, grid) {
+Mhd<Shear>::Mhd(Input &input, Grid *grid, std::vector<RhsPtr> &rhsVector) :
+                RightHandSide<Array3D<complex>, Shear>(input, grid, rhsVector) {
   // Allocate all of the temporary arrays
   vr1 = astra::makeArray<Array3D<real>>("Mhd::vr1", grid->npr_t);
   vr2 = astra::makeArray<Array3D<real>>("Mhd::vr2", grid->npr_t);

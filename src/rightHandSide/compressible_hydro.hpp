@@ -9,6 +9,7 @@
 #ifndef RIGHTHANDSIDE_COMPRESSIBLE_HYDRO_HPP_
 #define RIGHTHANDSIDE_COMPRESSIBLE_HYDRO_HPP_
 
+#include <memory>
 #include <vector>
 #include <string>
 #include "rightHandSide.hpp"
@@ -16,13 +17,15 @@
 #include "arrays.hpp"
 #include "shear.hpp"
 
+using RhsPtr = std::unique_ptr<RightHandSideConcept<Array3D<complex>>>;
+
 class Grid;
 
 // A class for the hydrodynamics right hand side
 template <typename Shear>
 class CompressibleHydro : public RightHandSide<Array3D<complex>, Shear> {
  public:
-  CompressibleHydro(Input &input, Grid *grid);
+  CompressibleHydro(Input &input, Grid *grid, std::vector<RhsPtr> &rhsVector);
   ~CompressibleHydro();
 
   void ExplicitStep(Field<Array3D<complex>>& fldin, Field<Array3D<complex>>& dfld, real t) override;
@@ -57,7 +60,8 @@ class CompressibleHydro : public RightHandSide<Array3D<complex>, Shear> {
 #include "fft.hpp"
 
 template <typename Shear>
-CompressibleHydro<Shear>::CompressibleHydro(Input &input, Grid *grid) : RightHandSide<Array3D<complex>, Shear>(input, grid) {
+CompressibleHydro<Shear>::CompressibleHydro(Input &input, Grid *grid, std::vector<RhsPtr> &rhsVector) :
+                                            RightHandSide<Array3D<complex>, Shear>(input, grid, rhsVector) {
   // Allocate all of the temporary arrays
   //vr1 = astra::makeArray<Array3D<real>>("CompressibleHydro::vr1", grid->npr_t);
   //vr2 = astra::makeArray<Array3D<real>>("CompressibleHydro::vr2", grid->npr_t);
