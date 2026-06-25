@@ -33,7 +33,7 @@ class RightHandSideConcept {
 template <typename T, typename Shear>
 class RightHandSide : public RightHandSideConcept<T> {
  public:
-  RightHandSide(Input &input, Grid *grid) : grid(grid), shear(input, grid) {}
+  RightHandSide(Input &input, Grid *grid, std::vector<std::unique_ptr<RightHandSideConcept<T>>> &rhsVector) : grid(grid), shear(input, grid) {}
   virtual ~RightHandSide() {}
 
   virtual void ExplicitStep(Field<T>& fldin, Field<T>& dfld, real t) = 0;

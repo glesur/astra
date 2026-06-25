@@ -18,6 +18,7 @@
 #include "grid.hpp"
 #include "advection.hpp"
 #include "burgers.hpp"
+#include "boussinesq.hpp"
 #include "hydro.hpp"
 #include "compressible_hydro.hpp"
 #include "mhd.hpp"
@@ -50,33 +51,39 @@ class RightHandSideFactory {
       std::string method = input.Get<std::string>("Physics","rhs",irhs);
       if(method == "advection") {
         if(shearType == ShearType::NoShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Advection<NoShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Advection<NoShear>>(input, grid, rhsVector)));
         } else if(shearType == ShearType::LinearShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Advection<LinearShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Advection<LinearShear>>(input, grid, rhsVector)));
         }
       } else if(method == "burgers") {
         if(shearType == ShearType::NoShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Burgers<NoShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Burgers<NoShear>>(input, grid, rhsVector)));
         } else if(shearType == ShearType::LinearShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Burgers<LinearShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Burgers<LinearShear>>(input, grid, rhsVector)));
         }
       } else if(method == "hydro") {
         if(shearType == ShearType::NoShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Hydro<NoShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Hydro<NoShear>>(input, grid, rhsVector)));
         } else if(shearType == ShearType::LinearShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Hydro<LinearShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Hydro<LinearShear>>(input, grid, rhsVector)));
         }
       } else if(method == "compressible_hydro") {
         if(shearType == ShearType::NoShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<CompressibleHydro<NoShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<CompressibleHydro<NoShear>>(input, grid, rhsVector)));
         } else if(shearType == ShearType::LinearShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<CompressibleHydro<LinearShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<CompressibleHydro<LinearShear>>(input, grid, rhsVector)));
         }
       } else if(method == "mhd") {
         if(shearType == ShearType::NoShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Mhd<NoShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Mhd<NoShear>>(input, grid, rhsVector)));
         } else if(shearType == ShearType::LinearShear) {
-          rhsVector.emplace_back(std::move(std::make_unique<Mhd<LinearShear>>(input, grid)));
+          rhsVector.emplace_back(std::move(std::make_unique<Mhd<LinearShear>>(input, grid, rhsVector)));
+        }
+      } else if(method == "boussinesq") {
+        if(shearType == ShearType::NoShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<Boussinesq<NoShear>>(input, grid, rhsVector)));
+        } else if(shearType == ShearType::LinearShear) {
+          rhsVector.emplace_back(std::move(std::make_unique<Boussinesq<LinearShear>>(input, grid, rhsVector)));
         }
       } else {
         throw std::runtime_error("Unknown right hand side method: " + method);
