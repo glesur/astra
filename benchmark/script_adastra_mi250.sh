@@ -16,23 +16,18 @@
 
 # nettoyage des modules charges en interactif et herites par defaut
 module purge
-module load cpe/24.07
-module load craype-accel-amd-gfx90a craype-x86-trento
-module load PrgEnv-cray
 
-#module load amd-mixed/6.3.3
-## Rocm 6.4 from CINES support mail
-export ROCM_PATH="/opt/software/rocm/6.4.0"
-export PATH="${ROCM_PATH}/bin:${PATH}"
-export PATH="${ROCM_PATH}/lib/llvm/bin:${PATH}"
-export LD_LIBRARY_PATH="${ROCM_PATH}/lib:${LD_LIBRARY_PATH}"
-export LD_LIBRARY_PATH="${ROCM_PATH}/lib/llvm/lib:${LD_LIBRARY_PATH}"
-export CMAKE_PREFIX_PATH="${ROCM_PATH}:${CMAKE_PREFIX_PATH:-}"
-export HIPCC_COMPILE_FLAGS_APPEND="${HIPCC_COMPILE_FLAGS_APPEND:-} --no-default-config "
+module load cpe/25.09
+module load craype-accel-amd-gfx90a craype-x86-trento
+module load PrgEnv-amd
+module load cray-python/3.11.7
+module load cmake
 
 export MPICH_GPU_SUPPORT_ENABLED=1
+export ASTRA_FLAGS="-DCMAKE_CXX_COMPILER=hipcc -DCMAKE_C_COMPILER=hipcc -DAstra_MPI=ON -DKokkos_ENABLE_HIP=ON -DKokkos_ENABLE_HIP_MULTIPLE_KERNEL_INSTANTIATIONS=ON -DKokkos_ARCH_AMD_GFX90A=ON"
 
-#module load nvidia-nsight-systems/2021.1.1
+export HIPCC_COMPILE_FLAGS_APPEND="-isystem ${CRAY_MPICH_PREFIX}/include"
+export HIPCC_LINK_FLAGS_APPEND="-L${CRAY_MPICH_PREFIX}/lib -lmpi ${PE_MPICH_GTL_DIR_amd_gfx90a} ${PE_MPICH_GTL_LIBS_amd_gfx90a} -lstdc++fs"
 
 # echo des commandes lancees
 set -x

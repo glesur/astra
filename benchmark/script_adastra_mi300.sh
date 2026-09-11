@@ -15,20 +15,12 @@
 #SBATCH --mail-user=geoffroy.lesur@univ-grenoble-alpes.fr
 
 # nettoyage des modules charges en interactif et herites par defaut
-module purge
-module load cpe/24.07
+# chargement des modules
+module load cpe/25.09
 module load craype-accel-amd-gfx942 craype-x86-trento
-module load PrgEnv-cray
+module load PrgEnv-amd
+module load cray-python/3.11.7
 
-#module load amd-mixed/6.3.3
-## Rocm 6.4 from CINES support mail
-export ROCM_PATH="/opt/software/rocm/6.4.0"
-export PATH="${ROCM_PATH}/bin:${PATH}"
-export PATH="${ROCM_PATH}/lib/llvm/bin:${PATH}"
-export LD_LIBRARY_PATH="${ROCM_PATH}/lib:${LD_LIBRARY_PATH}"
-export LD_LIBRARY_PATH="${ROCM_PATH}/lib/llvm/lib:${LD_LIBRARY_PATH}"
-export CMAKE_PREFIX_PATH="${ROCM_PATH}:${CMAKE_PREFIX_PATH:-}"
-export HIPCC_COMPILE_FLAGS_APPEND="${HIPCC_COMPILE_FLAGS_APPEND:-} --no-default-config "
 
 export MPICH_GPU_SUPPORT_ENABLED=1
 
