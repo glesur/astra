@@ -86,8 +86,8 @@ Output::Output(Input &input, Grid &grid)
 
   // Whether we want timevar
   timeVarOutput = std::make_unique<TimeVarOutput>(input, &grid);
-  lastTimevar = -timevarStep; // so that we output at time 0.0
   timevarStep = input.GetOrSet<real>("Output","timevar_step",0,-1.0);
+  lastTimevar = -timevarStep; // so that we output at time 0.0
 
   std::string shearTypeStr = input.GetOrSet<std::string>("Physics","shear_type",0,"disabled");
   if(shearTypeStr =="linear") {
